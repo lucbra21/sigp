@@ -122,6 +122,28 @@ def program_edit(program_id):
     return _program_form(program_id)
 
 
+@programs_bp.post("/<program_id>/duplicate")
+@login_required
+@require_perm("create_program")
+def program_duplicate(program_id):
+    """Crea una copia del programa y redirige a su edición."""
+    Program = _model("programs")
+    if not Program:
+        return "Modelo programs no disponible", 500
+    src = db.session.get(Program, program_id)
+    if not src:
+        flash("Programa no encontrado", "warning")
+        return redirect(url_for("programs.programs_list"))
+    new = Program(id=str(uuid4()))
+    for f in FIELDS:
+        setattr(new, f, getattr(src, f))
+    new.name = f"{src.name} (copia)"
+    db.session.add(new)
+    db.session.commit()
+    flash("Programa duplicado", "success")
+    return redirect(url_for("programs.program_edit", program_id=new.id))
+
+
 @programs_bp.post("/<program_id>/toggle")
 @login_required
 @require_perm("delete_program")

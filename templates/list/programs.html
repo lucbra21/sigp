@@ -32,6 +32,11 @@
         {% if can('update_program') %}
         <a href="{{ url_for('programs.program_edit', program_id=p.id) }}" class="btn btn-sm btn-primary">Editar</a>
         {% endif %}
+        {% if can('create_program') %}
+        <form method="post" action="{{ url_for('programs.program_duplicate', program_id=p.id) }}" class="d-inline">
+          <button type="submit" class="btn btn-sm btn-secondary">Duplicar</button>
+        </form>
+        {% endif %}
         {% if can('delete_program') %}
         <form method="post" action="{{ url_for('programs.program_toggle', program_id=p.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar programa?');">
           <button type="submit" class="btn btn-sm btn-danger">{{ 'Desactivar' if p.state!='Desactivado' else 'Activar' }}</button>
