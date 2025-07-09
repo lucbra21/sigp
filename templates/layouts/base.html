@@ -40,6 +40,18 @@
                         <ul class="dropdown-menu" aria-labelledby="gestionesDropdown">
                             {% if can_mod('programs') %}
                             <li><a class="dropdown-item" href="{{ url_for('programs.programs_list') }}">Gestión de programas</a></li>
+                            {% if can_mod('state_lead') %}
+                            <li><a class="dropdown-item" href="{{ url_for('state_lead.state_leads_list') }}">Estados de lead</a></li>
+                            {% if can_mod('state_ledger') %}
+                            <li><a class="dropdown-item" href="{{ url_for('state_ledger.state_ledgers_list') }}">Estados de ledger</a></li>
+                            {% endif %}
+                            {% if can_mod('state_prescriptor') %}
+                            <li><a class="dropdown-item" href="{{ url_for('state_prescriptor.state_prescriptors_list') }}">Estados de prescriptor</a></li>
+                            {% endif %}
+                            {% if can_mod('state_user') %}
+                            <li><a class="dropdown-item" href="{{ url_for('state_user.state_users_list') }}">Estados de usuario</a></li>
+                            {% endif %}
+                            {% endif %}
                             {% endif %}
                         </ul>
                     </li>

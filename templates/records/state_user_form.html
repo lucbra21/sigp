@@ -1,0 +1,13 @@
+{% extends 'layouts/base.html' %}
+{% block title %}{{ 'Editar' if row else 'Nuevo' }} estado usuario{% endblock %}
+{% block content %}
+<h2>{{ 'Editar' if row else 'Nuevo' }} estado de usuario</h2>
+<form method="post">
+  <div class="mb-3">
+    <label class="form-label" for="name">Nombre</label>
+    <input class="form-control" id="name" name="name" required value="{{ row.name if row else '' }}" />
+  </div>
+  <button type="submit" class="btn btn-primary">Guardar</button>
+  <a href="{{ url_for('state_user.state_users_list') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

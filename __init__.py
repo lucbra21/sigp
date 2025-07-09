@@ -52,6 +52,10 @@ def create_app(config_class=Config):
     from .controllers.users_controller import users_bp
     from .controllers.permissions_controller import perm_bp
     from .controllers.programs_controller import programs_bp
+    from .controllers.state_lead_controller import state_lead_bp
+    from .controllers.state_ledger_controller import state_ledger_bp
+    from .controllers.state_prescriptor_controller import state_prescriptor_bp
+    from .controllers.state_user_controller import state_user_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
@@ -60,6 +64,10 @@ def create_app(config_class=Config):
     app.register_blueprint(users_bp)
     app.register_blueprint(perm_bp)
     app.register_blueprint(programs_bp)
+    app.register_blueprint(state_lead_bp)
+    app.register_blueprint(state_ledger_bp)
+    app.register_blueprint(state_prescriptor_bp)
+    app.register_blueprint(state_user_bp)
 
     @app.route("/")
     def index():

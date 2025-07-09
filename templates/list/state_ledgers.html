@@ -1,0 +1,40 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Estados de ledger{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Gestión de estados de ledger</h2>
+  {% if can('create_state_ledger') %}
+  <a href="{{ url_for('state_ledger.state_ledger_new') }}" class="btn btn-success">Agregar nuevo</a>
+  {% endif %}
+</div>
+<form class="row mb-3" method="get">
+  <div class="col-auto"><input type="text" name="q" class="form-control" placeholder="Filtrar por nombre" value="{{ q }}"></div>
+  <div class="col-auto"><button class="btn btn-primary" type="submit">Filtrar</button></div>
+</form>
+<table class="table table-striped">
+<thead><tr><th>ID</th><th>Nombre</th><th>Acciones</th></tr></thead>
+<tbody>
+{% for l in ledgers %}
+<tr>
+  <td>{{ l.id }}</td>
+  <td>{{ l.name }}</td>
+  <td>
+    {% if can('update_state_ledger') %}
+    <a href="{{ url_for('state_ledger.state_ledger_edit', ledger_id=l.id) }}" class="btn btn-sm btn-primary">Editar</a>
+    {% endif %}
+    {% if can('delete_state_ledger') %}
+    <form method="post" action="{{ url_for('state_ledger.state_ledger_delete', ledger_id=l.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar estado?');">
+      <button type="submit" class="btn btn-sm btn-danger">Borrar</button>
+    </form>
+    {% endif %}
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<nav><ul class="pagination">
+  {% for p in range(1, pages+1) %}
+  <li class="page-item {% if p==page %}active{% endif %}"><a class="page-link" href="?q={{ q }}&page={{ p }}">{{ p }}</a></li>
+  {% endfor %}
+</ul></nav>
+{% endblock %}
