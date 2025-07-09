@@ -19,6 +19,7 @@ import hashlib
 from sigp import db, bcrypt
 from sigp.models import Base
 
+
 # ---------------------------------------------------------------------------
 # Blueprint
 # ---------------------------------------------------------------------------
@@ -71,6 +72,17 @@ def login_get():
     return render_template("layouts/login.html", form=form)
 
 
+def _audit_event(user_id, success: bool, event_type: str):
+    """Inserta un registro en login_audit."""
+    Audit = getattr(Base.classes, "login_audit", None)
+    if not Audit:
+        return
+    ip_addr = request.remote_addr
+    record = Audit(user_id=user_id, success=1 if success else 0, ip_addr=ip_addr, event_type=event_type)
+    db.session.add(record)
+    db.session.commit()
+
+
 @auth_bp.post("/login")
 def login_post():
     form = LoginForm(request.form)
@@ -87,8 +99,12 @@ def login_post():
     user = db.session.query(User).filter_by(email=form.email.data).first()
 
     if user and user.password_hash and user.password_hash.lower() == hashlib.sha256(form.password.data.encode()).hexdigest():
+        _audit_event(user.id, True, "LOGIN")
         login_user(user, remember=form.remember.data)
         return redirect("/")
+
+    if user:
+        _audit_event(user.id, False, "LOGIN")
 
     flash("Credenciales incorrectas", "danger")
     return redirect(url_for("auth.login_get"))
@@ -96,6 +112,7 @@ def login_post():
 
 @auth_bp.get("/logout")
 def logout():
+    _audit_event(current_user.id if current_user.is_authenticated else None, True, "LOGOUT")
     logout_user()
     flash("Sesión finalizada", "info")
     return redirect(url_for("auth.login_get"))
