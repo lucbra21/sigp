@@ -22,7 +22,7 @@
                             Seguridad
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="seguridadDropdown">
-                            <li><a class="dropdown-item" href="#">Gestión de usuarios</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('users.users_list') }}">Gestión de usuarios</a></li>
                             <li><a class="dropdown-item" href="#">Gestión de permisos</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('roles.roles_list') }}">Gestión de roles</a></li>
                         </ul>

@@ -1,0 +1,45 @@
+{% extends 'layouts/base.html' %}
+{% block title %}{{ 'Editar' if user else 'Nuevo' }} Usuario{% endblock %}
+{% block content %}
+<h2>{{ 'Editar' if user else 'Nuevo' }} usuario</h2>
+<form method="post" class="col-md-6">
+  <div class="mb-3">
+    <label class="form-label" for="email">Email</label>
+    <input type="email" class="form-control" id="email" name="email" value="{{ user.email if user }}" required />
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="name">Nombre</label>
+    <input type="text" class="form-control" id="name" name="name" value="{{ user.name if user }}" required />
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="lastname">Apellido</label>
+    <input type="text" class="form-control" id="lastname" name="lastname" value="{{ user.lastname if user }}" />
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="cellular">Celular</label>
+    <input type="text" class="form-control" id="cellular" name="cellular" value="{{ user.cellular if user }}" />
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="role_id">Rol</label>
+    <select class="form-select" id="role_id" name="role_id">
+      {% for r in roles %}
+      <option value="{{ r.id }}" {% if user and user.role_id == r.id %}selected{% endif %}>{{ r.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="state_id">Estado</label>
+    <select class="form-select" id="state_id" name="state_id">
+      {% for val, label in state_choices %}
+      <option value="{{ val }}" {% if user and user.state_id == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="password">Contraseña {% if user %}(dejar en blanco para mantener){% endif %}</label>
+    <input type="password" class="form-control" id="password" name="password" />
+  </div>
+  <button type="submit" class="btn btn-primary">Guardar</button>
+  <a href="{{ url_for('users.users_list') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

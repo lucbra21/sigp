@@ -41,11 +41,13 @@ def create_app(config_class=Config):
     from .controllers.prescriptor_controller import prescriptors_bp
     from .controllers.dashboard_controller import dashboard_bp
     from .controllers.roles_controller import roles_bp
+    from .controllers.users_controller import users_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(roles_bp)
+    app.register_blueprint(users_bp)
 
     @app.route("/")
     def index():

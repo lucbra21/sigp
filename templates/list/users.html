@@ -1,0 +1,72 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Usuarios{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Gestión de usuarios</h2>
+  <a href="{{ url_for('users.user_new') }}" class="btn btn-success">Agregar nuevo</a>
+</div>
+<form class="row mb-3" method="get">
+  <div class="col-auto">
+    <input type="text" name="q" class="form-control" placeholder="Filtrar por email, nombre o apellido" value="{{ q }}" />
+  </div>
+    <div class="col-auto">
+    <select class="form-select" name="role">
+      <option value="">Todos los roles</option>
+      {% for r in roles %}
+      <option value="{{ r.id }}" {% if role_filter == r.id|string %}selected{% endif %}>{{ r.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <select class="form-select" name="state">
+      <option value="">Todos los estados</option>
+      <option value="2" {% if state_filter == '2' %}selected{% endif %}>Activo</option>
+      <option value="1" {% if state_filter == '1' %}selected{% endif %}>Inactivo</option>
+      <option value="3" {% if state_filter == '3' %}selected{% endif %}>Suspendido</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+  </div>
+</form>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Email</th>
+      <th>Nombre</th>
+      <th>Apellido</th>
+      <th>Rol</th>
+      <th>Estado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.email }}</td>
+      <td>{{ u.name }}</td>
+      <td>{{ u.lastname }}</td>
+      <td>{{ roles_lookup.get(u.role_id, '-') }}</td>
+      <td>
+        {% if u.state_id == 2 %}<span class="badge bg-success">Activo</span>{% elif u.state_id == 1 %}<span class="badge bg-secondary">Inactivo</span>{% else %}<span class="badge bg-warning">Suspendido</span>{% endif %}
+      </td>
+      <td>
+        <a href="{{ url_for('users.user_edit', user_id=u.id) }}" class="btn btn-sm btn-primary">Editar</a>
+        <form method="post" action="{{ url_for('users.user_delete', user_id=u.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar usuario?');">
+          <button type="submit" class="btn btn-sm btn-danger">Borrar</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<nav>
+  <ul class="pagination">
+    {% for p in range(1, pages + 1) %}
+    <li class="page-item {% if p == page %}active{% endif %}">
+      <a class="page-link" href="?q={{ q }}&page={{ p }}">{{ p }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endblock %}
