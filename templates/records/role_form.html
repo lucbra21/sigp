@@ -1,0 +1,17 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Nuevo Rol{% endblock %}
+{% block content %}
+<h2>Nuevo rol</h2>
+<form method="post" class="col-md-6">
+  <div class="mb-3">
+    <label class="form-label" for="name">Nombre</label>
+    <input type="text" class="form-control" id="name" name="name" value="{{ q }}{{ role.name if role }}" required />
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="description">Descripción</label>
+    <textarea class="form-control" id="description" name="description" rows="3">{{ role.description if role }}</textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Guardar</button>
+  <a href="{{ url_for('roles.roles_list') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

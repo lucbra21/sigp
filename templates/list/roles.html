@@ -1,0 +1,51 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Roles{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Gestión de roles</h2>
+  <a href="{{ url_for('roles.role_new') }}" class="btn btn-success">Agregar nuevo</a>
+</div>
+<form class="row mb-3" method="get">
+  <div class="col-auto">
+    <input type="text" name="q" class="form-control" placeholder="Filtrar por nombre" value="{{ q }}" />
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+  </div>
+</form>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nombre</th>
+      <th>Descripción</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in roles %}
+    <tr>
+      <td>{{ r.id }}</td>
+      <td>{{ r.name }}</td>
+      <td>{{ r.description }}</td>
+    <td>
+        <a href="{{ url_for('roles.role_edit', role_id=r.id) }}" class="btn btn-sm btn-primary">Editar</a>
+        <form method="post" action="{{ url_for('roles.role_delete', role_id=r.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar rol?');">
+            <button type="submit" class="btn btn-sm btn-danger">Borrar</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<nav aria-label="Paginación roles">
+  <ul class="pagination">
+    {% for p in range(1, pages + 1) %}
+    <li class="page-item {% if p == page %}active{% endif %}">
+      <a class="page-link" href="?q={{ q }}&page={{ p }}">{{ p }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endblock %}
