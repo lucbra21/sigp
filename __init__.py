@@ -36,18 +36,28 @@ def create_app(config_class=Config):
         from .models import reflect_db
         reflect_db(app)
 
+    # ---- permisos en plantillas ----
+    from .security import has_perm, has_any_prefix
+
+    @app.context_processor
+    def _inject_can():
+        from flask_login import current_user
+        return dict(can=lambda p: has_perm(current_user, p), can_mod=lambda m: has_any_prefix(current_user, m))
+
     # Import blueprints here to avoid circular dependencies
     from .controllers.auth_controller import auth_bp
     from .controllers.prescriptor_controller import prescriptors_bp
     from .controllers.dashboard_controller import dashboard_bp
     from .controllers.roles_controller import roles_bp
     from .controllers.users_controller import users_bp
+    from .controllers.permissions_controller import perm_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(roles_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(perm_bp)
 
     @app.route("/")
     def index():

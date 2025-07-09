@@ -1,0 +1,39 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Permisos de {{ role.name }}{% endblock %}
+{% block content %}
+<h2>Permisos para {{ role.name }}</h2>
+<form method="post">
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Pantalla</th>
+          {% for a in actions %}
+          <th class="text-capitalize text-center">{{ a }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for module, mapping in table_data.items() %}
+        <tr>
+          <td class="text-capitalize fw-semibold">{{ module }}</td>
+          {% for a in actions %}
+          <td class="text-center">
+            {% set perm = mapping[a] %}
+            {% if perm is string %}
+            {# perm es string 'new|mod_action' #}
+            <input class="form-check-input" type="checkbox" value="{{ perm }}" name="perm_keys">
+            {% elif perm %}
+            <input class="form-check-input" type="checkbox" value="{{ perm.id }}" name="perm_keys" {% if perm.id in current_ids %}checked{% endif %}>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <button type="submit" class="btn btn-primary">Guardar</button>
+  <a href="{{ url_for('permissions.roles_select') }}" class="btn btn-secondary">Volver</a>
+</form>
+{% endblock %}

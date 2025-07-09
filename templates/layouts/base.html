@@ -22,9 +22,15 @@
                             Seguridad
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="seguridadDropdown">
+                            {% if can_mod('users') %}
                             <li><a class="dropdown-item" href="{{ url_for('users.users_list') }}">Gestión de usuarios</a></li>
-                            <li><a class="dropdown-item" href="#">Gestión de permisos</a></li>
+                            {% endif %}
+                            {% if can_mod('permissions') or can_mod('roles') %}
+                            <li><a class="dropdown-item" href="{{ url_for('permissions.roles_select') }}">Gestión de permisos</a></li>
+                            {% endif %}
+                            {% if can_mod('roles') %}
                             <li><a class="dropdown-item" href="{{ url_for('roles.roles_list') }}">Gestión de roles</a></li>
+                            {% endif %}
                         </ul>
                     </li>
                 </ul>

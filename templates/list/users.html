@@ -3,7 +3,9 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2 class="mb-0">Gestión de usuarios</h2>
+  {% if can('create_user') %}
   <a href="{{ url_for('users.user_new') }}" class="btn btn-success">Agregar nuevo</a>
+  {% endif %}
 </div>
 <form class="row mb-3" method="get">
   <div class="col-auto">
@@ -51,10 +53,14 @@
         {% if u.state_id == 2 %}<span class="badge bg-success">Activo</span>{% elif u.state_id == 1 %}<span class="badge bg-secondary">Inactivo</span>{% else %}<span class="badge bg-warning">Suspendido</span>{% endif %}
       </td>
       <td>
+        {% if can('update_user') %}
         <a href="{{ url_for('users.user_edit', user_id=u.id) }}" class="btn btn-sm btn-primary">Editar</a>
+        {% endif %}
+        {% if can('delete_user') %}
         <form method="post" action="{{ url_for('users.user_delete', user_id=u.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar usuario?');">
           <button type="submit" class="btn btn-sm btn-danger">Borrar</button>
         </form>
+        {% endif %}
       </td>
     </tr>
     {% endfor %}

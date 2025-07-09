@@ -1,0 +1,13 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Asignar permisos{% endblock %}
+{% block content %}
+<h2>Seleccionar rol</h2>
+<ul class="list-group col-md-6">
+  {% for r in roles %}
+  <li class="list-group-item d-flex justify-content-between align-items-center">
+    {{ r.name }}
+    <a class="btn btn-sm btn-primary" href="{{ url_for('permissions.assign_permissions', role_id=r.id) }}">Asignar permisos</a>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}
