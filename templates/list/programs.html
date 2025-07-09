@@ -1,0 +1,54 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Programas{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Gestión de programas</h2>
+  {% if can('create_program') %}
+  <a href="{{ url_for('programs.program_new') }}" class="btn btn-success">Agregar nuevo</a>
+  {% endif %}
+</div>
+<form class="row mb-3" method="get">
+  <div class="col-auto">
+    <input type="text" name="q" class="form-control" placeholder="Filtrar por nombre" value="{{ q }}" />
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+  </div>
+</form>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nombre</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in programs %}
+    <tr>
+      <td>{{ p.id }}</td>
+      <td>{{ p.name or '-' }}</td>
+      <td>
+        {% if can('update_program') %}
+        <a href="{{ url_for('programs.program_edit', program_id=p.id) }}" class="btn btn-sm btn-primary">Editar</a>
+        {% endif %}
+        {% if can('delete_program') %}
+        <form method="post" action="{{ url_for('programs.program_toggle', program_id=p.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar programa?');">
+          <button type="submit" class="btn btn-sm btn-danger">{{ 'Desactivar' if p.state!='Desactivado' else 'Activar' }}</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<nav>
+  <ul class="pagination">
+    {% for p in range(1, pages + 1) %}
+    <li class="page-item {% if p == page %}active{% endif %}">
+      <a class="page-link" href="?q={{ q }}&page={{ p }}">{{ p }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endblock %}

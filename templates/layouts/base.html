@@ -33,6 +33,16 @@
                             {% endif %}
                         </ul>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="gestionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Gestiones
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="gestionesDropdown">
+                            {% if can_mod('programs') %}
+                            <li><a class="dropdown-item" href="{{ url_for('programs.programs_list') }}">Gestión de programas</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
                 </ul>
                 <div class="d-flex">
                     <span class="navbar-text me-3">Bienvenido {{ current_user.email }}</span>
