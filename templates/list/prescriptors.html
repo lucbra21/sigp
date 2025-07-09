@@ -1,0 +1,42 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Listado de Prescriptores{% endblock %}
+{% block content %}
+<h2>Prescriptores</h2>
+<a href="{{ url_for('prescriptors.new_prescriptor') }}" class="btn btn-primary mb-3">Nuevo Prescriptor</a>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in items %}
+        <tr>
+            <td>{{ p.id }}</td>
+            <td>{{ p.nombre }}</td>
+            <td>{{ p.tipo }}</td>
+            <td>{{ p.estado }}</td>
+            <td>
+                <a href="{{ url_for('prescriptors.edit_prescriptor', prescriptor_id=p.id) }}" class="btn btn-sm btn-secondary">Editar</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Paginación simple -->
+<nav aria-label="Page navigation">
+    <ul class="pagination">
+        {% if page > 1 %}
+        <li class="page-item"><a class="page-link" href="?page={{ page - 1 }}">Anterior</a></li>
+        {% endif %}
+        {% if total > page * per_page %}
+        <li class="page-item"><a class="page-link" href="?page={{ page + 1 }}">Siguiente</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endblock %}

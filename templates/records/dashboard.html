@@ -1,0 +1,23 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4">
+    <h2 class="text-2xl font-bold mb-4">Dashboard</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Tarjeta Prescriptores activos -->
+        <div class="bg-white shadow rounded-lg p-6 flex items-center">
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500 mb-2">Prescriptores Activos</p>
+                <p class="text-3xl font-semibold text-gray-900">{{ prescriptores_activos }}</p>
+            </div>
+        </div>
+        <!-- Tarjeta Leads matriculados -->
+        <div class="bg-white shadow rounded-lg p-6 flex items-center">
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500 mb-2">Leads matriculados (30 días)</p>
+                <p class="text-3xl font-semibold text-gray-900">{{ leads_matriculados }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
