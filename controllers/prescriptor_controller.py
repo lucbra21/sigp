@@ -18,6 +18,7 @@ from wtforms import StringField, SelectField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Length, Optional, URL
 
 from sigp import db
+import hashlib
 import uuid
 from sigp.models import Base
 
@@ -60,6 +61,8 @@ def prescriptor_form_factory(is_create=True):
         squeeze_url_tst = StringField("Squeeze URL Test", validators=[Optional(), Length(max=255)])
         squeeze_url_prd = StringField("Squeeze URL Prod", validators=[Optional(), Length(max=255)])
         confidence_level_id = SelectField("Nivel de confianza", choices=conf_choices, validators=[Optional()])
+        email = StringField("Email", validators=[DataRequired(), Length(max=255)])
+        cellular = StringField("Celular", validators=[DataRequired(), Length(max=50)])
         squeeze_page_name = StringField("Nombre", validators=[DataRequired(), Length(max=255)])
         squeeze_page_status = SelectField("Estado squeeze page", choices=squeeze_status_choices, validators=[Optional()])
         observations = TextAreaField("Observaciones", validators=[Optional(), Length(max=1000)])
@@ -205,7 +208,6 @@ def create_prescriptor():
         # Construir dinámicamente los campos disponibles en el formulario
         obj_kwargs = {
             "id": str(uuid.uuid4()),
-            "user_id": current_user.id,
             "squeeze_page_name": form.squeeze_page_name.data,
         }
         if hasattr(form, "type_id") and form.type_id.data:
@@ -229,6 +231,25 @@ def create_prescriptor():
             obj_kwargs["squeeze_page_status"] = form.squeeze_page_status.data or "TEST"
         if hasattr(form, "observations") and form.observations.data:
             obj_kwargs["observations"] = form.observations.data
+
+        # Crear usuario asociado
+        UserModel = getattr(Base.classes, "users", None)
+        if not UserModel:
+            flash("Modelo users no disponible", "danger")
+            return render_template("records/prescriptor_form.html", form=form, action=url_for("prescriptors.create_prescriptor"))
+        new_user = UserModel(id=str(uuid.uuid4()))
+        new_user.name = form.squeeze_page_name.data
+        new_user.email = form.email.data
+        new_user.cellular = form.cellular.data
+        new_user.role_id = "5e6e517e-584b-42be-a7a3-564ee14e8723"
+        new_user.state_id = 1  # INACTIVO
+        # asignar password aleatorio
+        temp_pass = str(uuid.uuid4())
+        new_user.password_hash = hashlib.sha256(temp_pass.encode()).hexdigest()
+        db.session.add(new_user)
+        db.session.flush()  # obtener id
+
+        obj_kwargs["user_id"] = new_user.id
 
         new_obj = Model(**obj_kwargs)
         # Establecer valores por defecto de negocio
@@ -276,6 +297,13 @@ def edit_prescriptor(prescriptor_id):
 
     FormClass = prescriptor_form_factory(is_create=False)
     form = FormClass(obj=obj)
+    # precargar datos de usuario
+    UserModel = getattr(Base.classes, "users", None)
+    if UserModel and obj.user_id:
+        u = db.session.get(UserModel, obj.user_id)
+        if u:
+            form.email.data = u.email
+            form.cellular.data = getattr(u, "cellular", "")
     # Alinear sub_state SelectField con sub_state_id
     if hasattr(form, "sub_state") and hasattr(obj, "sub_state_id"):
         form.sub_state.data = str(obj.sub_state_id) if obj.sub_state_id else ""
@@ -300,13 +328,19 @@ def update_prescriptor(prescriptor_id):
         return redirect(url_for("prescriptors.list_prescriptors"))
 
     FormClass = prescriptor_form_factory(is_create=False)
-    form = FormClass()
+    form = FormClass(obj=obj)
     current_app.logger.info(">>> creando prescriptor con data %s", form.data)
 
     if form.validate_on_submit():
-        
-        
+        # precargar y actualizar email/cellular
         obj.state_id = int(form.state_id.data)
+        # actualizar usuario asociado
+        UserModel = getattr(Base.classes, "users", None)
+        if UserModel and obj.user_id:
+            u = db.session.get(UserModel, obj.user_id)
+            if u:
+                u.email = form.email.data
+                u.cellular = form.cellular.data
         try:
             db.session.commit()
             flash("Prescriptor actualizado", "success")

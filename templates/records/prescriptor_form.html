@@ -61,18 +61,32 @@
      {% endif %}
      </div>
     <div class="mb-3">
-         {% if form.confidence_level_id is defined %}
+         {% if form.email is defined %}
+         {{ form.email.label(class="form-label") }}
+         {{ form.email(class="form-control") }}
+         {% for err in form.email.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+     {% endif %}
+    </div>
+    <div class="mb-3">
+         {% if form.cellular is defined %}
+         {{ form.cellular.label(class="form-label") }}
+         {{ form.cellular(class="form-control") }}
+         {% for err in form.cellular.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+     {% endif %}
+    </div>
+    <div class="mb-3">
+          {% if form.confidence_level_id is defined %}
         {{ form.confidence_level_id.label(class="form-label") }}
         {{ form.confidence_level_id(class="form-select") }}
         {% for err in form.confidence_level_id.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
     {% endif %}
     </div>
     <div class="mb-3">
-        {% if form.squeeze_page_status is defined %}
+         {% if form.squeeze_page_status is defined %}
         {{ form.squeeze_page_status.label(class="form-label") }}
         {{ form.squeeze_page_status(class="form-select") }}
         {% for err in form.squeeze_page_status.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
-    {% endif %}
+{% endif %}
     </div>
 
     <div class="d-flex justify-content-between">
