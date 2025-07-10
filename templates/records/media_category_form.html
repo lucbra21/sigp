@@ -1,0 +1,19 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Categoría multimedia{% endblock %}
+{% block content %}
+<h2>Categoría multimedia</h2>
+<form method="post" action="{{ action }}">
+    {{ form.csrf_token }}
+    <div class="mb-3">
+        {{ form.name.label(class="form-label") }}
+        {{ form.name(class="form-control") }}
+        {% for err in form.name.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+    </div>
+    <div class="mb-3">
+        {{ form.description.label(class="form-label") }}
+        {{ form.description(class="form-control") }}
+    </div>
+    {{ form.submit(class="btn btn-success") }}
+    <a href="{{ url_for('multimedia.list_categories') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Archivos multimedia{% endblock %}
+{% block content %}
+<h2>Archivos multimedia</h2>
+<form class="row g-3 mb-3" method="get" action="{{ url_for('multimedia.list_media') }}">
+    <div class="col-auto">
+        <select name="category_id" class="form-select">
+            <option value="">Todas las categorías</option>
+            {% for c in cats %}
+            <option value="{{ c.id }}" {% if selected_cat==c.id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto"><button type="submit" class="btn btn-outline-primary">Filtrar</button></div>
+    <div class="col-auto ms-auto"><a href="{{ url_for('multimedia.upload_media') }}" class="btn btn-primary">Subir nuevo</a></div>
+</form>
+<table class="table table-bordered table-sm">
+    <thead>
+        <tr><th>ID</th><th>Título</th><th>Tipo</th><th>Tamaño</th><th>Subido</th><th>Descargar</th></tr>
+    </thead>
+    <tbody>
+        {% for f in files %}
+        <tr>
+            <td>{{ f.id }}</td>
+            <td>{{ f.title or f.original_name }}</td>
+            <td>{{ f.mime_type }}</td>
+            <td>{% if f.size_bytes %}{{ (f.size_bytes / 1024)|round(1) }} KB{% else %}-{% endif %}</td>
+            <td>{{ f.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>
+            {% if f.source_type == 'LINK' %}
+                <a href="{{ f.storage_key }}" target="_blank" class="btn btn-sm btn-outline-primary">Abrir</a>
+            {% else %}
+                <a href="{{ url_for('static', filename=f.storage_key) }}" download class="btn btn-sm btn-outline-primary">Descargar</a>
+            {% endif %}
+        </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

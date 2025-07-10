@@ -1,0 +1,190 @@
+"""Blueprint de Multimedia (scaffolding inicial)
+
+Por ahora solo incluye:
+• Gestión de categorías
+• Carga de archivo
+• Visualización de archivos
+
+Cada vista verifica permisos mediante el decorador requires_roles ya
+usado en el proyecto.
+
+IMPORTANTE: Se usa automap de SQLAlchemy. Las tablas deben existir en la
+BD para reflejarlas.
+"""
+from __future__ import annotations
+
+import uuid
+from pathlib import Path
+
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+from flask_login import login_required, current_user
+from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
+from werkzeug.utils import secure_filename
+from wtforms import StringField, SubmitField, TextAreaField, SelectField, URLField
+from wtforms.validators import DataRequired, Length
+
+from sigp import db
+from sigp.security import require_perm
+from sigp.models import Base
+# TODO: integrar verificación de roles cuando esté disponible
+
+multimedia_bp = Blueprint("multimedia", __name__, url_prefix="/media")
+
+# ────────────────────────────────────────────────────────────────────────────
+# Formularios
+# ────────────────────────────────────────────────────────────────────────────
+class CategoryForm(FlaskForm):
+    name = StringField("Nombre", validators=[DataRequired(), Length(max=100)])
+    description = TextAreaField("Descripción", validators=[Length(max=255)])
+    submit = SubmitField("Guardar")
+
+
+class UploadForm(FlaskForm):
+    source_type = SelectField("Tipo", choices=[("FILE", "Archivo"), ("LINK", "Enlace")], validators=[DataRequired()])
+    category = SelectField("Categoría", coerce=int, validators=[DataRequired()])
+    title = StringField("Título", validators=[DataRequired(), Length(max=255)])
+    description = TextAreaField("Descripción", validators=[Length(max=1000)])
+    url = URLField("URL (si es enlace)")
+    file = FileField(
+        "Archivo",
+        validators=[FileAllowed(["jpg", "jpeg", "png", "gif", "mp4", "pdf"], "Tipos permitidos: imágenes, video mp4, pdf")]
+    )
+    submit = SubmitField("Subir")
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ────────────────────────────────────────────────────────────────────────────
+
+def _get_models():
+    """Devuelve modelos reflejados o None si no existen."""
+    Category = getattr(Base.classes, "media_categories", None)
+    Media = getattr(Base.classes, "media_files", None)
+    return Category, Media
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# Categorías
+# ────────────────────────────────────────────────────────────────────────────
+@multimedia_bp.get("/categories")
+@login_required
+@require_perm("read_media")
+def list_categories():
+    Category, _ = _get_models()
+    if not Category:
+        flash("Tabla media_categories no disponible", "danger")
+        return redirect(url_for("main.index"))
+    cats = db.session.query(Category).order_by(Category.name.asc()).all()
+    return render_template("list/media_categories.html", cats=cats)
+
+
+@multimedia_bp.route("/categories/new", methods=["GET", "POST"])
+@login_required
+@require_perm("create_media")
+def create_category():
+    Category, _ = _get_models()
+    if not Category:
+        flash("Tabla media_categories no disponible", "danger")
+        return redirect(url_for("multimedia.list_categories"))
+    form = CategoryForm()
+    if form.validate_on_submit():
+        cat = Category(name=form.name.data, description=form.description.data)
+        db.session.add(cat)
+        db.session.commit()
+        flash("Categoría creada", "success")
+        return redirect(url_for("multimedia.list_categories"))
+    return render_template("records/media_category_form.html", form=form, action=url_for("multimedia.create_category"))
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# Upload de archivos
+# ────────────────────────────────────────────────────────────────────────────
+@multimedia_bp.route("/upload", methods=["GET", "POST"])
+@login_required
+@require_perm("create_media")
+def upload_media():
+    Category, Media = _get_models()
+    if not Media:
+        flash("Tabla media_files no disponible", "danger")
+        return redirect(url_for("multimedia.list_media"))
+        # build choices
+    if Category:
+        form = UploadForm()
+        form.category.choices = [(c.id, c.name) for c in db.session.query(Category).order_by(Category.name).all()]
+    else:
+        form = UploadForm()
+        form.category.choices = []
+
+    if form.validate_on_submit():
+        media_id = str(uuid.uuid4())
+        if form.source_type.data == "FILE":
+            f = form.file.data
+            orig_name = secure_filename(f.filename)
+            ext = Path(orig_name).suffix.lstrip(".")
+            filename = f"{media_id}.{ext}"
+            storage_path = Path(current_app.root_path) / "static/uploads" / filename
+            storage_path.parent.mkdir(parents=True, exist_ok=True)
+            f.save(storage_path)
+            storage_key = f"uploads/{filename}"
+            mime = f.mimetype
+            size_b = storage_path.stat().st_size
+        else:
+            storage_key = form.url.data
+            mime = "url/external"
+            size_b = None
+            orig_name = form.url.data
+
+        media = Media(
+            id=media_id,
+            uploader_id=current_user.id,
+            storage_key=storage_key,
+            original_name=orig_name,
+            mime_type=mime,
+            size_bytes=size_b,
+            source_type=form.source_type.data,
+            title=form.title.data,
+            description=form.description.data,
+        )
+        db.session.add(media)
+        db.session.commit()
+        # asociar categoría elegida
+        Assoc = getattr(Base.classes, "media_file_category", None)
+        if Assoc is not None and form.category.data:
+            db.session.add(Assoc(media_id=media_id, category_id=form.category.data))
+            db.session.commit()
+        flash("Archivo subido", "success")
+        return redirect(url_for("multimedia.list_media"))
+    return render_template("records/media_upload.html", form=form, action=url_for("multimedia.upload_media"))
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# Visualizar archivos
+# ────────────────────────────────────────────────────────────────────────────
+@multimedia_bp.get("/files")
+@login_required
+@require_perm("read_media")
+def list_media():
+    Category, Media = _get_models()
+    Assoc = getattr(Base.classes, "media_file_category", None)
+    if not Media:
+        flash("Tabla media_files no disponible", "danger")
+        return redirect(url_for("main.index"))
+
+    cat_id = request.args.get("category_id", type=int)
+
+    q = db.session.query(Media)
+    if cat_id and Assoc is not None:
+        q = q.join(Assoc, Assoc.media_id == Media.id).filter(Assoc.category_id == cat_id)
+    files = q.order_by(Media.created_at.desc()).limit(100).all()
+
+    cats = db.session.query(Category).order_by(Category.name).all() if Category else []
+    return render_template("list/media_files.html", files=files, cats=cats, selected_cat=cat_id)

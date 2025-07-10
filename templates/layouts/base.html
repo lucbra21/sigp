@@ -33,6 +33,20 @@
                             {% endif %}
                         </ul>
                     </li>
+                    {% if can_mod('media') %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="mediaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Multimedia</a>
+                        <ul class="dropdown-menu" aria-labelledby="mediaDropdown">
+                            {% if can('read_media') %}
+                            <li><a class="dropdown-item" href="{{ url_for('multimedia.list_media') }}">Visualizar archivos</a></li>
+                            {% endif %}
+                            {% if can('create_media') %}
+                            <li><a class="dropdown-item" href="{{ url_for('multimedia.upload_media') }}">Cargar archivo</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('multimedia.list_categories') }}">Gestión de categorías</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="gestionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Gestiones
