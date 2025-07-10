@@ -52,7 +52,9 @@
                             <li><a class="dropdown-item" href="{{ url_for('state_user.state_users_list') }}">Estados de usuario</a></li>
                             {% endif %}
                             {% if can_mod('prescriptor_type') %}
-                            <li><a class="dropdown-item" href="{{ url_for('prescriptor_type.types_list') }}">Tipos de prescriptor</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('prescriptor_type.types_list') }}">Tipos de Prescriptor</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('confidence_level.levels_list') }}">Niveles de confianza</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('edition.editions_list') }}">Ediciones</a></li>
                             {% endif %}
                             {% if can_mod('prescriptor') %}
                             <li><a class="dropdown-item" href="{{ url_for('prescriptors.list_prescriptors') }}">Prescriptores</a></li>

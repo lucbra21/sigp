@@ -57,6 +57,8 @@ def create_app(config_class=Config):
     from .controllers.state_prescriptor_controller import state_prescriptor_bp
     from .controllers.state_user_controller import state_user_bp
     from .controllers.prescriptor_type_controller import prescriptor_type_bp
+    from .controllers.confidence_level_controller import confidence_level_bp
+    from .controllers.edition_controller import edition_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
@@ -70,6 +72,8 @@ def create_app(config_class=Config):
     app.register_blueprint(state_prescriptor_bp)
     app.register_blueprint(state_user_bp)
     app.register_blueprint(prescriptor_type_bp)
+    app.register_blueprint(confidence_level_bp)
+    app.register_blueprint(edition_bp)
 
     @app.route("/")
     def index():
