@@ -1,0 +1,37 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Mis notificaciones{% endblock %}
+{% block content %}
+<h2>Mis notificaciones</h2>
+<form class="mb-3" method="get" action="{{ url_for('notifications.my_notifications') }}">
+    <select name="status" class="form-select w-auto d-inline-block">
+        <option value="all" {% if status=='all' %}selected{% endif %}>Todas</option>
+        <option value="unread" {% if status=='unread' %}selected{% endif %}>No leídas</option>
+        <option value="read" {% if status=='read' %}selected{% endif %}>Leídas</option>
+    </select>
+    <button class="btn btn-outline-primary btn-sm ms-2" type="submit">Filtrar</button>
+</form>
+<table class="table table-bordered table-sm">
+    <thead><tr><th>Fecha</th><th>Título</th><th>Estado</th><th>Acción</th></tr></thead>
+    <tbody>
+    {% for n in notifs %}
+        <tr class="{% if not n.is_read %}table-warning{% endif %}">
+            <td>{{ n.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>
+                {% if n.link_url %}
+                    <a href="{{ n.link_url }}" target="_blank">{{ n.title }}</a>
+                {% else %}{{ n.title }}{% endif %}
+                <br><small>{{ n.body }}</small>
+            </td>
+            <td>{% if n.is_read %}Leída{% else %}No leída{% endif %}</td>
+            <td>
+                {% if n.is_read %}
+                    <a href="{{ url_for('notifications.mark_unread', notif_id=n.id) }}" class="btn btn-sm btn-outline-secondary">Marcar no leída</a>
+                {% else %}
+                    <a href="{{ url_for('notifications.mark_read', notif_id=n.id) }}" class="btn btn-sm btn-outline-success">Marcar leída</a>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

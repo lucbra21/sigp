@@ -65,7 +65,8 @@ def create_app(config_class=Config):
     from .controllers.prescriptor_type_controller import prescriptor_type_bp
     from .controllers.confidence_level_controller import confidence_level_bp
     from .controllers.edition_controller import edition_bp
-    from .controllers.multimedia_controller import multimedia_bp
+    from sigp.controllers.multimedia_controller import multimedia_bp
+    from sigp.controllers.notifications_controller import notifications_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
@@ -82,6 +83,22 @@ def create_app(config_class=Config):
     app.register_blueprint(confidence_level_bp)
     app.register_blueprint(edition_bp)
     app.register_blueprint(multimedia_bp)
+    app.register_blueprint(notifications_bp)
+
+    # ---- context processors ----
+    @app.context_processor
+    def inject_unread_count():
+        from flask_login import current_user
+        from .models import Base
+        Notification = getattr(Base.classes, "notifications", None)
+        def _unread_count():
+            if Notification is None or not (current_user and current_user.is_authenticated):
+                return 0
+            try:
+                return db.session.query(Notification).filter_by(user_id=current_user.id, is_read=0).count()
+            except Exception:
+                return 0
+        return dict(unread_count=_unread_count)
 
     @app.route("/")
     def index():

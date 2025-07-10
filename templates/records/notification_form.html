@@ -1,0 +1,28 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Nueva notificación{% endblock %}
+{% block content %}
+<h2>Nueva notificación</h2>
+<form method="post" action="{{ action }}">
+    {{ form.csrf_token }}
+    <div class="mb-3">{{ form.recipient_type.label }} {{ form.recipient_type(class="form-select", id="recipType") }}</div>
+    <div class="mb-3 d-none" id="rolesDiv">{{ form.roles.label }} {{ form.roles(class="form-select", multiple=True) }}</div>
+    <div class="mb-3 d-none" id="usersDiv">{{ form.users.label }} {{ form.users(class="form-select", multiple=True) }}</div>
+    <div class="mb-3">{{ form.notif_type.label }} {{ form.notif_type(class="form-select") }}</div>
+    <div class="mb-3">{{ form.title.label }} {{ form.title(class="form-control") }}</div>
+    <div class="mb-3">{{ form.body.label }} {{ form.body(class="form-control") }}</div>
+    <div class="mb-3">{{ form.link_url.label }} {{ form.link_url(class="form-control") }}</div>
+    {{ form.submit(class="btn btn-success") }}
+    <a href="{{ url_for('notifications.list_all') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+<script>
+const rt = document.getElementById('recipType');
+const rolesDiv = document.getElementById('rolesDiv');
+const usersDiv = document.getElementById('usersDiv');
+function toggleTargets(){
+    rolesDiv.classList.toggle('d-none', rt.value!=='ROLE');
+    usersDiv.classList.toggle('d-none', rt.value!=='USER');
+}
+rt.addEventListener('change', toggleTargets);
+document.addEventListener('DOMContentLoaded', toggleTargets);
+</script>
+{% endblock %}

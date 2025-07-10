@@ -1,0 +1,34 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Gestión de notificaciones{% endblock %}
+{% block content %}
+<h2>Gestión de notificaciones</h2>
+<form class="mb-3" method="get" action="{{ url_for('notifications.list_all') }}">
+    <select name="status" class="form-select w-auto d-inline-block">
+        <option value="all" {% if status=='all' %}selected{% endif %}>Todas</option>
+        <option value="unread" {% if status=='unread' %}selected{% endif %}>No leídas</option>
+        <option value="read" {% if status=='read' %}selected{% endif %}>Leídas</option>
+    </select>
+    <button class="btn btn-outline-primary btn-sm ms-2" type="submit">Filtrar</button>
+</form>
+<a href="{{ url_for('notifications.new_notification') }}" class="btn btn-primary mb-3">Nueva notificación</a>
+<table class="table table-bordered table-sm">
+    <thead><tr><th>Fecha</th><th>Usuario</th><th>Título</th><th>Tipo</th><th>Leída</th><th>Acción</th></tr></thead>
+    <tbody>
+    {% for n in notifs %}
+        <tr>
+            <td>{{ n.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>{{ n.user_id }}</td>
+            <td>{{ n.title }}</td>
+            <td>{{ n.notif_type }}</td>
+            <td>{% if n.is_read %}Sí{% else %}No{% endif %}</td>
+            <td>
+                <form method="post" action="{{ url_for('notifications.delete_notification', notif_id=n.id) }}" onsubmit="return confirm('¿Eliminar notificación?');">
+                    
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

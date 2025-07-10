@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}SIGP{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
 </head>
 <body class="d-flex flex-column min-vh-100">
     <!-- Navbar -->
@@ -73,6 +74,9 @@
                             {% if can_mod('prescriptor') %}
                             <li><a class="dropdown-item" href="{{ url_for('prescriptors.list_prescriptors') }}">Prescriptores</a></li>
                             {% endif %}
+                            {% if can_mod('notifications') %}
+                            <li><a class="dropdown-item" href="{{ url_for('notifications.list_all') }}">Notificaciones</a></li>
+                            {% endif %}
                             {% endif %}
                             {% endif %}
                         </ul>
@@ -82,6 +86,13 @@
                     <span class="navbar-text me-3">Bienvenido {{ current_user.email }}</span>
                     <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">Logout</a>
                 </div>
+                <li class="nav-item me-2">
+                    {% set unread = unread_count() %}
+                    <a class="nav-link position-relative" href="{{ url_for('notifications.my_notifications') }}" title="No leídas: {{ unread }}">
+                        <i class="fs-4 {% if unread %}bi bi-bell-fill text-danger{% else %}bi bi-bell text-secondary{% endif %}"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill {% if unread %}bg-danger{% else %}bg-secondary{% endif %}">{{ unread }}</span>
+                    </a>
+                </li>
             </div>
         </div>
     </nav>
