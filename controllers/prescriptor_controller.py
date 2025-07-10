@@ -297,13 +297,21 @@ def edit_prescriptor(prescriptor_id):
 
     FormClass = prescriptor_form_factory(is_create=False)
     form = FormClass(obj=obj)
-    # precargar datos de usuario
+    # precargar datos de usuario (dueño) y nombre creador
     UserModel = getattr(Base.classes, "users", None)
-    if UserModel and obj.user_id:
-        u = db.session.get(UserModel, obj.user_id)
-        if u:
-            form.email.data = u.email
-            form.cellular.data = getattr(u, "cellular", "")
+    if UserModel:
+        # dueño (login del prescriptor)
+        if obj.user_id:
+            u_owner = db.session.get(UserModel, obj.user_id)
+            if u_owner:
+                form.email.data = u_owner.email
+                form.cellular.data = getattr(u_owner, "cellular", "")
+        # creador del registro
+        creator_id = getattr(obj, "user_getter_id", None) or obj.user_id
+        if creator_id:
+            creator = db.session.get(UserModel, creator_id)
+            if creator:
+                form.user_id.data = creator.name
     # Alinear sub_state SelectField con sub_state_id
     if hasattr(form, "sub_state") and hasattr(obj, "sub_state_id"):
         form.sub_state.data = str(obj.sub_state_id) if obj.sub_state_id else ""
