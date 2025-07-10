@@ -24,3 +24,6 @@ class Config:
 
     # Bcrypt
     BCRYPT_LOG_ROUNDS = 13
+
+    # config.py  (modo desarrollo)
+    # SQLALCHEMY_ECHO = True

@@ -3,6 +3,35 @@
 {% block content %}
 <h2>Prescriptores</h2>
 <a href="{{ url_for('prescriptors.new_prescriptor') }}" class="btn btn-primary mb-3">Nuevo Prescriptor</a>
+
+<!-- Filtros -->
+<form class="row row-cols-lg-auto g-2 align-items-end mb-3" method="get">
+    <div class="col-12">
+        <label for="fNombre" class="form-label">Nombre</label>
+        <input type="text" class="form-control" id="fNombre" name="nombre" value="{{ filters.nombre }}">
+    </div>
+    <div class="col-12">
+        <label for="fTipo" class="form-label">Tipo</label>
+        <select id="fTipo" name="tipo" class="form-select">
+            <option value="">- Todos -</option>
+            {% for val, lbl in type_choices %}
+            <option value="{{ val }}" {% if filters.tipo==val %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-12">
+        <label for="fEstado" class="form-label">Estado</label>
+        <select id="fEstado" name="estado" class="form-select">
+            <option value="">- Todos -</option>
+            {% for val, lbl in state_choices %}
+            <option value="{{ val }}" {% if filters.estado==val %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-secondary">Filtrar</button>
+    </div>
+</form>
 <table class="table table-striped">
     <thead>
         <tr>

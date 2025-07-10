@@ -56,6 +56,7 @@ def create_app(config_class=Config):
     from .controllers.state_ledger_controller import state_ledger_bp
     from .controllers.state_prescriptor_controller import state_prescriptor_bp
     from .controllers.state_user_controller import state_user_bp
+    from .controllers.prescriptor_type_controller import prescriptor_type_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
@@ -68,6 +69,7 @@ def create_app(config_class=Config):
     app.register_blueprint(state_ledger_bp)
     app.register_blueprint(state_prescriptor_bp)
     app.register_blueprint(state_user_bp)
+    app.register_blueprint(prescriptor_type_bp)
 
     @app.route("/")
     def index():
