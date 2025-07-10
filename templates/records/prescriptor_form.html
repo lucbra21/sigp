@@ -55,7 +55,13 @@
     {% endif %}
     </div>
     <div class="mb-3">
-        {% if form.confidence_level_id is defined %}
+         {% if form.observations is defined %}
+         {{ form.observations.label(class="form-label") }}
+         {{ form.observations(class="form-control", rows="3") }}
+     {% endif %}
+     </div>
+    <div class="mb-3">
+         {% if form.confidence_level_id is defined %}
         {{ form.confidence_level_id.label(class="form-label") }}
         {{ form.confidence_level_id(class="form-select") }}
         {% for err in form.confidence_level_id.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}

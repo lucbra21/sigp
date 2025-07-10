@@ -14,7 +14,7 @@ from flask import (
 )
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, SubmitField
+from wtforms import StringField, SelectField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Length, Optional, URL
 
 from sigp import db
@@ -55,11 +55,14 @@ def prescriptor_form_factory(is_create=True):
         proposed_type_id = SelectField("Tipo propuesto", choices=[("", "-")] + type_choices, validators=[Optional()])
         state_id = SelectField("Estado", choices=state_choices, validators=[DataRequired()])
         sub_state = SelectField("Subestado", choices=substate_choices, validators=[Optional()])
-        squeeze_url_tst = StringField("Squeeze URL Test", validators=[Optional(), URL(), Length(max=255)])
-        squeeze_url_prd = StringField("Squeeze URL Prod", validators=[Optional(), URL(), Length(max=255)])
+        # squeeze_url_tst = StringField("Squeeze URL Test", validators=[Optional(), URL(), Length(max=255)])
+        # squeeze_url_prd = StringField("Squeeze URL Prod", validators=[Optional(), URL(), Length(max=255)])
+        squeeze_url_tst = StringField("Squeeze URL Test", validators=[Optional(), Length(max=255)])
+        squeeze_url_prd = StringField("Squeeze URL Prod", validators=[Optional(), Length(max=255)])
         confidence_level_id = SelectField("Nivel de confianza", choices=conf_choices, validators=[Optional()])
         squeeze_page_name = StringField("Nombre", validators=[DataRequired(), Length(max=255)])
         squeeze_page_status = SelectField("Estado squeeze page", choices=squeeze_status_choices, validators=[Optional()])
+        observations = TextAreaField("Observaciones", validators=[Optional(), Length(max=1000)])
         submit = SubmitField("Guardar")
 
         class Meta:
@@ -199,19 +202,35 @@ def create_prescriptor():
 
     if form.validate_on_submit():
         # Construir objeto con todos los campos disponibles
-        new_obj = Model(
-            id=str(uuid.uuid4()),
-            user_id=current_user.id,
-            type_id=int(form.type_id.data),
-            proposed_type_id=int(form.proposed_type_id.data) if form.proposed_type_id.data else None,
-            state_id=int(form.state_id.data),
-            sub_state_id=int(form.sub_state.data) if form.sub_state.data else None,
-            confidence_level_id=int(form.confidence_level_id.data) if form.confidence_level_id.data else None,
-            squeeze_url_tst=form.squeeze_url_tst.data or None,
-            squeeze_url_prd=form.squeeze_url_prd.data or None,
-            squeeze_page_name=form.squeeze_page_name.data,
-            squeeze_page_status=form.squeeze_page_status.data or None,
-        )
+        # Construir dinámicamente los campos disponibles en el formulario
+        obj_kwargs = {
+            "id": str(uuid.uuid4()),
+            "user_id": current_user.id,
+            "squeeze_page_name": form.squeeze_page_name.data,
+        }
+        if hasattr(form, "type_id") and form.type_id.data:
+            obj_kwargs["type_id"] = int(form.type_id.data)
+        if hasattr(form, "proposed_type_id") and form.proposed_type_id.data:
+            obj_kwargs["proposed_type_id"] = int(form.proposed_type_id.data)
+            # Si no hay type_id en el formulario, usar el mismo valor para cumplir NOT NULL
+            if "type_id" not in obj_kwargs:
+                obj_kwargs["type_id"] = obj_kwargs["proposed_type_id"]
+        if hasattr(form, "state_id") and form.state_id.data:
+            obj_kwargs["state_id"] = int(form.state_id.data)
+        if hasattr(form, "sub_state") and form.sub_state.data:
+            obj_kwargs["sub_state_id"] = int(form.sub_state.data)
+        if hasattr(form, "confidence_level_id") and form.confidence_level_id.data:
+            obj_kwargs["confidence_level_id"] = int(form.confidence_level_id.data)
+        if hasattr(form, "squeeze_url_tst"):
+            obj_kwargs["squeeze_url_tst"] = form.squeeze_url_tst.data or None
+        if hasattr(form, "squeeze_url_prd"):
+            obj_kwargs["squeeze_url_prd"] = form.squeeze_url_prd.data or None
+        if hasattr(form, "squeeze_page_status"):
+            obj_kwargs["squeeze_page_status"] = form.squeeze_page_status.data or "TEST"
+        if hasattr(form, "observations") and form.observations.data:
+            obj_kwargs["observations"] = form.observations.data
+
+        new_obj = Model(**obj_kwargs)
         # Establecer valores por defecto de negocio
         # Estado Activo (1)
         if hasattr(new_obj, "state_id"):
@@ -257,6 +276,9 @@ def edit_prescriptor(prescriptor_id):
 
     FormClass = prescriptor_form_factory(is_create=False)
     form = FormClass(obj=obj)
+    # Alinear sub_state SelectField con sub_state_id
+    if hasattr(form, "sub_state") and hasattr(obj, "sub_state_id"):
+        form.sub_state.data = str(obj.sub_state_id) if obj.sub_state_id else ""
     return render_template(
         "records/prescriptor_form.html",
         form=form,

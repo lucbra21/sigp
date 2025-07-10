@@ -26,4 +26,7 @@ class Config:
     BCRYPT_LOG_ROUNDS = 13
 
     # config.py  (modo desarrollo)
-    # SQLALCHEMY_ECHO = True
+    SQLALCHEMY_ECHO = True
+#     * eliminar los estados de prescriptores sobrantes
+# en la alta de prescriptor hay que meter los campos que se necesitan 
+# * que estan en usuario por ejemplo mail celular nacionalidad etc
