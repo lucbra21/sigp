@@ -32,6 +32,12 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     bcrypt.init_app(app)
 
+    # asegurar carpeta de contratos
+    import os, pathlib
+    upload_dir = pathlib.Path(app.root_path) / Config.CONTRACT_UPLOAD_FOLDER
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    app.config["CONTRACT_UPLOAD_FOLDER"] = upload_dir
+
     with app.app_context():
         from .models import reflect_db
         reflect_db(app)

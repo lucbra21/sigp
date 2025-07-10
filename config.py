@@ -25,6 +25,10 @@ class Config:
     # Bcrypt
     BCRYPT_LOG_ROUNDS = 13
 
+    # Carpeta para contratos de prescriptores (dentro de static)
+    CONTRACT_UPLOAD_FOLDER = "static/contracts"
+    CONTRACT_ALLOWED_EXT = {"pdf"}
+
     # config.py  (modo desarrollo)
     SQLALCHEMY_ECHO = True
 #     * eliminar los estados de prescriptores sobrantes

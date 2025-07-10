@@ -14,6 +14,7 @@ from flask import (
 )
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, SelectField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Length, Optional, URL
 
@@ -66,12 +67,14 @@ def prescriptor_form_factory(is_create=True):
         squeeze_page_name = StringField("Nombre", validators=[DataRequired(), Length(max=255)])
         squeeze_page_status = SelectField("Estado squeeze page", choices=squeeze_status_choices, validators=[Optional()])
         observations = TextAreaField("Observaciones", validators=[Optional(), Length(max=1000)])
+        contract_file = FileField("Contrato (PDF)", validators=[FileAllowed(["pdf"], "Solo PDF")])
         submit = SubmitField("Guardar")
 
         class Meta:
             csrf = True
 
         # Eliminar campos que no deben mostrarse en el alta
+    # Ocultar en creación campos avanzados
     if is_create:
         for fld in [
             "type_id",
@@ -230,13 +233,18 @@ def create_prescriptor():
         if hasattr(form, "squeeze_page_status"):
             obj_kwargs["squeeze_page_status"] = form.squeeze_page_status.data or "TEST"
         if hasattr(form, "observations") and form.observations.data:
-            obj_kwargs["observations"] = form.observations.data
+             obj_kwargs["observations"] = form.observations.data
+        if hasattr(form, "contract_file") and form.contract_file.data:
+            filename = f"{obj_kwargs['id']}.pdf"
+            path = current_app.config["CONTRACT_UPLOAD_FOLDER"] / filename
+            form.contract_file.data.save(path)
+            obj_kwargs["contract_url"] = url_for("static", filename=f"contracts/{filename}")
 
         # Crear usuario asociado
         UserModel = getattr(Base.classes, "users", None)
         if not UserModel:
             flash("Modelo users no disponible", "danger")
-            return render_template("records/prescriptor_form.html", form=form, action=url_for("prescriptors.create_prescriptor"))
+
         new_user = UserModel(id=str(uuid.uuid4()))
         new_user.name = form.squeeze_page_name.data
         new_user.email = form.email.data
@@ -319,6 +327,7 @@ def edit_prescriptor(prescriptor_id):
         "records/prescriptor_form.html",
         form=form,
         action=url_for("prescriptors.update_prescriptor", prescriptor_id=prescriptor_id),
+        contract_url=getattr(obj, "contract_url", None),
     )
 
 
@@ -342,6 +351,12 @@ def update_prescriptor(prescriptor_id):
     if form.validate_on_submit():
         # precargar y actualizar email/cellular
         obj.state_id = int(form.state_id.data)
+        # manejar contrato
+        if form.contract_file.data:
+            filename = f"{obj.id}.pdf"
+            path = current_app.config["CONTRACT_UPLOAD_FOLDER"] / filename
+            form.contract_file.data.save(path)
+            obj.contract_url = url_for("static", filename=f"contracts/{filename}")
         # actualizar usuario asociado
         UserModel = getattr(Base.classes, "users", None)
         if UserModel and obj.user_id:
@@ -356,7 +371,12 @@ def update_prescriptor(prescriptor_id):
             db.session.rollback()
             current_app.logger.exception("Error al actualizar prescriptor: %s", e)
             flash("Error al actualizar prescriptor", "danger")
-            return render_template("records/prescriptor_form.html", form=form, action=url_for("prescriptors.update_prescriptor", prescriptor_id=prescriptor_id))
+            return render_template(
+                "records/prescriptor_form.html",
+                form=form,
+                action=url_for("prescriptors.update_prescriptor", prescriptor_id=prescriptor_id),
+                contract_url=getattr(obj, "contract_url", None),
+            )
         return redirect(url_for("prescriptors.list_prescriptors"))
 
     current_app.logger.info("Errores de validación: %s", form.errors)
@@ -365,4 +385,5 @@ def update_prescriptor(prescriptor_id):
         "records/prescriptor_form.html",
         form=form,
         action=url_for("prescriptors.update_prescriptor", prescriptor_id=prescriptor_id),
+        contract_url=getattr(obj, "contract_url", None),
     )
