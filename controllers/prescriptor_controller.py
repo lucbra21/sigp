@@ -19,6 +19,8 @@ from wtforms import StringField, SelectField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Length, Optional, URL
 
 from sigp import db
+import os
+from werkzeug.utils import secure_filename
 import hashlib
 import uuid
 from sigp.models import Base
@@ -61,10 +63,10 @@ def prescriptor_form_factory(is_create=True):
         # squeeze_url_prd = StringField("Squeeze URL Prod", validators=[Optional(), URL(), Length(max=255)])
         squeeze_url_tst = StringField("Squeeze URL Test", validators=[Optional(), Length(max=255)])
         squeeze_url_prd = StringField("Squeeze URL Prod", validators=[Optional(), Length(max=255)])
-        photo_url = StringField("Foto (URL)", validators=[Optional(), Length(max=255)])
-        squeeze_page_image_1 = StringField("Imagen 1 (URL)", validators=[Optional(), Length(max=255)])
-        squeeze_page_image_2 = StringField("Imagen 2 (URL)", validators=[Optional(), Length(max=255)])
-        squeeze_page_image_3 = StringField("Imagen 3 (URL)", validators=[Optional(), Length(max=255)])
+        photo_file = FileField("Foto", validators=[Optional(), FileAllowed(['jpg','jpeg','png','gif'], 'Imágenes')])
+        squeeze_page_image_1_file = FileField("Imagen 1", validators=[Optional(), FileAllowed(['jpg','jpeg','png','gif'], 'Imágenes')])
+        squeeze_page_image_2_file = FileField("Imagen 2", validators=[Optional(), FileAllowed(['jpg','jpeg','png','gif'], 'Imágenes')])
+        squeeze_page_image_3_file = FileField("Imagen 3", validators=[Optional(), FileAllowed(['jpg','jpeg','png','gif'], 'Imágenes')])
         face_url = StringField("Facebook URL", validators=[Optional(), Length(max=255)])
         linkedin_url = StringField("LinkedIn URL", validators=[Optional(), Length(max=255)])
         instagram_url = StringField("Instagram URL", validators=[Optional(), Length(max=255)])
@@ -238,20 +240,10 @@ def create_prescriptor():
             obj_kwargs["squeeze_url_tst"] = form.squeeze_url_tst.data or None
         if hasattr(form, "squeeze_url_prd"):
             obj_kwargs["squeeze_url_prd"] = form.squeeze_url_prd.data or None
-        if hasattr(form, "photo_url"):
-            obj_kwargs["photo_url"] = form.photo_url.data or None
-        for fld in [
-            "squeeze_page_image_1",
-            "squeeze_page_image_2",
-            "squeeze_page_image_3",
-            "face_url",
-            "linkedin_url",
-            "instagram_url",
-            "x_url",
-        ]:
+        # social URLs
+        for fld in ["face_url","linkedin_url","instagram_url","x_url"]:
             if hasattr(form, fld):
                 obj_kwargs[fld] = getattr(form, fld).data or None
-            obj_kwargs["squeeze_url_prd"] = form.squeeze_url_prd.data or None
         if hasattr(form, "squeeze_page_status"):
             obj_kwargs["squeeze_page_status"] = form.squeeze_page_status.data or "TEST"
         if hasattr(form, "observations") and form.observations.data:
@@ -345,11 +337,18 @@ def edit_prescriptor(prescriptor_id):
     # Alinear sub_state SelectField con sub_state_id
     if hasattr(form, "sub_state") and hasattr(obj, "sub_state_id"):
         form.sub_state.data = str(obj.sub_state_id) if obj.sub_state_id else ""
+    image_urls = {
+        "photo": getattr(obj, "photo_url", None),
+        "img1": getattr(obj, "squeeze_page_image_1", None),
+        "img2": getattr(obj, "squeeze_page_image_2", None),
+        "img3": getattr(obj, "squeeze_page_image_3", None),
+    }
     return render_template(
         "records/prescriptor_form.html",
         form=form,
         action=url_for("prescriptors.update_prescriptor", prescriptor_id=prescriptor_id),
         contract_url=getattr(obj, "contract_url", None),
+        image_urls=image_urls,
     )
 
 
@@ -377,10 +376,6 @@ def update_prescriptor(prescriptor_id):
         simple_fields = [
             "squeeze_url_tst",
             "squeeze_url_prd",
-            "photo_url",
-            "squeeze_page_image_1",
-            "squeeze_page_image_2",
-            "squeeze_page_image_3",
             "face_url",
             "linkedin_url",
             "instagram_url",
@@ -389,6 +384,28 @@ def update_prescriptor(prescriptor_id):
         for fld in simple_fields:
             if hasattr(obj, fld) and hasattr(form, fld):
                 setattr(obj, fld, getattr(form, fld).data or None)
+
+        # gestionar uploads de imágenes
+        upload_dir = current_app.config.get("PRESCRIPTOR_IMG_FOLDER", os.path.join(current_app.root_path, "static", "prescriptors"))
+        os.makedirs(upload_dir, exist_ok=True)
+        def _save_file(file_field, suffix):
+            if file_field.data:
+                filename = secure_filename(f"{obj.id}_{suffix}.{file_field.data.filename.rsplit('.',1)[-1]}")
+                path = os.path.join(upload_dir, filename)
+                file_field.data.save(path)
+                return url_for("static", filename=f"prescriptors/{filename}")
+            return None
+        mapping = {
+            "photo_file":"photo_url",
+            "squeeze_page_image_1_file":"squeeze_page_image_1",
+            "squeeze_page_image_2_file":"squeeze_page_image_2",
+            "squeeze_page_image_3_file":"squeeze_page_image_3",
+        }
+        for fld_file, model_attr in mapping.items():
+            if hasattr(form, fld_file):
+                url = _save_file(getattr(form, fld_file), model_attr)
+                if url:
+                    setattr(obj, model_attr, url)
 
         # manejar contrato
         if form.contract_file.data:
@@ -420,9 +437,16 @@ def update_prescriptor(prescriptor_id):
 
     current_app.logger.info("Errores de validación: %s", form.errors)
     flash("Errores en el formulario", "danger")
+    image_urls = {
+        "photo": getattr(obj, "photo_url", None),
+        "img1": getattr(obj, "squeeze_page_image_1", None),
+        "img2": getattr(obj, "squeeze_page_image_2", None),
+        "img3": getattr(obj, "squeeze_page_image_3", None),
+    }
     return render_template(
         "records/prescriptor_form.html",
         form=form,
         action=url_for("prescriptors.update_prescriptor", prescriptor_id=prescriptor_id),
         contract_url=getattr(obj, "contract_url", None),
+        image_urls=image_urls,
     )

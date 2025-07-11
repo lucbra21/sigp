@@ -134,7 +134,8 @@ def new_lead():
         flash("Lead creado", "success")
         return redirect(url_for("leads.leads_list"))
 
-        return render_template("records/lead_form.html", form=form, action=url_for("leads.new_lead"), edit=False)
+    # initial GET or validation errors
+    return render_template("records/lead_form.html", form=form, action=url_for("leads.new_lead"), edit=False)
 
 
 @leads_bp.route("/<lead_id>/edit", methods=["GET", "POST"])

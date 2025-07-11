@@ -89,7 +89,45 @@
 {% endif %}
     </div>
 
-    {% if form.contract_file is defined %}
+    <!-- Multimedia y redes sociales -->
+    <div class="mb-3">{% if form.photo_file is defined %}
+        {{ form.photo_file.label(class="form-label") }}
+        {{ form.photo_file(class="form-control-file") }}
+        {% if image_urls and image_urls.photo %}<a href="{{ image_urls.photo }}" target="_blank"><img src="{{ image_urls.photo }}" class="img-thumbnail mt-1" style="max-width:120px"></a>{% endif %}
+    {% endif %}</div>
+    <div class="mb-3">{% if form.squeeze_page_image_1_file is defined %}
+        {{ form.squeeze_page_image_1_file.label(class="form-label") }}
+        {{ form.squeeze_page_image_1_file(class="form-control-file") }}
+        {% if image_urls and image_urls.img1 %}<a href="{{ image_urls.img1 }}" target="_blank"><img src="{{ image_urls.img1 }}" class="img-thumbnail mt-1" style="max-width:120px"></a>{% endif %}
+    {% endif %}</div>
+    <div class="mb-3">{% if form.squeeze_page_image_2_file is defined %}
+        {{ form.squeeze_page_image_2_file.label(class="form-label") }}
+        {{ form.squeeze_page_image_2_file(class="form-control-file") }}
+        {% if image_urls and image_urls.img2 %}<a href="{{ image_urls.img2 }}" target="_blank"><img src="{{ image_urls.img2 }}" class="img-thumbnail mt-1" style="max-width:120px"></a>{% endif %}
+    {% endif %}</div>
+    <div class="mb-3">{% if form.squeeze_page_image_3_file is defined %}
+        {{ form.squeeze_page_image_3_file.label(class="form-label") }}
+        {{ form.squeeze_page_image_3_file(class="form-control-file") }}
+        {% if image_urls and image_urls.img3 %}<a href="{{ image_urls.img3 }}" target="_blank"><img src="{{ image_urls.img3 }}" class="img-thumbnail mt-1" style="max-width:120px"></a>{% endif %}
+    {% endif %}</div>
+    <div class="mb-3">{% if form.face_url is defined %}
+        {{ form.face_url.label(class="form-label") }}
+        {{ form.face_url(class="form-control") }}
+    {% endif %}</div>
+    <div class="mb-3">{% if form.linkedin_url is defined %}
+        {{ form.linkedin_url.label(class="form-label") }}
+        {{ form.linkedin_url(class="form-control") }}
+    {% endif %}</div>
+    <div class="mb-3">{% if form.instagram_url is defined %}
+        {{ form.instagram_url.label(class="form-label") }}
+        {{ form.instagram_url(class="form-control") }}
+    {% endif %}</div>
+    <div class="mb-3">{% if form.x_url is defined %}
+        {{ form.x_url.label(class="form-label") }}
+        {{ form.x_url(class="form-control") }}
+    {% endif %}</div>
+
+{% if form.contract_file is defined %}
     <div class="mb-3">
         {{ form.contract_file.label(class="form-label") }}
         {{ form.contract_file(class="form-control") }}
