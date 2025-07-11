@@ -68,6 +68,7 @@ def create_app(config_class=Config):
     from sigp.controllers.multimedia_controller import multimedia_bp
     from .controllers.notifications_controller import notifications_bp
     from .controllers.leads_controller import leads_bp
+    from .controllers.landing_controller import landing_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
@@ -86,6 +87,7 @@ def create_app(config_class=Config):
     app.register_blueprint(multimedia_bp)
     app.register_blueprint(notifications_bp)
     app.register_blueprint(leads_bp)
+    app.register_blueprint(landing_bp)
 
     # ---- context processors ----
     @app.context_processor

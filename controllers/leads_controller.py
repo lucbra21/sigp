@@ -63,7 +63,20 @@ def leads_list():
     page = request.args.get("page", 1, type=int)
     per_page = 25
 
-    q = db.session.query(Lead).order_by(Lead.created_at.desc())
+    # Filtros
+    cand_q = request.args.get("candidate", "").strip()
+    presc_q = request.args.get("prescriptor", "")  # id
+    state_q = request.args.get("state", "")  # id
+
+    q = db.session.query(Lead)
+    if cand_q:
+        q = q.filter(Lead.candidate_name.ilike(f"%{cand_q}%"))
+    if presc_q:
+        q = q.filter(Lead.prescriptor_id == presc_q)
+    if state_q:
+        q = q.filter(Lead.state_id == int(state_q))
+
+    q = q.order_by(Lead.created_at.desc())
     total = q.count()
     leads = q.offset((page - 1) * per_page).limit(per_page).all()
 
@@ -73,10 +86,31 @@ def leads_list():
         pres_rows = db.session.query(Prescriptor).filter(Prescriptor.id.in_(pres_ids)).all()
         pres_map = {p.id: _presc_label(p) for p in pres_rows}
 
+    # Mapear id -> nombre de estado
+    state_map = {}
+    if StateLead is not None and leads:
+        sids = {l.state_id for l in leads}
+        state_rows = db.session.query(StateLead).filter(StateLead.id.in_(sids)).all()
+        state_map = {s.id: s.name for s in state_rows}
+
+    # Choices para filtros
+    presc_choices = []
+    if Prescriptor is not None:
+        presc_rows = db.session.query(Prescriptor).order_by(Prescriptor.squeeze_page_name).all()
+        presc_choices = [(p.id, _presc_label(p)) for p in presc_rows]
+    state_choices = []
+    if StateLead is not None:
+        state_rows_all = db.session.query(StateLead).order_by(StateLead.name).all()
+        state_choices = [(s.id, s.name) for s in state_rows_all]
+
     return render_template(
         "list/leads_list.html",
         leads=leads,
         pres_map=pres_map,
+        state_map=state_map,
+        presc_choices=presc_choices,
+        state_choices=state_choices,
+        filters={"candidate": cand_q, "prescriptor": presc_q, "state": state_q},
         total=total,
         page=page,
         per_page=per_page,
@@ -136,6 +170,27 @@ def new_lead():
 
     # initial GET or validation errors
     return render_template("records/lead_form.html", form=form, action=url_for("leads.new_lead"), edit=False)
+
+
+@leads_bp.post("/<lead_id>/delete")
+@login_required
+@require_perm("delete_leads")
+def delete_lead(lead_id):
+    """Eliminar leads cuyo estado sea 6."""
+    if Lead is None:
+        flash("Tabla leads no disponible", "danger")
+        return redirect(url_for("leads.leads_list"))
+    lead = db.session.get(Lead, lead_id)
+    if not lead:
+        flash("Lead no encontrado", "warning")
+    else:
+        if lead.state_id == 6:
+            db.session.delete(lead)
+            db.session.commit()
+            flash("Lead eliminado", "info")
+        else:
+            flash("Solo se pueden eliminar leads con estado 6", "danger")
+    return redirect(url_for("leads.leads_list"))
 
 
 @leads_bp.route("/<lead_id>/edit", methods=["GET", "POST"])
