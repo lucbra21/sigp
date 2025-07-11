@@ -1,0 +1,33 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Gestión de leads{% endblock %}
+{% block content %}
+<h2>Gestión de leads</h2>
+<a href="{{ url_for('leads.new_lead') }}" class="btn btn-primary mb-3">Nuevo lead</a>
+<table class="table table-bordered table-sm">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Candidato</th>
+            <th>Prescriptor</th>
+            <th>Celular</th>
+            <th>Comercial</th>
+            <th>Estado</th>
+            {% if can('update_leads') %}<th>Acciones</th>{% endif %}
+        </tr>
+    </thead>
+    <tbody>
+    {% for l in leads %}
+        <tr>
+            <td>{{ l.created_at.strftime('%d/%m/%Y') if l.created_at }} </td>
+            <td>{{ l.candidate_name or '-' }}<br><small>{{ l.candidate_email }}</small></td>
+            <td>{{ pres_map.get(l.prescriptor_id, l.prescriptor_id) }}</td>
+            <td>{{ l.candidate_cellular or '-' }}</td>
+            <td>{{ l.commercial_id or '-' }}</td>
+            <td>{{ l.state_id }}</td>
+            {% if can('update_leads') %}<td><a href="{{ url_for('leads.edit_lead', lead_id=l.id) }}" class="btn btn-sm btn-secondary">Editar</a></td>{% endif %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% if total==0 %}<p>No hay leads.</p>{% endif %}
+{% endblock %}

@@ -39,12 +39,19 @@
                         <a class="nav-link dropdown-toggle" href="#" id="mediaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Multimedia</a>
                         <ul class="dropdown-menu" aria-labelledby="mediaDropdown">
                             {% if can('read_media') %}
-                            <li><a class="dropdown-item" href="{{ url_for('multimedia.list_media') }}">Visualizar archivos</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('multimedia.list_media') }}">Archivos</a></li>
                             {% endif %}
                             {% if can('create_media') %}
-                            <li><a class="dropdown-item" href="{{ url_for('multimedia.upload_media') }}">Cargar archivo</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('multimedia.list_categories') }}">Gestión de categorías</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('multimedia.upload_media') }}">Subir</a></li>
                             {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+                    {% if can_mod('leads') %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="prescDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Prescripción</a>
+                        <ul class="dropdown-menu" aria-labelledby="prescDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('leads.leads_list') }}">Gestión de leads</a></li>
                         </ul>
                     </li>
                     {% endif %}

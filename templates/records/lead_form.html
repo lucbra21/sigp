@@ -1,0 +1,16 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Nuevo lead{% endblock %}
+{% block content %}
+<h2>Nuevo lead</h2>
+<form method="post" action="{{ action }}">
+    {{ form.csrf_token }}
+    <div class="mb-3">{{ form.prescriptor_id.label }} {{ form.prescriptor_id(class="form-select") }}</div>
+    <div class="mb-3">{{ form.program_info_id.label }} {{ form.program_info_id(class="form-select") }}</div>
+    <div class="mb-3">{{ form.state_id.label }} {{ form.state_id(class="form-select") }}</div>
+    <div class="mb-3">{{ form.candidate_name.label }} {{ form.candidate_name(class="form-control") }}</div>
+    <div class="mb-3">{{ form.candidate_email.label }} {{ form.candidate_email(class="form-control") }}</div>
+    <div class="mb-3">{{ form.candidate_cellular.label }} {{ form.candidate_cellular(class="form-control") }}</div>
+    {{ form.submit(class="btn btn-success") }}
+    <a href="{{ url_for('leads.leads_list') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

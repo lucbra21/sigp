@@ -66,7 +66,8 @@ def create_app(config_class=Config):
     from .controllers.confidence_level_controller import confidence_level_bp
     from .controllers.edition_controller import edition_bp
     from sigp.controllers.multimedia_controller import multimedia_bp
-    from sigp.controllers.notifications_controller import notifications_bp
+    from .controllers.notifications_controller import notifications_bp
+    from .controllers.leads_controller import leads_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
@@ -84,6 +85,7 @@ def create_app(config_class=Config):
     app.register_blueprint(edition_bp)
     app.register_blueprint(multimedia_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(leads_bp)
 
     # ---- context processors ----
     @app.context_processor
