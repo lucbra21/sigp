@@ -61,6 +61,14 @@ def prescriptor_form_factory(is_create=True):
         # squeeze_url_prd = StringField("Squeeze URL Prod", validators=[Optional(), URL(), Length(max=255)])
         squeeze_url_tst = StringField("Squeeze URL Test", validators=[Optional(), Length(max=255)])
         squeeze_url_prd = StringField("Squeeze URL Prod", validators=[Optional(), Length(max=255)])
+        photo_url = StringField("Foto (URL)", validators=[Optional(), Length(max=255)])
+        squeeze_page_image_1 = StringField("Imagen 1 (URL)", validators=[Optional(), Length(max=255)])
+        squeeze_page_image_2 = StringField("Imagen 2 (URL)", validators=[Optional(), Length(max=255)])
+        squeeze_page_image_3 = StringField("Imagen 3 (URL)", validators=[Optional(), Length(max=255)])
+        face_url = StringField("Facebook URL", validators=[Optional(), Length(max=255)])
+        linkedin_url = StringField("LinkedIn URL", validators=[Optional(), Length(max=255)])
+        instagram_url = StringField("Instagram URL", validators=[Optional(), Length(max=255)])
+        x_url = StringField("X/Twitter URL", validators=[Optional(), Length(max=255)])
         confidence_level_id = SelectField("Nivel de confianza", choices=conf_choices, validators=[Optional()])
         email = StringField("Email", validators=[DataRequired(), Length(max=255)])
         cellular = StringField("Celular", validators=[DataRequired(), Length(max=50)])
@@ -230,6 +238,20 @@ def create_prescriptor():
             obj_kwargs["squeeze_url_tst"] = form.squeeze_url_tst.data or None
         if hasattr(form, "squeeze_url_prd"):
             obj_kwargs["squeeze_url_prd"] = form.squeeze_url_prd.data or None
+        if hasattr(form, "photo_url"):
+            obj_kwargs["photo_url"] = form.photo_url.data or None
+        for fld in [
+            "squeeze_page_image_1",
+            "squeeze_page_image_2",
+            "squeeze_page_image_3",
+            "face_url",
+            "linkedin_url",
+            "instagram_url",
+            "x_url",
+        ]:
+            if hasattr(form, fld):
+                obj_kwargs[fld] = getattr(form, fld).data or None
+            obj_kwargs["squeeze_url_prd"] = form.squeeze_url_prd.data or None
         if hasattr(form, "squeeze_page_status"):
             obj_kwargs["squeeze_page_status"] = form.squeeze_page_status.data or "TEST"
         if hasattr(form, "observations") and form.observations.data:
@@ -351,6 +373,23 @@ def update_prescriptor(prescriptor_id):
     if form.validate_on_submit():
         # precargar y actualizar email/cellular
         obj.state_id = int(form.state_id.data)
+        # actualizar campos simples
+        simple_fields = [
+            "squeeze_url_tst",
+            "squeeze_url_prd",
+            "photo_url",
+            "squeeze_page_image_1",
+            "squeeze_page_image_2",
+            "squeeze_page_image_3",
+            "face_url",
+            "linkedin_url",
+            "instagram_url",
+            "x_url",
+        ]
+        for fld in simple_fields:
+            if hasattr(obj, fld) and hasattr(form, fld):
+                setattr(obj, fld, getattr(form, fld).data or None)
+
         # manejar contrato
         if form.contract_file.data:
             filename = f"{obj.id}.pdf"
