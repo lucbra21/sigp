@@ -51,6 +51,7 @@
             <td>{{ p.estado }}</td>
             <td>
                 <a href="{{ url_for('prescriptors.edit_prescriptor', prescriptor_id=p.id) }}" class="btn btn-sm btn-secondary">Editar</a>
+                <a href="{{ url_for('landing.landing_page', prescriptor_id=p.id) }}" target="_blank" class="btn btn-sm btn-info">Squeeze Page</a>
             </td>
         </tr>
         {% endfor %}

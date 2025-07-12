@@ -61,8 +61,7 @@ def prescriptor_form_factory(is_create=True):
         sub_state = SelectField("Subestado", choices=substate_choices, validators=[Optional()])
         # squeeze_url_tst = StringField("Squeeze URL Test", validators=[Optional(), URL(), Length(max=255)])
         # squeeze_url_prd = StringField("Squeeze URL Prod", validators=[Optional(), URL(), Length(max=255)])
-        squeeze_url_tst = StringField("Squeeze URL Test", validators=[Optional(), Length(max=255)])
-        squeeze_url_prd = StringField("Squeeze URL Prod", validators=[Optional(), Length(max=255)])
+
         photo_file = FileField("Foto", validators=[Optional(), FileAllowed(['jpg','jpeg','png','gif'], 'Imágenes')])
         squeeze_page_image_1_file = FileField("Imagen 1", validators=[Optional(), FileAllowed(['jpg','jpeg','png','gif'], 'Imágenes')])
         squeeze_page_image_2_file = FileField("Imagen 2", validators=[Optional(), FileAllowed(['jpg','jpeg','png','gif'], 'Imágenes')])
@@ -367,12 +366,23 @@ def update_prescriptor(prescriptor_id):
 
     FormClass = prescriptor_form_factory(is_create=False)
     form = FormClass(obj=obj)
+    # modelo users para sincronizar nombre/email
+    UserModel = getattr(Base.classes, "users", None)
     current_app.logger.info(">>> creando prescriptor con data %s", form.data)
 
     if form.validate_on_submit():
         # precargar y actualizar email/cellular
         obj.state_id = int(form.state_id.data)
         # actualizar campos simples
+        # actualizar nombre
+        if hasattr(obj, "squeeze_page_name") and hasattr(form, "squeeze_page_name"):
+            obj.squeeze_page_name = form.squeeze_page_name.data
+            # actualizar nombre de usuario asociado también
+            if UserModel and obj.user_id:
+                u = db.session.get(UserModel, obj.user_id)
+                if u:
+                    u.name = form.squeeze_page_name.data
+
         simple_fields = [
             "squeeze_url_tst",
             "squeeze_url_prd",
