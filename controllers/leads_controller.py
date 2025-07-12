@@ -236,6 +236,29 @@ def new_lead():
         )
         db.session.add(lead)
         db.session.commit()
+
+        # enviar notificación a comerciales si el programa tiene emails configurados
+        if Program is not None and form.program_info_id.data:
+            program = db.session.get(Program, form.program_info_id.data)
+            if program and getattr(program, "commercial_emails", None):
+                from sigp.common.email_utils import send_simple_mail
+                emails = [e.strip() for e in program.commercial_emails.split(',') if e.strip()]
+                if emails:
+                    subject = f"Nuevo lead para programa {getattr(program, 'name', program.id)}"
+                    body = (
+                        "Se ha generado un nuevo lead desde la gestión interna.\n\n"
+                        f"Prescriptor ID: {form.prescriptor_id.data}\n"
+                        f"Programa: {getattr(program, 'name', program.id)}\n"
+                        f"Nombre candidato: {form.candidate_name.data}\n"
+                        f"Email: {form.candidate_email.data or '-'}\n"
+                        f"Celular: {form.candidate_cellular.data or '-'}\n"
+                    )
+                    try:
+                        send_simple_mail(emails, subject, body)
+                    except Exception as exc:
+                        current_app.logger.exception("Error enviando mail a comerciales: %s", exc)
+                        flash("Lead creado pero no se pudo enviar correo a comerciales", "warning")
+
         flash("Lead creado", "success")
         return redirect(url_for("leads.leads_list"))
 
