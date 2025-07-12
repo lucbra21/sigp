@@ -241,8 +241,8 @@ def create_prescriptor():
         if hasattr(form, "squeeze_url_prd"):
             obj_kwargs["squeeze_url_prd"] = form.squeeze_url_prd.data or None
         # social URLs
-        for fld in ["face_url","linkedin_url","instagram_url","x_url"]:
-            if hasattr(form, fld):
+        for fld in ["face_url", "linkedin_url", "instagram_url", "x_url"]:
+            if hasattr(form, fld) and hasattr(Model, fld):
                 obj_kwargs[fld] = getattr(form, fld).data or None
         if hasattr(form, "squeeze_page_status"):
             obj_kwargs["squeeze_page_status"] = form.squeeze_page_status.data or "TEST"
@@ -475,6 +475,28 @@ def update_prescriptor(prescriptor_id):
     )
 
 
+@prescriptors_bp.route("/my-commissions", methods=["GET"])
+@login_required
+def my_commissions():
+    PrescComm = getattr(Base.classes, "prescriptor_commission", None)
+    Program = getattr(Base.classes, "programs", None)
+    Model = _get_model()
+    if not (PrescComm and Program and Model):
+        abort(404)
+    presc = db.session.query(Model).filter_by(user_id=current_user.id).first()
+    if not presc:
+        flash("No eres prescriptor", "warning")
+        return redirect(url_for("dashboard.index"))
+    rows = db.session.query(PrescComm).filter_by(prescriptor_id=presc.id).all()
+    if not rows:
+        from sigp.common.prescriptor_utils import sync_commissions_for_prescriptor
+        sync_commissions_for_prescriptor(presc.id)
+        rows = db.session.query(PrescComm).filter_by(prescriptor_id=presc.id).all()
+    prog_rows = db.session.query(Program.id, Program.name).all()
+    prog_map = {pid: name for pid, name in prog_rows}
+    return render_template("records/my_commissions.html", rows=rows, prog_map=prog_map)
+
+
 @prescriptors_bp.route("/<prescriptor_id>/commissions", methods=["GET", "POST"])
 @login_required
 @require_perm("update_prescriptor_commission")
@@ -499,9 +521,13 @@ def prescriptor_commissions(prescriptor_id):
             r.value_quotas = request.form.get(f"quot_{r.id}", type=float) or 0
         db.session.commit()
         flash("Comisiones guardadas", "success")
-        return redirect(url_for("prescriptors.prescriptor_commissions", prescriptor_id=prescriptor_id))
+        return redirect(url_for("prescriptors.list_prescriptors"))
 
     rows = db.session.query(PrescComm).filter_by(prescriptor_id=prescriptor_id).all()
+    if not rows:
+        from sigp.common.prescriptor_utils import sync_commissions_for_prescriptor
+        sync_commissions_for_prescriptor(prescriptor_id)
+        rows = db.session.query(PrescComm).filter_by(prescriptor_id=prescriptor_id).all()
     prog_rows = db.session.query(Program.id, Program.name).all()
     prog_map = {pid: name for pid, name in prog_rows}
     return render_template("records/prescriptor_commissions.html", rows=rows, presc=presc, prog_map=prog_map)

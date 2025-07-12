@@ -1,0 +1,23 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Mis comisiones{% endblock %}
+{% block content %}
+<h2>Mis comisiones</h2>
+<table class="table table-bordered table-sm">
+  <thead>
+    <tr>
+      <th>Programa</th>
+      <th>Comisión</th>
+      <th>% 1ª cuota</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in rows %}
+    <tr>
+      <td>{{ prog_map[c.program_id] }}</td>
+      <td>{{ c.commission_value }}</td>
+      <td>{{ c.first_installment_pct }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

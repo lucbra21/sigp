@@ -53,6 +53,7 @@
                         <ul class="dropdown-menu" aria-labelledby="prescDropdown">
                             <li><a class="dropdown-item" href="{{ url_for('leads.leads_list') }}">Gestión de leads</a></li>
 {% if can('read_own_leads') %}<li><a class="dropdown-item" href="{{ url_for('leads.my_leads') }}">Mis leads</a></li>{% endif %}
+                            <li><a class="dropdown-item" href="{{ url_for('prescriptors.my_commissions') }}">Mis comisiones</a></li>
                         </ul>
                     </li>
                     {% endif %}
@@ -104,6 +105,20 @@
             </div>
         </div>
     </nav>
+
+    <!-- Mensajes flash -->
+    <div class="container-fluid mt-3">
+        {% with messages = get_flashed_messages(with_categories=True) %}
+          {% if messages %}
+            {% for cat, msg in messages %}
+              <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+                  {{ msg }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+    </div>
 
     <!-- Contenido principal -->
     <div class="container-fluid flex-fill py-4">
