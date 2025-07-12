@@ -1,0 +1,43 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Actualizar estado{% endblock %}
+{% block content %}
+<h2>Actualizar estado Lead</h2>
+<form method="post">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">
+    {{ form.state_id.label(class="form-label") }}
+    {{ form.state_id(class="form-select", id="stateSel") }}
+  </div>
+  <div class="mb-3" id="grpProgram">
+    {{ form.program_id.label(class="form-label") }}
+    {{ form.program_id(class="form-select") }}
+  </div>
+  <div class="mb-3" id="grpEdition">
+    {{ form.edition_id.label(class="form-label") }}
+    {{ form.edition_id(class="form-select") }}
+  </div>
+  <div class="mb-3" id="grpInstall">
+    {{ form.installments.label(class="form-label") }}
+    {{ form.installments(class="form-control") }}
+  </div>
+  <div class="mb-3" id="grpObs">
+    {{ form.observations.label(class="form-label") }}
+    {{ form.observations(class="form-control") }}
+  </div>
+  <button type="submit" class="btn btn-primary">Guardar</button>
+  <a href="{{ url_for('leads.leads_list') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+<script>
+function toggle() {
+  const sel = document.getElementById('stateSel');
+  const matId = {{ matriculado_id }};
+  const showMat = parseInt(sel.value) === matId;
+  document.getElementById('grpProgram').style.display = showMat ? '' : 'none';
+  document.getElementById('grpEdition').style.display = showMat ? '' : 'none';
+  document.getElementById('grpInstall').style.display = showMat ? '' : 'none';
+  document.getElementById('grpObs').style.display = showMat ? 'none' : '';
+}
+window.addEventListener('DOMContentLoaded', toggle);
+document.getElementById('stateSel').addEventListener('change', toggle);
+</script>
+{% endblock %}

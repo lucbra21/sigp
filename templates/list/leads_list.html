@@ -58,6 +58,7 @@
               {% endif %}
               {% if can('view_leads') %}
               <a href="{{ url_for('leads.lead_history', lead_id=l.id) }}" class="btn btn-sm btn-info me-1">Histórico</a>
+               <a href="{{ url_for('leads.update_status', lead_id=l.id) }}" class="btn btn-sm btn-warning me-1">Actualizar estado</a>
               {% endif %}
               {% if can('delete_leads') and l.state_id==6 %}
               <form method="post" action="{{ url_for('leads.delete_lead', lead_id=l.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar lead?');">

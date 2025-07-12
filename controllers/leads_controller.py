@@ -4,7 +4,7 @@ from __future__ import annotations
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 import uuid
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, SubmitField
+from wtforms import StringField, SelectField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Length, Email, Optional
 from flask_login import login_required
 
@@ -19,6 +19,11 @@ leads_bp = Blueprint("leads", __name__, url_prefix="/leads")
 Lead = getattr(Base.classes, "leads", None)
 StateLead = getattr(Base.classes, "state_lead", None)
 Program = getattr(Base.classes, "programs", None)
+Edition = getattr(Base.classes, "editions", None)
+
+# Estados clave
+MATRICULADO_ID = 3
+COMPLETADO_ID = 7
 
 
 # Helper to get display label for a prescriptor
@@ -31,6 +36,15 @@ def _presc_label(p):
     if val:
         return val
     return getattr(p, "name", getattr(p, "nombre", str(p.id)))
+
+class LeadStatusForm(FlaskForm):
+    state_id = SelectField("Nuevo estado", coerce=int, validators=[DataRequired()])
+    observations = TextAreaField("Observaciones", validators=[Length(max=500)])
+    program_id = SelectField("Programa matriculado", coerce=str, validators=[Optional()])
+    edition_id = SelectField("Edición", coerce=int, validators=[Optional()])
+    installments = StringField("Cuotas", validators=[Optional(), Length(max=20)])
+    submit = SubmitField("Guardar")
+
 
 class LeadForm(FlaskForm):
     prescriptor_id = SelectField("Prescriptor", coerce=str, validators=[DataRequired()])
@@ -317,6 +331,133 @@ def lead_history(lead_id):
         user_map = {u.id: u.email for u in urows}
 
     return render_template("list/lead_history.html", history=history, state_map=state_map, user_map=user_map)
+
+# ---------------------------------------------------------------------------
+# Actualizar estado
+# ---------------------------------------------------------------------------
+
+@leads_bp.route("/<lead_id>/status", methods=["GET", "POST"])
+@login_required
+@require_perm("update_leads")
+def update_status(lead_id):
+    if Lead is None:
+        flash("Tabla leads no disponible", "danger")
+        return redirect(url_for("leads.leads_list"))
+    lead = db.session.get(Lead, lead_id)
+    if not lead:
+        flash("Lead no encontrado", "warning")
+        return redirect(url_for("leads.leads_list"))
+    # no permitir cambios si ya esta completado
+    if lead.state_id == COMPLETADO_ID:
+        flash("Lead completado: no se puede modificar", "warning")
+        return redirect(url_for("leads.leads_list"))
+
+    form = LeadStatusForm()
+    # cargar choices estados
+    if StateLead is not None:
+        states = db.session.query(StateLead).order_by(StateLead.name).all()
+        form.state_id.choices = [(s.id, s.name) for s in states]
+    # cargar programas
+    if Program is not None:
+        prows = db.session.query(Program).order_by(Program.name).all()
+        form.program_id.choices = [(p.id, getattr(p, "name", getattr(p, "nombre", p.id))) for p in prows]
+    else:
+        form.program_id.choices = []
+    # Ediciones
+    if Edition is not None:
+        erows = db.session.query(Edition).order_by(Edition.name).all()
+        form.edition_id.choices = [(e.id, e.name) for e in erows]
+    else:
+        form.edition_id.choices = []
+
+    # inicial GET
+    if request.method == "GET":
+        form.state_id.data = lead.state_id
+        form.observations.data = getattr(lead, "observations", "")
+        form.program_id.data = lead.program_id if hasattr(lead, 'program_id') else lead.program_info_id
+        form.installments.data = getattr(lead, "installments", "")
+
+    if form.validate_on_submit():
+        new_state = form.state_id.data
+        obs = form.observations.data or ""
+        if new_state == MATRICULADO_ID:
+            lead.program_id = form.program_id.data
+            lead.edition_id = form.edition_id.data
+            lead.payment_fees = form.installments.data
+            # Obtener nombres legibles
+            prog_name = str(lead.program_id)
+            if Program is not None and lead.program_id:
+                pr = db.session.get(Program, lead.program_id)
+                if pr:
+                    prog_name = getattr(pr, 'name', prog_name)
+            ed_name = str(lead.edition_id) if lead.edition_id else "-"
+            if Edition is not None and lead.edition_id:
+                ed = db.session.get(Edition, lead.edition_id)
+                if ed:
+                    ed_name = getattr(ed, 'name', ed_name)
+            obs = f"Matriculado en programa {prog_name} edición {ed_name} cuotas {lead.payment_fees}"
+        else:
+            lead.observations = obs
+        lead.state_id = new_state
+        # asignar comercial
+        try:
+            lead.commercial_id = current_user.id
+        except Exception:
+            pass
+        try:
+            db.session.commit()
+            from sigp.common.lead_utils import log_lead_change
+            log_lead_change(lead.id, lead.state_id, obs)
+            db.session.commit()
+            flash("Estado actualizado", "success")
+            # enviar mail y notificación al prescriptor
+            Prescriptor = getattr(Base.classes, 'prescriptors', None)
+            Notification = getattr(Base.classes, 'notifications', None)
+            UserModel = getattr(Base.classes, 'users', None)
+            if Prescriptor is not None:
+                presc = db.session.get(Prescriptor, lead.prescriptor_id)
+                presc_email = None
+                if presc:
+                    if getattr(presc, 'user_id', None) and UserModel is not None:
+                        usr = db.session.get(UserModel, presc.user_id)
+                        if usr:
+                            presc_email = usr.email
+                    presc_email = presc_email or getattr(presc, 'email', None)
+                if presc_email:
+                    # obtener nombre del estado
+                    state_name = str(new_state)
+                    if StateLead is not None:
+                        st = db.session.get(StateLead, new_state)
+                        if st:
+                            state_name = getattr(st, 'name', state_name)
+                    subject = f"Tu lead ha cambiado de estado a {state_name}"
+                    body = f"El lead {lead.candidate_name or lead.id} ahora está en estado {state_name}. Observaciones: {obs}"
+                    try:
+                        from sigp.common.email_utils import send_simple_mail
+                        send_simple_mail([presc_email], subject, body)
+                    except Exception as exc:
+                        current_app.logger.exception('Error enviando mail a prescriptor: %s', exc)
+                    # notificación interna
+                    if Notification is not None and UserModel is not None and usr:
+                        import datetime, uuid as _uuid
+                        notif = Notification(
+                            id=str(_uuid.uuid4()),
+                            user_id=usr.id,
+                            title=subject,
+                            body=body,
+                            notif_type='INFO',
+                            is_read=0,
+                            created_at=datetime.datetime.utcnow(),
+                        )
+                        db.session.add(notif)
+                        db.session.commit()
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.exception("Error actualizando estado lead: %s", exc)
+            flash("Error actualizando estado", "danger")
+        return redirect(url_for("leads.leads_list"))
+
+    return render_template("records/lead_status_form.html", form=form, lead=lead, matriculado_id=MATRICULADO_ID)
     """Eliminar leads cuyo estado sea 6."""
     if Lead is None:
         flash("Tabla leads no disponible", "danger")
