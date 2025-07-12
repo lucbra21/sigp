@@ -24,20 +24,13 @@ Program = getattr(Base.classes, "programs", None)
 # Helper to get display label for a prescriptor
 
 def _presc_label(p):
-    """Return readable label for a prescriptor: user's full_name/name/email else squeeze/name."""
+    """Etiqueta para desplegable: siempre el campo squeeze_page_name si existe."""
     if p is None:
         return ""
-    # Try linked user
-    if User is not None and hasattr(p, "user_id") and p.user_id:
-        u = db.session.get(User, p.user_id)
-        if u:
-            return getattr(u, "full_name", None) or getattr(u, "name", None) or getattr(u, "email", None) or str(u.id)
-    # Fallback to prescriptor fields
-    for attr in ("squeeze_page_name", "name", "nombre", "email"):
-        val = getattr(p, attr, None)
-        if val:
-            return val
-    return str(getattr(p, "id", "?"))
+    val = getattr(p, "squeeze_page_name", None)
+    if val:
+        return val
+    return getattr(p, "name", getattr(p, "nombre", str(p.id)))
 
 class LeadForm(FlaskForm):
     prescriptor_id = SelectField("Prescriptor", coerce=str, validators=[DataRequired()])
@@ -236,6 +229,10 @@ def new_lead():
         )
         db.session.add(lead)
         db.session.commit()
+        # registrar movimiento inicial en historial
+        from sigp.common.lead_utils import log_lead_change
+        log_lead_change(lead.id, lead.state_id, "Alta de lead")
+        db.session.commit()
 
         # enviar notificación a comerciales si el programa tiene emails configurados
         if Program is not None and form.program_info_id.data:
@@ -259,6 +256,27 @@ def new_lead():
                         current_app.logger.exception("Error enviando mail a comerciales: %s", exc)
                         flash("Lead creado pero no se pudo enviar correo a comerciales", "warning")
 
+                    # generar notificaciones internas para usuarios con mismo email
+                    Notification = getattr(Base.classes, "notifications", None)
+                    User = getattr(Base.classes, "users", None)
+                    if Notification is not None and User is not None:
+                        user_rows = db.session.query(User).filter(User.email.in_(emails)).all()
+                        if user_rows:
+                            import datetime, uuid as _uuid
+                            notif_objects = []
+                            for u in user_rows:
+                                notif_objects.append(Notification(
+                                    id=str(_uuid.uuid4()),
+                                    user_id=u.id,
+                                    title=subject,
+                                    body=body,
+                                    notif_type="INFO",
+                                    is_read=0,
+                                    created_at=datetime.datetime.utcnow(),
+                                ))
+                            db.session.bulk_save_objects(notif_objects)
+                            db.session.commit()
+
         flash("Lead creado", "success")
         return redirect(url_for("leads.leads_list"))
 
@@ -270,6 +288,35 @@ def new_lead():
 @login_required
 @require_perm("delete_leads")
 def delete_lead(lead_id):
+    """Eliminar leads cuyo estado sea 6."""
+
+# ---------------------------------------------------------------------------
+# Historial
+# ---------------------------------------------------------------------------
+
+@leads_bp.get("/<lead_id>/history")
+@login_required
+@require_perm("view_leads")
+def lead_history(lead_id):
+    LeadHistory = getattr(Base.classes, "lead_history", None)
+    if LeadHistory is None:
+        flash("Tabla lead_history no disponible", "danger")
+        return redirect(url_for("leads.leads_list"))
+
+    history = db.session.query(LeadHistory).filter(LeadHistory.lead_id == lead_id).order_by(LeadHistory.changed_at.desc()).all()
+
+    # maps
+    state_map = {}
+    if StateLead is not None:
+        srows = db.session.query(StateLead.id, StateLead.name).all()
+        state_map = {s.id: s.name for s in srows}
+    user_map = {}
+    User = getattr(Base.classes, "users", None)
+    if User is not None:
+        urows = db.session.query(User.id, User.email).all()
+        user_map = {u.id: u.email for u in urows}
+
+    return render_template("list/lead_history.html", history=history, state_map=state_map, user_map=user_map)
     """Eliminar leads cuyo estado sea 6."""
     if Lead is None:
         flash("Tabla leads no disponible", "danger")
