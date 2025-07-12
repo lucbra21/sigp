@@ -23,6 +23,7 @@ def _model(name):
 
 from uuid import uuid4
 from sigp.security import require_perm
+from sigp.common.email_utils import send_simple_mail
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -41,6 +42,7 @@ FIELDS = [
     "scholarship_value",
     "registration_value",
     "value_quotas",
+    "commercial_emails",
     "state",
 ]
 
@@ -142,6 +144,48 @@ def program_duplicate(program_id):
     db.session.commit()
     flash("Programa duplicado", "success")
     return redirect(url_for("programs.program_edit", program_id=new.id))
+
+
+@programs_bp.post("/test-mail")
+@login_required
+@require_perm("update_program")
+def program_test_mail_fixed():
+    """Envía un correo de prueba al remitente configurado (self-test)"""
+    from flask import current_app
+    from flask import request
+    recipient = request.form.get("to") or current_app.config.get("MAIL_DEFAULT_SENDER") or current_app.config.get("MAIL_USERNAME")
+    send_simple_mail(
+        [recipient],
+        "Prueba SMTP SIGP (self-test)",
+        "Correo de prueba para verificar el envío SMTP hacia la misma cuenta.",
+    )
+    flash(f"Correo de prueba enviado a {recipient}", "success")
+    return redirect(url_for("programs.programs_list"))
+
+
+@programs_bp.post("/<program_id>/test-email")
+@login_required
+@require_perm("update_program")
+def program_test_email(program_id):
+    """Envía un correo de prueba a las direcciones comerciales del programa."""
+    Program = _model("programs")
+    if not Program:
+        return "Modelo programs no disponible", 500
+    program = db.session.get(Program, program_id)
+    if not program:
+        flash("Programa no encontrado", "warning")
+        return redirect(url_for("programs.programs_list"))
+    emails = []
+    if getattr(program, "commercial_emails", None):
+        emails = [e.strip() for e in program.commercial_emails.split(",") if e.strip()]
+    if not emails:
+        flash("El programa no tiene emails comerciales definidos", "warning")
+        return redirect(url_for("programs.programs_list"))
+    subject = f"Prueba de envío de correos - Programa {program.name or program.id}"
+    body = "Este es un correo de prueba desde SIGP para verificar la configuración de envío."
+    send_simple_mail(emails, subject, body)
+    flash("Correo de prueba enviado a: " + ", ".join(emails), "success")
+    return redirect(url_for("programs.programs_list"))
 
 
 @programs_bp.post("/<program_id>/toggle")

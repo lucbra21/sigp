@@ -25,12 +25,20 @@ class Config:
     # Bcrypt
     BCRYPT_LOG_ROUNDS = 13
 
+    # SMTP / Email
+    MAIL_SERVER = os.getenv("MAIL_SERVER", "smtp.ionos.es")
+    MAIL_PORT = int(os.getenv("MAIL_PORT", 465))
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME", "sigp@sportsdatacampus.com")
+    # Se recomienda definir MAIL_PASSWORD en variable de entorno para no exponerla
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "Dep#Ext$2025")
+    MAIL_USE_SSL = os.getenv("MAIL_USE_SSL", "True").lower() in {"1", "true", "yes"}
+    MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "False").lower() in {"1", "true", "yes"}
+    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", MAIL_USERNAME)
+
     # Carpeta para contratos de prescriptores (dentro de static)
     CONTRACT_UPLOAD_FOLDER = "static/contracts"
     CONTRACT_ALLOWED_EXT = {"pdf"}
 
     # config.py  (modo desarrollo)
     SQLALCHEMY_ECHO = True
-#     * eliminar los estados de prescriptores sobrantes
-# en la alta de prescriptor hay que meter los campos que se necesitan 
-# * que estan en usuario por ejemplo mail celular nacionalidad etc
+

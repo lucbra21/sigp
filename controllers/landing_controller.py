@@ -33,7 +33,7 @@ class PublicLeadForm(FlaskForm):
     name = StringField("Nombre", validators=[DataRequired(), Length(max=100)])
     email = StringField("Email", validators=[Optional(), Email(), Length(max=255)])
     cellular = StringField("Celular", validators=[Optional(), Length(max=50)])
-    program_info_id = SelectField("Programa", coerce=str, validators=[Optional()])
+    program_info_id = SelectField("Programa", coerce=str, validators=[DataRequired(message="Seleccione un programa")])
     submit = SubmitField("Me interesa")
 
     class Meta:
@@ -92,6 +92,25 @@ def landing_page(prescriptor_id: str):
         db.session.add(new_lead)
         db.session.commit()
         current_app.logger.info("Nuevo lead captado para prescriptor %s", prescriptor_id)
+
+        # Notificar a comerciales
+        if Program is not None and form.program_info_id.data:
+            program = db.session.get(Program, form.program_info_id.data)
+            if program and getattr(program, "commercial_emails", None):
+                from sigp.email_utils import send_simple_mail  # import aquí para evitar ciclos
+                emails = [e.strip() for e in program.commercial_emails.split(",") if e.strip()]
+                if emails:
+                    subject = "Nuevo lead para programa {}".format(getattr(program, "name", program.id))
+                    body = (
+                        f"Se ha generado un nuevo lead desde squeeze page.\n\n"
+                        f"Prescriptor: {getattr(prescriptor, 'squeeze_page_name', prescriptor.id)}\n"
+                        f"Programa: {getattr(program, 'name', program.id)}\n"
+                        f"Nombre candidato: {form.name.data}\n"
+                        f"Email: {form.email.data or '-'}\n"
+                        f"Celular: {form.cellular.data or '-'}\n"
+                    )
+                    send_simple_mail(emails, subject, body)
+
         return render_template("public/thanks.html", prescriptor=prescriptor)
 
     # Reunir imágenes para el carrusel

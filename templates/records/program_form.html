@@ -70,6 +70,10 @@
     </div>
   </div>
   <div class="mb-3">
+    <label class="form-label" for="commercial_emails">Emails comerciales (separados por coma)</label>
+    <textarea class="form-control" id="commercial_emails" name="commercial_emails" rows="2" placeholder="email1@example.com, email2@example.com">{{ program.commercial_emails if program else '' }}</textarea>
+  </div>
+  <div class="mb-3">
     <label class="form-label" for="state">Estado</label>
     {% set st = program.state if program else 'Activo' %}
     <select class="form-select" id="state" name="state">
