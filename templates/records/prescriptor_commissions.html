@@ -1,0 +1,31 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Comisiones{% endblock %}
+{% block content %}
+<h2>Comisiones del prescriptor {{ presc.squeeze_page_name }}</h2>
+<form method="post">
+<table class="table table-bordered table-sm">
+  <thead>
+    <tr>
+      <th>Programa</th>
+      <th>Comisión</th>
+      <th>% 1ª cuota</th>
+      <th>Valor inscripción</th>
+      <th>Valor cuotas</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in rows %}
+    <tr>
+      <td>{{ prog_map[c.program_id] }}</td>
+      <td><input type="number" step="0.01" name="comm_{{ c.id }}" value="{{ c.commission_value }}" class="form-control form-control-sm"/></td>
+      <td><input type="number" step="0.01" name="first_{{ c.id }}" value="{{ c.first_installment_pct }}" class="form-control form-control-sm"/></td>
+      <td><input type="number" step="0.01" name="reg_{{ c.id }}" value="{{ c.registration_value }}" class="form-control form-control-sm"/></td>
+      <td><input type="number" step="0.01" name="quot_{{ c.id }}" value="{{ c.value_quotas }}" class="form-control form-control-sm"/></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<button class="btn btn-primary">Guardar</button>
+<a href="{{ url_for('prescriptors.edit_prescriptor', prescriptor_id=presc.id) }}" class="btn btn-secondary">Volver</a>
+</form>
+{% endblock %}

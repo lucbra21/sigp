@@ -13,6 +13,7 @@ from flask import (
     flash,
 )
 from flask_login import login_required, current_user
+from sigp.security import require_perm
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, SelectField, SubmitField, TextAreaField
@@ -291,6 +292,12 @@ def create_prescriptor():
         try:
             db.session.commit()
             flash("Prescriptor creado", "success")
+            # sincronizar comisiones iniciales
+            try:
+                from sigp.common.prescriptor_utils import sync_commissions_for_prescriptor
+                sync_commissions_for_prescriptor(new_obj.id)
+            except Exception as exc:
+                current_app.logger.exception("Error sincronizando comisiones: %s", exc)
         except Exception as e:
             db.session.rollback()
             current_app.logger.exception("Error al guardar prescriptor: %s", e)
@@ -348,6 +355,8 @@ def edit_prescriptor(prescriptor_id):
         action=url_for("prescriptors.update_prescriptor", prescriptor_id=prescriptor_id),
         contract_url=getattr(obj, "contract_url", None),
         image_urls=image_urls,
+        edit=True,
+        obj=obj,
     )
 
 
@@ -399,23 +408,24 @@ def update_prescriptor(prescriptor_id):
         upload_dir = current_app.config.get("PRESCRIPTOR_IMG_FOLDER", os.path.join(current_app.root_path, "static", "prescriptors"))
         os.makedirs(upload_dir, exist_ok=True)
         def _save_file(file_field, suffix):
-            if file_field.data:
+            if file_field and getattr(file_field, 'data', None):
                 filename = secure_filename(f"{obj.id}_{suffix}.{file_field.data.filename.rsplit('.',1)[-1]}")
                 path = os.path.join(upload_dir, filename)
                 file_field.data.save(path)
                 return url_for("static", filename=f"prescriptors/{filename}")
             return None
+
         mapping = {
-            "photo_file":"photo_url",
-            "squeeze_page_image_1_file":"squeeze_page_image_1",
-            "squeeze_page_image_2_file":"squeeze_page_image_2",
-            "squeeze_page_image_3_file":"squeeze_page_image_3",
+            "photo_file": "photo_url",
+            "squeeze_page_image_1_file": "squeeze_page_image_1",
+            "squeeze_page_image_2_file": "squeeze_page_image_2",
+            "squeeze_page_image_3_file": "squeeze_page_image_3",
         }
         for fld_file, model_attr in mapping.items():
             if hasattr(form, fld_file):
-                url = _save_file(getattr(form, fld_file), model_attr)
-                if url:
-                    setattr(obj, model_attr, url)
+                saved_url = _save_file(getattr(form, fld_file), model_attr)
+                if saved_url:
+                    setattr(obj, model_attr, saved_url)
 
         # manejar contrato
         if form.contract_file.data:
@@ -423,13 +433,14 @@ def update_prescriptor(prescriptor_id):
             path = current_app.config["CONTRACT_UPLOAD_FOLDER"] / filename
             form.contract_file.data.save(path)
             obj.contract_url = url_for("static", filename=f"contracts/{filename}")
+
         # actualizar usuario asociado
-        UserModel = getattr(Base.classes, "users", None)
         if UserModel and obj.user_id:
             u = db.session.get(UserModel, obj.user_id)
             if u:
                 u.email = form.email.data
                 u.cellular = form.cellular.data
+
         try:
             db.session.commit()
             flash("Prescriptor actualizado", "success")
@@ -459,4 +470,39 @@ def update_prescriptor(prescriptor_id):
         action=url_for("prescriptors.update_prescriptor", prescriptor_id=prescriptor_id),
         contract_url=getattr(obj, "contract_url", None),
         image_urls=image_urls,
+        edit=True,
+        obj=obj,
     )
+
+
+@prescriptors_bp.route("/<prescriptor_id>/commissions", methods=["GET", "POST"])
+@login_required
+@require_perm("update_prescriptor_commission")
+def prescriptor_commissions(prescriptor_id):
+    PrescComm = getattr(Base.classes, "prescriptor_commission", None)
+    Program = getattr(Base.classes, "programs", None)
+    Model = _get_model()
+    if not (PrescComm and Program and Model):
+        flash("Modelos no disponibles", "danger")
+        return redirect(url_for("prescriptors.list_prescriptors"))
+    presc = db.session.get(Model, prescriptor_id)
+    if not presc:
+        flash("Prescriptor no encontrado", "warning")
+        return redirect(url_for("prescriptors.list_prescriptors"))
+
+    if request.method == "POST":
+        rows = db.session.query(PrescComm).filter_by(prescriptor_id=prescriptor_id).all()
+        for r in rows:
+            r.commission_value = request.form.get(f"comm_{r.id}", type=float) or 0
+            r.first_installment_pct = request.form.get(f"first_{r.id}", type=float) or 0
+            r.registration_value = request.form.get(f"reg_{r.id}", type=float) or 0
+            r.value_quotas = request.form.get(f"quot_{r.id}", type=float) or 0
+        db.session.commit()
+        flash("Comisiones guardadas", "success")
+        return redirect(url_for("prescriptors.prescriptor_commissions", prescriptor_id=prescriptor_id))
+
+    rows = db.session.query(PrescComm).filter_by(prescriptor_id=prescriptor_id).all()
+    prog_rows = db.session.query(Program.id, Program.name).all()
+    prog_map = {pid: name for pid, name in prog_rows}
+    return render_template("records/prescriptor_commissions.html", rows=rows, presc=presc, prog_map=prog_map)
+

@@ -1,7 +1,11 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Formulario Prescriptor{% endblock %}
 {% block content %}
-<h2>Formulario Prescriptor</h2>
+<h2>Formulario Prescriptor
+{% if edit and can('update_prescriptor_commission') %}
+ <a href="{{ url_for('prescriptors.prescriptor_commissions', prescriptor_id=obj.id) }}" class="btn btn-sm btn-outline-info ms-3">Comisiones</a>
+{% endif %}
+</h2>
 <form method="post" action="{{ action }}" enctype="multipart/form-data">
     {{ form.csrf_token }}
     <div class="mb-3">

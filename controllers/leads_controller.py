@@ -399,11 +399,12 @@ def update_status(lead_id):
         else:
             lead.observations = obs
         lead.state_id = new_state
-        # asignar comercial
-        try:
-            lead.commercial_id = current_user.id
-        except Exception:
-            pass
+        # asignar comercial: sólo la primera vez que pasa a Matriculado
+        if new_state == MATRICULADO_ID and not getattr(lead, 'commercial_id', None):
+            try:
+                lead.commercial_id = current_user.id
+            except Exception:
+                pass
         try:
             db.session.commit()
             from sigp.common.lead_utils import log_lead_change
