@@ -20,6 +20,12 @@
     {{ form.installments.label(class="form-label") }}
     {{ form.installments(class="form-control") }}
   </div>
+  <div class="mb-3" id="grpStart">
+    {{ form.start_month.label(class="form-label") }}
+    {{ form.start_month(class="form-select") }}
+    {{ form.start_year.label(class="form-label ms-3") }}
+    {{ form.start_year(class="form-control d-inline-block", style="width:120px") }}
+  </div>
   <div class="mb-3" id="grpObs">
     {{ form.observations.label(class="form-label") }}
     {{ form.observations(class="form-control") }}
@@ -35,9 +41,33 @@ function toggle() {
   document.getElementById('grpProgram').style.display = showMat ? '' : 'none';
   document.getElementById('grpEdition').style.display = showMat ? '' : 'none';
   document.getElementById('grpInstall').style.display = showMat ? '' : 'none';
+  document.getElementById('grpStart').style.display = showMat ? '' : 'none';
   document.getElementById('grpObs').style.display = showMat ? 'none' : '';
 }
 window.addEventListener('DOMContentLoaded', toggle);
 document.getElementById('stateSel').addEventListener('change', toggle);
+
+function adjustYear() {
+  const monthSel = document.getElementById('start_month');
+  const yearInput = document.getElementById('start_year');
+  if (!monthSel || !yearInput) return;
+  const m = monthSel.value;
+  const today = new Date();
+  let year = today.getFullYear();
+  if (m === '03') {
+    if (today.getMonth() + 1 >= 3) {
+      year = today.getMonth() + 1 > 3 ? today.getFullYear() + 1 : year;
+    }
+  } else if (m === '10') {
+    if (today.getMonth() + 1 >= 10) {
+      year = today.getMonth() + 1 > 10 ? today.getFullYear() + 1 : year;
+    }
+  }
+  yearInput.value = year;
+}
+if (document.getElementById('start_month')) {
+  adjustYear();
+  document.getElementById('start_month').addEventListener('change', adjustYear);
+}
 </script>
 {% endblock %}

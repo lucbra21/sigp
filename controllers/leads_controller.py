@@ -1,10 +1,10 @@
 """Leads management blueprint: simple listing of leads."""
 from __future__ import annotations
 
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
 import uuid
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, SubmitField, TextAreaField
+from wtforms import StringField, SelectField, SubmitField, TextAreaField, IntegerField
 from wtforms.validators import DataRequired, Length, Email, Optional
 from flask_login import login_required
 
@@ -43,6 +43,8 @@ class LeadStatusForm(FlaskForm):
     program_id = SelectField("Programa matriculado", coerce=str, validators=[Optional()])
     edition_id = SelectField("Edición", coerce=int, validators=[Optional()])
     installments = StringField("Cuotas", validators=[Optional(), Length(max=20)])
+    start_month = SelectField("Mes inicio", choices=[("03", "Marzo"), ("10", "Octubre")], validators=[Optional()])
+    start_year = IntegerField("Año inicio", validators=[Optional()])
     submit = SubmitField("Guardar")
 
 
@@ -375,15 +377,32 @@ def update_status(lead_id):
         form.state_id.data = lead.state_id
         form.observations.data = getattr(lead, "observations", "")
         form.program_id.data = lead.program_id if hasattr(lead, 'program_id') else lead.program_info_id
-        form.installments.data = getattr(lead, "installments", "")
+        form.installments.data = getattr(lead, "payment_fees", "")
+        form.start_month.data = getattr(lead, "start_month", None)
+        form.start_year.data = getattr(lead, "start_year", None)
+        # Defaults if empty
+        if not form.start_month.data or not form.start_year.data:
+            from datetime import date
+            today = date.today()
+            if today.month < 3:
+                form.start_month.data, form.start_year.data = "03", today.year
+            elif today.month < 10:
+                form.start_month.data, form.start_year.data = "10", today.year
+            else:
+                form.start_month.data, form.start_year.data = "03", today.year + 1
 
     if form.validate_on_submit():
         new_state = form.state_id.data
         obs = form.observations.data or ""
         if new_state == MATRICULADO_ID:
+            if not form.installments.data or not form.installments.data.strip():
+                flash("Debes indicar las cuotas del plan de pago", "warning")
+                return render_template("records/lead_status_form.html", form=form, matriculado_id=MATRICULADO_ID)
             lead.program_id = form.program_id.data
             lead.edition_id = form.edition_id.data
             lead.payment_fees = form.installments.data
+            lead.start_month = form.start_month.data
+            lead.start_year = form.start_year.data
             # Obtener nombres legibles
             prog_name = str(lead.program_id)
             if Program is not None and lead.program_id:
@@ -395,7 +414,7 @@ def update_status(lead_id):
                 ed = db.session.get(Edition, lead.edition_id)
                 if ed:
                     ed_name = getattr(ed, 'name', ed_name)
-            obs = f"Matriculado en programa {prog_name} edición {ed_name} cuotas {lead.payment_fees}"
+            obs = f"Matriculado en programa {prog_name} edición {ed_name} cuotas {lead.payment_fees or '-'} inicio {lead.start_month}/{lead.start_year}"
         else:
             lead.observations = obs
         lead.state_id = new_state
