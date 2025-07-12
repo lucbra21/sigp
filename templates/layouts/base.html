@@ -52,6 +52,7 @@
                         <a class="nav-link dropdown-toggle" href="#" id="prescDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Prescripción</a>
                         <ul class="dropdown-menu" aria-labelledby="prescDropdown">
                             <li><a class="dropdown-item" href="{{ url_for('leads.leads_list') }}">Gestión de leads</a></li>
+{% if can('read_own_leads') %}<li><a class="dropdown-item" href="{{ url_for('leads.my_leads') }}">Mis leads</a></li>{% endif %}
                         </ul>
                     </li>
                     {% endif %}

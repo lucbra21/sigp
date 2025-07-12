@@ -117,6 +117,77 @@ def leads_list():
     )
 
 
+
+
+@leads_bp.get("/my")
+@login_required
+def my_leads():
+    """Listado paginado de leads solo del prescriptor logueado."""
+    if Lead is None:
+        flash("Tabla leads no disponible", "danger")
+        return redirect(url_for("dashboard.dashboard_home"))
+
+    # Identificar prescriptor del usuario
+    my_presc_id = None
+    if Prescriptor is not None and current_user.is_authenticated:
+        presc = db.session.query(Prescriptor).filter(Prescriptor.user_id == current_user.id).first()
+        if presc:
+            my_presc_id = presc.id
+    if not my_presc_id:
+        flash("No se encontró un prescriptor asociado a tu usuario", "warning")
+        return redirect(url_for("dashboard.dashboard_home"))
+
+    # Filtros
+    cand_q = request.args.get("candidate", "").strip()
+    state_q = request.args.get("state", "")
+    from_q = request.args.get("from", "")
+    to_q = request.args.get("to", "")
+
+    page = request.args.get("page", 1, type=int)
+    per_page = 25
+
+    q = db.session.query(Lead).filter(Lead.prescriptor_id == my_presc_id)
+    if cand_q:
+        q = q.filter(Lead.candidate_name.ilike(f"%{cand_q}%"))
+    if state_q:
+        q = q.filter(Lead.state_id == int(state_q))
+    if from_q:
+        q = q.filter(Lead.created_at >= from_q)
+    if to_q:
+        q = q.filter(Lead.created_at <= to_q + " 23:59:59")
+
+    q = q.order_by(Lead.created_at.desc())
+    total = q.count()
+    leads = q.offset((page - 1) * per_page).limit(per_page).all()
+
+    # State map
+    state_map = {}
+    state_choices = []
+    if StateLead is not None:
+        srows = db.session.query(StateLead).all()
+        state_map = {s.id: s.name for s in srows}
+        state_choices = [(s.id, s.name) for s in srows]
+
+    # Program map
+    program_map = {}
+    if Program is not None and leads:
+        pids = {l.program_info_id for l in leads if l.program_info_id}
+        prow = db.session.query(Program).filter(Program.id.in_(pids)).all()
+        program_map = {p.id: getattr(p, "name", getattr(p, "nombre", p.id)) for p in prow}
+
+    return render_template(
+        "list/my_leads.html",
+        leads=leads,
+        state_map=state_map,
+        state_choices=state_choices,
+        program_map=program_map,
+        filters={"candidate": cand_q, "state": state_q, "from": from_q, "to": to_q},
+        total=total,
+        page=page,
+        per_page=per_page,
+    )
+
+
 @leads_bp.route("/new", methods=["GET", "POST"])
 @login_required
 @require_perm("create_leads")
