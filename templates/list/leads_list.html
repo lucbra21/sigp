@@ -65,6 +65,11 @@
                 <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
               </form>
               {% endif %}
+              {% if can('delete_leads') and l.is_test %}
+               <form method="post" action="{{ url_for('leads.delete_test_lead', lead_id=l.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar lead de prueba?');">
+                 <button type="submit" class="btn btn-sm btn-danger">Eliminar test</button>
+               </form>
+               {% endif %}
             </td>
             {% endif %}
         </tr>

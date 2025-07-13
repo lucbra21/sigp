@@ -34,10 +34,12 @@ def create_commission_ledger(lead) -> None:  # noqa: C901
     if Ledger is None or PrescComm is None:
         return
 
+    # skip test leads
+    if getattr(lead, "is_test", False):
+        return
+
     # avoid duplicates
-    exists = (
-        db.session.query(Ledger).filter(Ledger.lead_id == lead.id).first()
-    )
+    exists = db.session.query(Ledger).filter(Ledger.lead_id == lead.id).first()
     if exists:
         return
 

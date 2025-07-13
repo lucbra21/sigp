@@ -1,7 +1,7 @@
 """Leads management blueprint: simple listing of leads."""
 from __future__ import annotations
 
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, abort
 import uuid
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, SubmitField, TextAreaField, IntegerField
@@ -309,6 +309,31 @@ def delete_lead(lead_id):
 # ---------------------------------------------------------------------------
 # Historial
 # ---------------------------------------------------------------------------
+
+@leads_bp.post("/<lead_id>/delete-test")
+@login_required
+@require_perm("delete_leads")
+def delete_test_lead(lead_id):
+    """Delete a test lead and its history/ledger."""
+    Lead = getattr(Base.classes, "leads", None)
+    LeadHistory = getattr(Base.classes, "lead_history", None)
+    Ledger = getattr(Base.classes, "ledger", None)
+    if Lead is None:
+        abort(404)
+    lead = db.session.get(Lead, lead_id)
+    if not lead or not getattr(lead, "is_test", False):
+        flash("Solo se pueden eliminar leads de prueba", "warning")
+        return redirect(url_for("leads.list_leads"))
+    # delete related
+    if LeadHistory is not None:
+        db.session.query(LeadHistory).filter(LeadHistory.lead_id == lead_id).delete()
+    if Ledger is not None:
+        db.session.query(Ledger).filter(Ledger.lead_id == lead_id).delete()
+    db.session.delete(lead)
+    db.session.commit()
+    flash("Lead de prueba eliminado", "success")
+    return redirect(url_for("leads.list_leads"))
+
 
 @leads_bp.get("/<lead_id>/history")
 @login_required
