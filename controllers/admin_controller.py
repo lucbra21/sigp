@@ -67,10 +67,19 @@ def _state_name(state_id: int) -> str:
 def pay_approval():
     # Filtros de periodo
     now = _dt.datetime.utcnow()
-    from_month = int(request.args.get("from_month", now.month))
-    from_year = int(request.args.get("from_year", now.year))
-    to_month = int(request.args.get("to_month", now.month))
-    to_year = int(request.args.get("to_year", now.year))
+    def _opt_int(name):
+        try:
+            val = request.args.get(name)
+            return int(val) if val else None
+        except (TypeError, ValueError):
+            return None
+    def _int_param(name, default):
+        v = _opt_int(name)
+        return v if v is not None else default
+    from_month = _int_param("from_month", now.month)
+    from_year  = _int_param("from_year",  now.year)
+    to_month   = _int_param("to_month",   now.month)
+    to_year    = _int_param("to_year",    now.year)
     period_start = from_year * 100 + from_month
     period_end = to_year * 100 + to_month
     if Ledger is None:
@@ -182,6 +191,103 @@ def suspend_payment(ledger_id):
     _notify_and_log([row], SUSPENDIDO_ID)
     flash("Movimiento suspendido", "warning")
     return redirect(url_for("admin.pay_approval"))
+
+@admin_bp.post("/payments/canceled/<ledger_id>/invoice")
+@login_required
+@require_perm("manage_payments")
+def invoice_payment(ledger_id):
+    if Ledger is None:
+        flash("Tabla ledger no disponible", "danger")
+        return redirect(url_for("admin.list_canceled"))
+    row = db.session.get(Ledger, ledger_id)
+    if not row:
+        flash("Movimiento no encontrado", "warning")
+        return redirect(url_for("admin.list_canceled"))
+    row.state_id = PEND_FACT_ID
+    row.approved_at = _dt.datetime.utcnow()
+    db.session.commit()
+    db.session.flush()
+    _notify_and_log([row], PEND_FACT_ID)
+    flash("Movimiento enviado a facturar", "success")
+    return redirect(url_for("admin.list_canceled"))
+
+# ---- LISTADOS POR ESTADO ----
+@admin_bp.get("/payments/suspended")
+@login_required
+@require_perm("manage_payments")
+def list_suspended():
+    now = _dt.datetime.utcnow()
+    def _opt_int(name):
+        try:
+            val = request.args.get(name)
+            return int(val) if val else None
+        except (TypeError, ValueError):
+            return None
+    def _int_param(name, default):
+        v = _opt_int(name)
+        return v if v is not None else default
+    from_month = _int_param("from_month", now.month)
+    from_year  = _int_param("from_year",  now.year)
+    to_month   = _int_param("to_month",   now.month)
+    to_year    = _int_param("to_year",    now.year)
+    query = db.session.query(Ledger).filter(Ledger.state_id == SUSPENDIDO_ID)
+    period_start = from_year * 100 + from_month
+    query = query.filter((Ledger.approve_due_year*100 + Ledger.approve_due_month) >= period_start)
+    if request.args.get("to_year") or request.args.get("to_month"):
+        period_end = to_year * 100 + to_month
+        query = query.filter((Ledger.approve_due_year*100 + Ledger.approve_due_month) <= period_end)
+    rows = query.order_by(Ledger.approve_due_year, Ledger.approve_due_month).all()
+    pres_map, lead_map = {}, {}
+    if rows:
+        if Prescriptor is not None:
+            pids = {r.prescriptor_id for r in rows}
+            pres_rows = db.session.query(Prescriptor).filter(Prescriptor.id.in_(pids)).all()
+            pres_map = {p.id: getattr(p, "name", p.id) for p in pres_rows}
+        if Lead is not None:
+            lids = {r.lead_id for r in rows if r.lead_id}
+            lead_rows = db.session.query(Lead).filter(Lead.id.in_(lids)).all()
+            lead_map = {l.id: getattr(l, "candidate_name", l.id) for l in lead_rows}
+    return render_template("list/pay_status.html", rows=rows, pres_map=pres_map, lead_map=lead_map,
+                           page_title="Pagos suspendidos", state_id=SUSPENDIDO_ID, SUSPENDIDO_ID=SUSPENDIDO_ID, ANULADO_ID=ANULADO_ID)
+
+
+@admin_bp.get("/payments/canceled")
+@login_required
+@require_perm("manage_payments")
+def list_canceled():
+    now = _dt.datetime.utcnow()
+    def _opt_int(name):
+        try:
+            val = request.args.get(name)
+            return int(val) if val else None
+        except (TypeError, ValueError):
+            return None
+    def _int_param(name, default):
+        v = _opt_int(name)
+        return v if v is not None else default
+    from_month = _int_param("from_month", now.month)
+    from_year  = _int_param("from_year",  now.year)
+    to_month   = _int_param("to_month",   now.month)
+    to_year    = _int_param("to_year",    now.year)
+    query = db.session.query(Ledger).filter(Ledger.state_id == ANULADO_ID)
+    period_start = from_year * 100 + from_month
+    query = query.filter((Ledger.approve_due_year*100 + Ledger.approve_due_month) >= period_start)
+    if request.args.get("to_year") or request.args.get("to_month"):
+        period_end = to_year * 100 + to_month
+        query = query.filter((Ledger.approve_due_year*100 + Ledger.approve_due_month) <= period_end)
+    rows = query.order_by(Ledger.approve_due_year, Ledger.approve_due_month).all()
+    pres_map, lead_map = {}, {}
+    if rows:
+        if Prescriptor is not None:
+            pids = {r.prescriptor_id for r in rows}
+            pres_rows = db.session.query(Prescriptor).filter(Prescriptor.id.in_(pids)).all()
+            pres_map = {p.id: getattr(p, "name", p.id) for p in pres_rows}
+        if Lead is not None:
+            lids = {r.lead_id for r in rows if r.lead_id}
+            lead_rows = db.session.query(Lead).filter(Lead.id.in_(lids)).all()
+            lead_map = {l.id: getattr(l, "candidate_name", l.id) for l in lead_rows}
+    return render_template("list/pay_status.html", rows=rows, pres_map=pres_map, lead_map=lead_map,
+                           page_title="Pagos anulados", state_id=ANULADO_ID, SUSPENDIDO_ID=SUSPENDIDO_ID, ANULADO_ID=ANULADO_ID)
 
 # ---- RUTAS EN LOTE ----
 @admin_bp.post("/payments/approval/bulk_cancel")

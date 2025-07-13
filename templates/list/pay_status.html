@@ -1,0 +1,70 @@
+{% extends 'layouts/base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<h2>{{ page_title }}</h2>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-auto">
+    <label class="form-label">Desde</label>
+    <select class="form-select" name="from_month">
+      {% for m in range(1,13) %}
+      <option value="{{m}}" {% if m == from_month %}selected{% endif %}>{{'%02d' % m}}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <label class="form-label">Año</label>
+    <input type="number" class="form-control" name="from_year" value="{{ from_year }}" />
+  </div>
+  <div class="col-auto">
+    <label class="form-label">Hasta</label>
+    <select class="form-select" name="to_month">
+      {% for m in range(1,13) %}
+      <option value="{{m}}" {% if m == to_month %}selected{% endif %}>{{'%02d' % m}}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <label class="form-label">Año</label>
+    <input type="number" class="form-control" name="to_year" value="{{ to_year }}" />
+  </div>
+  <div class="col-auto align-self-end"><button class="btn btn-primary">Filtrar</button></div>
+</form>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Prescriptor</th>
+      <th>Lead</th>
+      <th>Concepto</th>
+      <th>Monto</th>
+      <th>Periodo</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ pres_map.get(r.prescriptor_id, r.prescriptor_id) }}</td>
+      <td>{{ lead_map.get(r.lead_id, '-') }}</td>
+      <td>{{ r.concept }}</td>
+      <td>{{ '%.2f'|format(r.amount) }}</td>
+      <td>{{ r.approve_due_month }}/{{ r.approve_due_year }}</td>
+      <td>
+        {% if state_id == SUSPENDIDO_ID %}
+        <form method="post" action="{{ url_for('admin.approve_payment', ledger_id=r.id) }}" class="d-inline">
+          <button class="btn btn-sm btn-success" onclick="return confirm('¿Aprobar?');">Aprobar</button>
+        </form>
+        <form method="post" action="{{ url_for('admin.reject_payment', ledger_id=r.id) }}" class="d-inline">
+          <button class="btn btn-sm btn-danger" onclick="return confirm('¿Anular?');">Anular</button>
+        </form>
+        {% elif state_id == ANULADO_ID %}
+        <form method="post" action="{{ url_for('admin.invoice_payment', ledger_id=r.id) }}" class="d-inline">
+          <button class="btn btn-sm btn-warning" onclick="return confirm('¿Enviar a facturar?');">Facturar</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% if rows|length == 0 %}<p>No hay registros.</p>{% endif %}
+{% endblock %}
