@@ -8,6 +8,7 @@ from flask_login import login_required
 from sigp import db
 from sigp.models import Base
 from sigp.security import require_perm
+from sigp.common.email_utils import send_simple_mail
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -15,11 +16,42 @@ Ledger = getattr(Base.classes, "ledger", None)
 StateLedger = getattr(Base.classes, "state_ledger", None)
 Prescriptor = getattr(Base.classes, "prescriptors", None)
 Lead = getattr(Base.classes, "leads", None)
+LeadHistory = getattr(Base.classes, "lead_history", None)
 
 PEND_APROB_ID = 1  # PEND_APROB_ADMIN
 PEND_FACT_ID = 2  # PEND_FACTURAR
 ANULADO_ID = 5  # ANULADO
 SUSPENDIDO_ID = 6  # SUSPENDIDO
+
+
+def _notify_and_log(ledger_rows, new_state_id):
+    """Send email notifications to prescriptors and log lead history."""
+    if not ledger_rows:
+        return
+    # Group by prescriptor
+    if Prescriptor is None:
+        return
+    presc_ids = {r.prescriptor_id for r in ledger_rows}
+    prescs = db.session.query(Prescriptor).filter(Prescriptor.id.in_(presc_ids)).all()
+    presc_map = {p.id: p for p in prescs}
+    # email body per prescriptor
+    mail_data = {}
+    for r in ledger_rows:
+        p = presc_map.get(r.prescriptor_id)
+        if not p or not getattr(p, "email", None):
+            continue
+        mail_data.setdefault(p.email, []).append(r)
+        # history
+        if LeadHistory is not None and r.lead_id:
+            hist = LeadHistory(lead_id=r.lead_id, ts=_dt.datetime.utcnow(), action="STATE_CHANGE",
+                               notes=f"Pago comisión - nuevo estado {new_state_id}")
+            db.session.add(hist)
+    db.session.commit()
+    state_name = _state_name(new_state_id)
+    for email, items in mail_data.items():
+        lines = [f"Lead {it.lead_id} concepto {it.concept} monto {it.amount}" for it in items]
+        body = "Se actualizó el estado de los siguientes pagos a '{}':\n\n".format(state_name) + "\n".join(lines)
+        send_simple_mail([email], "Actualización de pagos de comisión", body)
 
 
 def _state_name(state_id: int) -> str:
@@ -83,6 +115,9 @@ def bulk_approve(): # approve selected
         .update({Ledger.state_id: PEND_FACT_ID, Ledger.approved_at: _dt.datetime.utcnow()}, synchronize_session=False)
     )
     db.session.commit()
+    # fetch affected rows for email/history
+    rows = db.session.query(Ledger).filter(Ledger.id.in_(ids)).all()
+    _notify_and_log(rows, PEND_FACT_ID)
     flash(f"Se aprobaron {updated} movimientos", "success")
     return redirect(url_for("admin.pay_approval"))
 
@@ -102,6 +137,8 @@ def approve_payment(ledger_id):
     row.state_id = PEND_FACT_ID
     row.approved_at = _dt.datetime.utcnow()
     db.session.commit()
+    db.session.flush()
+    _notify_and_log([row], PEND_FACT_ID)
     flash("Movimiento aprobado", "success")
     return redirect(url_for("admin.pay_approval"))
 
@@ -121,6 +158,8 @@ def reject_payment(ledger_id):
     row.state_id = ANULADO_ID
     row.approved_at = _dt.datetime.utcnow()
     db.session.commit()
+    db.session.flush()
+    _notify_and_log([row], ANULADO_ID)
     flash("Movimiento anulado", "info")
     return redirect(url_for("admin.pay_approval"))
 
@@ -139,6 +178,8 @@ def suspend_payment(ledger_id):
     row.state_id = SUSPENDIDO_ID
     row.approved_at = _dt.datetime.utcnow()
     db.session.commit()
+    db.session.flush()
+    _notify_and_log([row], SUSPENDIDO_ID)
     flash("Movimiento suspendido", "warning")
     return redirect(url_for("admin.pay_approval"))
 
@@ -157,6 +198,8 @@ def bulk_cancel():
         .update({Ledger.state_id: ANULADO_ID, Ledger.approved_at: _dt.datetime.utcnow()}, synchronize_session=False)
     )
     db.session.commit()
+    rows = db.session.query(Ledger).filter(Ledger.id.in_(ids)).all()
+    _notify_and_log(rows, ANULADO_ID)
     flash(f"Se anularon {upd} movimientos", "info")
     return redirect(url_for("admin.pay_approval"))
 
@@ -175,5 +218,7 @@ def bulk_suspend():
         .update({Ledger.state_id: SUSPENDIDO_ID, Ledger.approved_at: _dt.datetime.utcnow()}, synchronize_session=False)
     )
     db.session.commit()
+    rows = db.session.query(Ledger).filter(Ledger.id.in_(ids)).all()
+    _notify_and_log(rows, SUSPENDIDO_ID)
     flash(f"Se suspendieron {upd} movimientos", "warning")
     return redirect(url_for("admin.pay_approval"))
