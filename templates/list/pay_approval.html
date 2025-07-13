@@ -35,7 +35,9 @@
   <div class="mb-2">
     <button type="button" class="btn btn-sm btn-secondary" id="selAll">Seleccionar todos</button>
     <button type="button" class="btn btn-sm btn-secondary" id="deselAll">Deseleccionar todos</button>
-    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('¿Aprobar movimientos seleccionados?');">Aprobar seleccionados</button>
+    <button type="submit" formaction="{{ url_for('admin.bulk_approve') }}" class="btn btn-sm btn-success" onclick="return confirm('¿Aprobar movimientos seleccionados?');">Aprobar seleccionados</button>
+    <button type="submit" formaction="{{ url_for('admin.bulk_cancel') }}" class="btn btn-sm btn-danger" onclick="return confirm('¿Anular movimientos seleccionados?');">Anular seleccionados</button>
+    <button type="submit" formaction="{{ url_for('admin.bulk_suspend') }}" class="btn btn-sm btn-warning" onclick="return confirm('¿Suspender movimientos seleccionados?');">Suspender seleccionados</button>
   </div>
 <table class="table table-striped">
   <thead>
@@ -65,6 +67,9 @@
         </form>
         <form method="post" action="{{ url_for('admin.reject_payment', ledger_id=r.id) }}" class="d-inline">
           <button class="btn btn-sm btn-danger" onclick="return confirm('¿Anular?');">Anular</button>
+        </form>
+        <form method="post" action="{{ url_for('admin.suspend_payment', ledger_id=r.id) }}" class="d-inline">
+          <button class="btn btn-sm btn-warning" onclick="return confirm('¿Suspender?');">Suspender</button>
         </form>
       </td>
     </tr>

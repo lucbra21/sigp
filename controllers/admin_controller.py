@@ -19,6 +19,7 @@ Lead = getattr(Base.classes, "leads", None)
 PEND_APROB_ID = 1  # PEND_APROB_ADMIN
 PEND_FACT_ID = 2  # PEND_FACTURAR
 ANULADO_ID = 5  # ANULADO
+SUSPENDIDO_ID = 6  # SUSPENDIDO
 
 
 def _state_name(state_id: int) -> str:
@@ -71,7 +72,7 @@ def pay_approval():
 @admin_bp.post("/payments/approval/bulk")
 @login_required
 @require_perm("manage_payments")
-def bulk_approve():
+def bulk_approve(): # approve selected
     ids = request.form.getlist("selected_ids")
     if not ids:
         flash("No seleccionaste movimientos", "warning")
@@ -121,4 +122,58 @@ def reject_payment(ledger_id):
     row.approved_at = _dt.datetime.utcnow()
     db.session.commit()
     flash("Movimiento anulado", "info")
+    return redirect(url_for("admin.pay_approval"))
+
+
+@admin_bp.post("/payments/approval/<ledger_id>/suspend")
+@login_required
+@require_perm("manage_payments")
+def suspend_payment(ledger_id):
+    if Ledger is None:
+        flash("Tabla ledger no disponible", "danger")
+        return redirect(url_for("admin.pay_approval"))
+    row = db.session.get(Ledger, ledger_id)
+    if not row:
+        flash("Movimiento no encontrado", "warning")
+        return redirect(url_for("admin.pay_approval"))
+    row.state_id = SUSPENDIDO_ID
+    row.approved_at = _dt.datetime.utcnow()
+    db.session.commit()
+    flash("Movimiento suspendido", "warning")
+    return redirect(url_for("admin.pay_approval"))
+
+# ---- RUTAS EN LOTE ----
+@admin_bp.post("/payments/approval/bulk_cancel")
+@login_required
+@require_perm("manage_payments")
+def bulk_cancel():
+    ids = request.form.getlist("selected_ids")
+    if not ids:
+        flash("No seleccionaste movimientos", "warning")
+        return redirect(url_for("admin.pay_approval"))
+    upd = (
+        db.session.query(Ledger)
+        .filter(Ledger.id.in_(ids), Ledger.state_id == PEND_APROB_ID)
+        .update({Ledger.state_id: ANULADO_ID, Ledger.approved_at: _dt.datetime.utcnow()}, synchronize_session=False)
+    )
+    db.session.commit()
+    flash(f"Se anularon {upd} movimientos", "info")
+    return redirect(url_for("admin.pay_approval"))
+
+
+@admin_bp.post("/payments/approval/bulk_suspend")
+@login_required
+@require_perm("manage_payments")
+def bulk_suspend():
+    ids = request.form.getlist("selected_ids")
+    if not ids:
+        flash("No seleccionaste movimientos", "warning")
+        return redirect(url_for("admin.pay_approval"))
+    upd = (
+        db.session.query(Ledger)
+        .filter(Ledger.id.in_(ids), Ledger.state_id == PEND_APROB_ID)
+        .update({Ledger.state_id: SUSPENDIDO_ID, Ledger.approved_at: _dt.datetime.utcnow()}, synchronize_session=False)
+    )
+    db.session.commit()
+    flash(f"Se suspendieron {upd} movimientos", "warning")
     return redirect(url_for("admin.pay_approval"))
