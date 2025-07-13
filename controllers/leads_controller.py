@@ -5,6 +5,9 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 import uuid
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, SubmitField, TextAreaField, IntegerField
+from flask_wtf.file import FileField, FileAllowed
+from werkzeug.utils import secure_filename
+import os
 from wtforms.validators import DataRequired, Length, Email, Optional
 from flask_login import login_required
 
@@ -45,6 +48,7 @@ class LeadStatusForm(FlaskForm):
     installments = StringField("Cuotas", validators=[Optional(), Length(max=20)])
     start_month = SelectField("Mes inicio", choices=[("03", "Marzo"), ("10", "Octubre")], validators=[Optional()])
     start_year = IntegerField("Año inicio", validators=[Optional()])
+    receipt = FileField("Comprobante pago", validators=[Optional(), FileAllowed(["jpg", "jpeg", "png", "pdf", "gif"], "Formatos permitidos: jpg, png, pdf, gif")])
     submit = SubmitField("Guardar")
 
 
@@ -421,11 +425,28 @@ def update_status(lead_id):
         obs = form.observations.data or ""
         if new_state == MATRICULADO_ID:
             if not form.installments.data or not form.installments.data.strip():
+                # ensure receipt optional but we can store
+                pass
                 flash("Debes indicar las cuotas del plan de pago", "warning")
-                return render_template("records/lead_status_form.html", form=form, matriculado_id=MATRICULADO_ID)
+                return render_template("records/lead_status_form.html", form=form, lead=lead, matriculado_id=MATRICULADO_ID)
             lead.program_id = form.program_id.data
             lead.edition_id = form.edition_id.data
             lead.payment_fees = form.installments.data
+            # guardar archivo comprobante si viene
+            if form.receipt.data:
+                up_folder = current_app.config.get("RECEIPT_UPLOAD_FOLDER", os.path.join(current_app.static_folder, "uploads", "receipts"))
+                os.makedirs(up_folder, exist_ok=True)
+                filename = f"{uuid.uuid4().hex}_{secure_filename(form.receipt.data.filename)}"
+                save_path = os.path.join(up_folder, filename)
+                form.receipt.data.save(save_path)
+                if hasattr(lead, "matricula_receipt"):
+                    setattr(lead, "matricula_receipt", filename)
+                else:
+                    # fallback raw update when automap lacks column
+                    db.session.execute(
+                        db.text("UPDATE leads SET matricula_receipt = :fn WHERE id = :lid"),
+                        {"fn": filename, "lid": lead.id},
+                    )
             lead.start_month = form.start_month.data
             lead.start_year = form.start_year.data
             # Obtener nombres legibles

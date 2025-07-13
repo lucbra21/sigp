@@ -2,7 +2,7 @@
 {% block title %}Actualizar estado{% endblock %}
 {% block content %}
 <h2>Actualizar estado Lead</h2>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
   {{ form.hidden_tag() }}
   <div class="mb-3">
     {{ form.state_id.label(class="form-label") }}
@@ -19,6 +19,13 @@
   <div class="mb-3" id="grpInstall">
     {{ form.installments.label(class="form-label") }}
     {{ form.installments(class="form-control") }}
+  </div>
+  <div class="mb-3" id="grpReceipt">
+    {{ form.receipt.label(class="form-label") }}
+    {{ form.receipt(class="form-control") }}
+    {% if lead and lead.matricula_receipt %}
+      <a href="{{ url_for('static', filename='uploads/receipts/' ~ lead.matricula_receipt) }}" target="_blank" class="d-block mt-2">Ver comprobante actual</a>
+    {% endif %}
   </div>
   <div class="mb-3" id="grpStart">
     {{ form.start_month.label(class="form-label") }}
@@ -42,6 +49,7 @@ function toggle() {
   document.getElementById('grpEdition').style.display = showMat ? '' : 'none';
   document.getElementById('grpInstall').style.display = showMat ? '' : 'none';
   document.getElementById('grpStart').style.display = showMat ? '' : 'none';
+  document.getElementById('grpReceipt').style.display = showMat ? '' : 'none';
   document.getElementById('grpObs').style.display = showMat ? 'none' : '';
 }
 window.addEventListener('DOMContentLoaded', toggle);
