@@ -426,6 +426,12 @@ def update_status(lead_id):
                 pass
         try:
             db.session.commit()
+            # generar movimientos de libro mayor
+            try:
+                from sigp.common.ledger_utils import create_commission_ledger
+                create_commission_ledger(lead)
+            except Exception as exc:
+                current_app.logger.exception("Error creando ledger: %s", exc)
             from sigp.common.lead_utils import log_lead_change
             log_lead_change(lead.id, lead.state_id, obs)
             db.session.commit()
