@@ -24,7 +24,7 @@ def _first_quota_date(start_month: str, start_year: int) -> _dt.date:
     return _dt.date(start_year, 12, 1)  # December
 
 
-def create_commission_ledger(lead) -> None:  # noqa: C901
+def create_commission_ledger(lead) -> int:  # noqa: C901
     """Generate ledger movements for a newly matriculated lead.
 
     Assumes the lead row is already committed with program_id, payment_fees,
@@ -36,12 +36,12 @@ def create_commission_ledger(lead) -> None:  # noqa: C901
 
     # skip test leads
     if getattr(lead, "is_test", False):
-        return
+        return 0
 
     # avoid duplicates
     exists = db.session.query(Ledger).filter(Ledger.lead_id == lead.id).first()
     if exists:
-        return
+        return 0
 
     # fetch commission row
     comm_row = (
@@ -125,3 +125,4 @@ def create_commission_ledger(lead) -> None:  # noqa: C901
     if movements:
         db.session.bulk_save_objects(movements)
         db.session.commit()
+    return len(movements)

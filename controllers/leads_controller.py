@@ -473,11 +473,15 @@ def update_status(lead_id):
         try:
             db.session.commit()
             # generar movimientos de libro mayor
-            try:
-                from sigp.common.ledger_utils import create_commission_ledger
-                create_commission_ledger(lead)
-            except Exception as exc:
-                current_app.logger.exception("Error creando ledger: %s", exc)
+            # generar movimientos solo si estado nuevo es MATRICULADO
+            if new_state == MATRICULADO_ID:
+                try:
+                    from sigp.common.ledger_utils import create_commission_ledger
+                    added = create_commission_ledger(lead)
+                    if added == 0:
+                        flash("No se generaron cuotas nuevas porque ya existían movimientos para este lead", "info")
+                except Exception as exc:
+                    current_app.logger.exception("Error creando ledger: %s", exc)
             from sigp.common.lead_utils import log_lead_change
             log_lead_change(lead.id, lead.state_id, obs)
             db.session.commit()

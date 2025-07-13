@@ -98,6 +98,9 @@ def assign_permissions(role_id):
     # Agrupar por módulo usando el prefijo del nombre (users_nuevo -> users)
     grouped = {}
     for p in permissions:
+        if "_" not in p.name:
+            # ignore malformed permission names
+            continue
         parts = p.name.split("_", 1)
         module = parts[0]
         grouped.setdefault(module, []).append(p)
@@ -108,6 +111,9 @@ def assign_permissions(role_id):
     # Recalcular agrupación considerando posible nomenclatura 'action_module'
     regrouped = {}
     for p in permissions:
+        if "_" not in p.name:
+            # skip unexpected names
+            continue
         first, second = p.name.split("_", 1)
         first_l = first.lower()
         second_l = second.lower()
