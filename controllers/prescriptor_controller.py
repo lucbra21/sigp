@@ -120,6 +120,244 @@ def _get_model():
 
 
 # ---------------------------------------------------------------------------
+# Invoice upload
+StateLedger = getattr(Base.classes, "state_ledger", None)
+
+_DEF_STATE_IDS = {}
+
+def _state_id(slug: str):
+    """Devuelve id del estado con nombre o codigo dado (cache)."""
+    if slug in _DEF_STATE_IDS:
+        return _DEF_STATE_IDS[slug]
+    if StateLedger is None:
+        return None
+    q = db.session.query(StateLedger.id)
+    if hasattr(StateLedger, "code"):
+        q = q.filter((StateLedger.name == slug) | (StateLedger.code == slug))
+    else:
+        q = q.filter(StateLedger.name == slug)
+    row = q.first()
+    if row:
+        _DEF_STATE_IDS[slug] = row.id
+        return row.id
+    return None
+
+DEFAULT_PEND_FACT_ID = 2  # fallback cuando no se puede acceder a BD
+DEFAULT_FACTURADO_ID = 3
+
+
+Invoice = getattr(Base.classes, "invoice", None)
+Ledger = getattr(Base.classes, "ledger", None)
+
+
+@prescriptors_bp.get("/invoices/new")
+@login_required
+def new_invoice():
+    prescriptor_id = _get_prescriptor_id(current_user)
+    if not prescriptor_id:
+        flash("No estás asociado a un prescriptor", "warning")
+        return redirect("/")
+    if Ledger is None:
+        flash("Tabla ledger no disponible", "danger")
+        return redirect("/")
+    pend_id = _state_id("PENDIENTE_FACTURAR") or DEFAULT_PEND_FACT_ID
+    rows = (
+        db.session.query(Ledger)
+        .filter(Ledger.state_id == pend_id, Ledger.prescriptor_id == prescriptor_id)
+        .all()
+    )
+    return render_template("records/upload_invoice.html", rows=rows)
+
+
+@prescriptors_bp.post("/invoices")
+@login_required
+def create_invoice():
+    prescriptor_id = _get_prescriptor_id(current_user)
+    if not prescriptor_id:
+        flash("No estás asociado a un prescriptor", "warning")
+        return redirect("/")
+    if Ledger is None or Invoice is None:
+        flash("Modelos no disponibles", "danger")
+        return redirect("/")
+
+    number = request.form.get("number", "").strip()
+    date_str = request.form.get("invoice_date", "")
+    import datetime as _dt
+    try:
+        invoice_date = _dt.datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        flash("Fecha inválida", "warning")
+        return redirect(url_for("prescriptors.new_invoice"))
+
+    ledger_ids = request.form.getlist("ledger_ids")
+    if not ledger_ids:
+        flash("Selecciona movimientos a facturar", "warning")
+        return redirect(url_for("prescriptors.new_invoice"))
+
+    file = request.files.get("file")
+    if not file or file.filename == "":
+        flash("Adjunta el archivo de factura", "warning")
+        return redirect(url_for("prescriptors.new_invoice"))
+
+    from sigp.config import Config
+    allowed = Config.INVOICE_ALLOWED_EXT
+    ext = file.filename.rsplit(".",1)[-1].lower()
+    if ext not in allowed:
+        flash("Tipo de archivo no permitido", "warning")
+        return redirect(url_for("prescriptors.new_invoice"))
+    import uuid, os
+    fname = f"{uuid.uuid4()}.{ext}"
+    save_dir = os.path.join(os.getcwd(), Config.INVOICE_UPLOAD_FOLDER)
+    os.makedirs(save_dir, exist_ok=True)
+    full_path = os.path.join(save_dir, fname)
+    file.save(full_path)
+
+    # Calcular total
+    pend_id = _state_id("PENDIENTE_FACTURAR") or DEFAULT_PEND_FACT_ID
+    rows = (
+        db.session.query(Ledger)
+        .filter(Ledger.id.in_(ledger_ids), Ledger.state_id == pend_id, Ledger.prescriptor_id == prescriptor_id)
+        .all()
+    )
+    if not rows:
+        flash("Movimientos seleccionados no válidos", "warning")
+        return redirect(url_for("prescriptors.new_invoice"))
+    total = sum([float(r.amount) for r in rows])
+
+    import uuid as _uuid
+    inv = Invoice(
+        id=str(_uuid.uuid4()),
+        prescriptor_id=prescriptor_id,
+        number=number,
+        invoice_date=invoice_date,
+        total=total,
+        file_path=os.path.join(Config.INVOICE_UPLOAD_FOLDER, fname),
+        created_at=_dt.datetime.utcnow(),
+    )
+    db.session.add(inv)
+    db.session.flush()
+
+    fact_id = _state_id("FACTURADO") or DEFAULT_FACTURADO_ID
+    for r in rows:
+        r.state_id = fact_id
+        r.invoice_id = inv.id
+
+    db.session.commit()
+
+    # enviar email a administración
+    try:
+        from sigp.common.email_utils import send_simple_mail
+        # lista de mails admin desde config o fallback
+        admin_emails = current_app.config.get("ADMIN_EMAILS") or []
+        if isinstance(admin_emails, str):
+            admin_emails = [e.strip() for e in admin_emails.split(",") if e.strip()]
+        if admin_emails:
+            subj = f"Nueva factura #{number} subida por prescriptor {prescriptor_id}"
+            body = (
+                f"Se ha subido una nueva factura.\n\n"
+                f"Número: {number}\n"
+                f"Fecha: {invoice_date}\n"
+                f"Total: {total:.2f} €\n"
+                f"Movimientos: {len(rows)}\n"
+            )
+            send_simple_mail(admin_emails, subj, body)
+    except Exception as exc:  # pylint: disable=broad-except
+        current_app.logger.error("Error enviando mail de factura: %s", exc)
+
+    flash("Factura subida correctamente", "success")
+    return redirect(url_for("prescriptors.new_invoice"))
+
+
+def _get_prescriptor_id(user):
+    pid = getattr(user, "prescriptor_id", None)
+    if pid:
+        return pid
+    PresModel = getattr(Base.classes, "prescriptors", None)
+    if PresModel and getattr(user, "id", None):
+        row = db.session.query(PresModel.id).filter(PresModel.user_id == user.id).first()
+        if row:
+            return row.id
+    return None
+
+# Historial de un lead propio
+@prescriptors_bp.get("/leads/<lead_id>/history")
+@login_required
+def my_lead_history(lead_id):
+    Lead = getattr(Base.classes, "leads", None)
+    LeadHistory = getattr(Base.classes, "lead_history", None)
+    if not (Lead and LeadHistory):
+        abort(404)
+    lead = db.session.get(Lead, lead_id)
+    if not lead or lead.prescriptor_id != _get_prescriptor_id(current_user):
+        abort(403)
+    history = db.session.query(LeadHistory).filter(LeadHistory.lead_id==lead_id).order_by(LeadHistory.changed_at.desc()).all()
+    StateLead = getattr(Base.classes, "state_lead", None)
+    state_map = {}
+    if StateLead is not None:
+        srows = db.session.query(StateLead.id, StateLead.name).all()
+        state_map = {s.id: s.name for s in srows}
+    return render_template("list/lead_history.html", history=history, state_map=state_map, user_map={})
+
+# Libro mayor del prescriptor
+@prescriptors_bp.get("/ledger")
+@login_required
+def my_ledger():
+    # permisos extendidos (admin/finanzas) → puede elegir prescriptor
+    from sigp.common.security import has_perm
+    can_all = has_perm(current_user, "manage_payments") or has_perm(current_user, "manage_leads")
+
+    # prescriptor elegido
+    presc_id_param = request.args.get("prescriptor")
+    prescriptor_id = _get_prescriptor_id(current_user)
+    if can_all and presc_id_param:
+        prescriptor_id = presc_id_param
+
+    if not prescriptor_id and not can_all:
+        flash("No estás asociado a un prescriptor", "warning")
+        return redirect("/")
+
+    if Ledger is None:
+        flash("Tabla ledger no disponible", "danger")
+        return redirect("/")
+    StateLedger = getattr(Base.classes, "state_ledger", None)
+    state_f = request.args.get("state", "")
+    query = (
+        db.session.query(
+            Ledger.id,
+            Ledger.concept,
+            Ledger.amount,
+            Ledger.created_at,
+            Ledger.state_id,
+            StateLedger.name.label("state_name"),
+        )
+        .join(StateLedger, StateLedger.id == Ledger.state_id)
+        .filter(Ledger.prescriptor_id == prescriptor_id)
+        .order_by(Ledger.created_at.desc())
+    )
+    if state_f:
+        query = query.filter(Ledger.state_id == state_f)
+    rows = query.all() if prescriptor_id else []
+    states = db.session.query(StateLedger.id, StateLedger.name).all()
+
+    # lista de prescriptores para selector si admin
+    presc_choices = []
+    if can_all:
+        PresModel = getattr(Base.classes, "prescriptors", None)
+        if PresModel:
+            presc_choices = (
+                db.session.query(PresModel.id, PresModel.squeeze_page_name).order_by(PresModel.squeeze_page_name).all()
+            )
+    return render_template(
+        "list/my_ledger.html",
+        rows=rows,
+        states=states,
+        state_f=state_f,
+        presc_choices=presc_choices,
+        prescriptor_id=prescriptor_id,
+        can_select=can_all,
+    )
+
+# ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
 
@@ -492,9 +730,16 @@ def my_commissions():
         from sigp.common.prescriptor_utils import sync_commissions_for_prescriptor
         sync_commissions_for_prescriptor(presc.id)
         rows = db.session.query(PrescComm).filter_by(prescriptor_id=presc.id).all()
+
+    # mapas auxiliares
     prog_rows = db.session.query(Program.id, Program.name).all()
     prog_map = {pid: name for pid, name in prog_rows}
-    return render_template("records/my_commissions.html", rows=rows, prog_map=prog_map)
+
+    return render_template(
+        "records/my_commissions.html",
+        rows=rows,
+        prog_map=prog_map,
+    )
 
 
 @prescriptors_bp.route("/<prescriptor_id>/commissions", methods=["GET", "POST"])

@@ -57,6 +57,8 @@
                             {% endif %}
                             {% if can('update_prescriptor_commission') %}
                             <li><a class="dropdown-item" href="{{ url_for('prescriptors.my_commissions') }}">Mis comisiones</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('prescriptors.new_invoice') }}">Subir factura</a></li>
+                             <li><a class="dropdown-item" href="{{ url_for('prescriptors.my_ledger') }}">Mi libro mayor</a></li>
                             {% endif %}
                             {% if can('manage_payments') %}
                             <li><a class="dropdown-item" href="{{ url_for('admin.pay_approval') }}">Aprobación de pagos</a></li>

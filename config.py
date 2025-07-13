@@ -39,6 +39,11 @@ class Config:
     CONTRACT_UPLOAD_FOLDER = "static/contracts"
     CONTRACT_ALLOWED_EXT = {"pdf"}
 
+    # Facturas prescriptores
+    INVOICE_UPLOAD_FOLDER = "static/invoices"
+    INVOICE_ALLOWED_EXT = {"pdf", "jpg", "jpeg", "png"}
+    INVOICE_MAX_MB = 5
+
     # config.py  (modo desarrollo)
     SQLALCHEMY_ECHO = True
 

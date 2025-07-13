@@ -1,0 +1,42 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Mi libro mayor{% endblock %}
+{% block content %}
+<h2>Mi libro mayor</h2>
+<form class="row mb-3" method="get">
+  {% if can_select %}
+  <div class="col-auto">
+    <select name="prescriptor" class="form-select" onchange="this.form.submit()">
+      <option value="">-- Prescriptor --</option>
+      {% for pid, pname in presc_choices %}
+      <option value="{{ pid }}" {% if pid==prescriptor_id %}selected{% endif %}>{{ pname }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  <div class="col-auto">
+    <select name="state" class="form-select">
+      <option value="">-- Estado --</option>
+      {% for st in states %}
+      <option value="{{ st.id }}" {% if st.id|string == state_f %}selected{% endif %}>{{ st.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-sm btn-primary">Filtrar</button>
+  </div>
+</form>
+<table class="table table-sm table-bordered">
+  <thead><tr><th>Fecha</th><th>Concepto</th><th>Monto</th><th>Estado</th></tr></thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row.created_at.strftime('%d/%m/%Y') if row.created_at else '-' }}</td>
+      <td>{{ row.concept }}</td>
+      <td>{{ '%.2f'|format(row.amount) }}</td>
+      <td>{{ row.state_name }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if rows|length == 0 %}<p>No hay movimientos.</p>{% endif %}
+{% endblock %}

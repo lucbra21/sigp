@@ -36,7 +36,7 @@
       <th>Email</th>
       <th>Celular</th>
       <th>Programa</th>
-      <th>Estado</th>
+      <th>Estado</th><th>Acciones</th>
     </tr>
   </thead>
   <tbody>
@@ -47,7 +47,7 @@
       <td>{{ l.candidate_email or '-'}}</td>
       <td>{{ l.candidate_cellular or '-'}}</td>
       <td>{{ program_map.get(l.program_info_id, '-') }}</td>
-      <td>{{ state_map.get(l.state_id, l.state_id) }}</td>
+      <td>{{ state_map.get(l.state_id, l.state_id) }}</td><td><a class="btn btn-sm btn-info" href="{{ url_for('prescriptors.my_lead_history', lead_id=l.id) }}">Histórico</a></td>
     </tr>
   {% endfor %}
   </tbody>

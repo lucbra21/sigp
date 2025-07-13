@@ -7,14 +7,17 @@ from flask_login import current_user
 from sigp import db
 from sigp.models import Base
 
-LeadHistory = getattr(Base.classes, "lead_history", None)
+def _model():
+    """Return the lead_history model (cached per request)."""
+    return getattr(Base.classes, "lead_history", None)
 
 
 def log_lead_change(lead_id: str, state_id: int, observations: str | None = None):
-    """Insert a row into lead_history.
+    """Insert a row into lead_history and commit immediately.
 
-    If the table is not present or the user is anonymous, do nothing.
+    Does nothing if model not available or user anonymous.
     """
+    LeadHistory = _model()
     if LeadHistory is None:
         return
     user_id = getattr(current_user, "id", None)
@@ -22,7 +25,6 @@ def log_lead_change(lead_id: str, state_id: int, observations: str | None = None
         return
 
     lh = LeadHistory(
-        # id is AUTO_INCREMENT -> omit if so; if uuid char, provide id
         lead_id=lead_id,
         state_id=state_id,
         changed_by=user_id,
@@ -30,4 +32,7 @@ def log_lead_change(lead_id: str, state_id: int, observations: str | None = None
         changed_at=datetime.datetime.utcnow(),
     )
     db.session.add(lh)
-    # Note: caller should commit to persist
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
