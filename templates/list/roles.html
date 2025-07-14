@@ -35,7 +35,7 @@
         <a href="{{ url_for('roles.role_edit', role_id=r.id) }}" class="btn btn-sm btn-primary">Editar</a>
         {% endif %}
         {% if can('delete_role') %}
-        <form method="post" action="{{ url_for('roles.role_delete', role_id=r.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar rol?');">
+        <form method="post" action="{{ url_for('roles.role_delete', role_id=r.id) }}" class="d-inline" data-confirm="¿Eliminar rol?">
             <button type="submit" class="btn btn-sm btn-danger">Borrar</button>
         </form>
         {% endif %}
