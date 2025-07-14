@@ -57,8 +57,8 @@
         <a href="{{ url_for('users.user_edit', user_id=u.id) }}" class="btn btn-sm btn-primary">Editar</a>
         {% endif %}
         {% if can('delete_user') %}
-        <form method="post" action="{{ url_for('users.user_delete', user_id=u.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar usuario?');">
-          <button type="submit" class="btn btn-sm btn-danger">Borrar</button>
+        <form method="post" action="{{ url_for('users.user_delete', user_id=u.id) }}" class="d-inline" >
+          <button type="submit" class="btn btn-sm btn-danger" data-confirm="¿Eliminar usuario?">Borrar</button>
         </form>
         {% endif %}
       </td>

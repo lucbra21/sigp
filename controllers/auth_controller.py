@@ -114,5 +114,5 @@ def login_post():
 def logout():
     _audit_event(current_user.id if current_user.is_authenticated else None, True, "LOGOUT")
     logout_user()
-    flash("Sesión finalizada", "info")
+    # flash("Sesión finalizada", "info")
     return redirect(url_for("auth.login_get"))
