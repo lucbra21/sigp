@@ -1,34 +1,79 @@
-{# Plantilla minimal de login #}
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Iniciar Sesión | SIGP</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login/SIGP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/unicons/4.0.0/css/line.css">
+
+    <link rel="stylesheet" href="../static/css/auth_light.css">
 </head>
-<body class="d-flex align-items-center justify-content-center vh-100 bg-light">
-    <div class="card shadow-sm" style="min-width: 22rem;">
-        <div class="card-body">
-            <h1 class="h4 mb-3 text-center">Iniciar Sesión</h1>
-            <form method="post">
-                {{ form.csrf_token }}
-                <div class="mb-3">
-                    {{ form.email.label(class="form-label") }}
-                    {{ form.email(class="form-control") }}
+<body>
+    <a href="https://sportsdatacampus.com/" class="logo" target="_blank">
+        <img style="width: 400px; height: 100px;" src="../static/img/logos/SDC_horizontal_monocromo_negro.svg" alt="">
+    </a>
+    <div class="section">
+        <div class="container">
+            <div class="row full-height justify-content-center">
+                <div class="col-12 text-center align-self-center py-5">
+                    <div class="section pb-5 pt-5 pt-sm-2 text-center">
+                        <h6 class="mb-0 pb-3"><span>Ingresar </span><span>Contactanos</span></h6>
+                        <input class="checkbox" type="checkbox" id="reg-log" name="reg-log"/>
+                        <label for="reg-log"></label>
+                        <div class="card-3d-wrap mx-auto">
+                            <div class="card-3d-wrapper">
+                                <div class="card-front">
+                                    <div class="center-wrap">
+                                        
+                                            <div class="section text-center">
+                                                <h4 class="mb-4 pb-3">Iniciar Sesión</h4>
+                                                <form method="post">
+                                                    {{ form.csrf_token }}
+                                                    <div class="form-group">
+                                                        {{ form.email(class="form-style", placeholder="Tu Email", autocomplete="off") }}
+                                                        <i class="input-icon uil uil-at"></i>
+                                                    </div>	
+                                                    <div class="form-group mt-2">
+                                                        {{ form.password(class="form-style", placeholder="Tu Contraseña", autocomplete="off") }}
+                                                        <i class="input-icon uil uil-lock-alt"></i>
+                                                    </div>
+                                                    <div class="form-check mb-3 mt-3">
+                                                        {{ form.remember(style="left: 100px; margin-top: -3px; accent-color: #6c757d !important; border-color: #6c757d !important; background-color: #6c757d !important;",class="checkbox-gray")  }}
+                                                        {{ form.remember.label(class="form-check-label") }}
+                                                    </div>
+                                                    {{ form.submit(class="btn mt-4") }}
+                                                    <p class="mb-0 mt-4 text-center"><a href="#0" class="link">Olvidaste tu contraseña?</a></p>
+                                                </form>
+                                            </div>
+                                       
+                                    </div>
+                                </div>
+                                <div class="card-back">
+                                    <div class="center-wrap">
+                                        <div class="section text-center">
+                                            <h4 class="mb-4 pb-3">Contactanos</h4>
+                                            <div class="form-group">
+                                                <input type="text" name="logname" class="form-style" placeholder="Your Full Name" id="logname" autocomplete="off">
+                                                <i class="input-icon uil uil-user"></i>
+                                            </div>	
+                                            <div class="form-group mt-2">
+                                                <input type="email" name="logemail" class="form-style" placeholder="Your Email" id="logemail2" autocomplete="off">
+                                                <i class="input-icon uil uil-at"></i>
+                                            </div>	
+                                            <div class="form-group mt-2">
+                                                <textarea type="text" name="logtext" class="form-style" placeholder="Cuentanos..." id="logtext"></textarea>
+                                                <i class="input-icon uil uil-lock-alt"></i>
+                                            </div>
+                                            <a href="#" class="btn mt-4">submit</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    {{ form.password.label(class="form-label") }}
-                    {{ form.password(class="form-control") }}
-                </div>
-                <div class="form-check mb-3">
-                    {{ form.remember(class="form-check-input") }}
-                    {{ form.remember.label(class="form-check-label") }}
-                </div>
-                <div class="d-grid">
-                    {{ form.submit(class="btn btn-primary") }}
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </body>
