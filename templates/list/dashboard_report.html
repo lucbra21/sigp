@@ -29,15 +29,50 @@
     </div>
   </form>
 
-  <table class="table table-bordered w-auto">
+  <div class="row g-3">
     <tbody>
-      <tr><th>Leads</th><td>{{ lead_count }}</td></tr>
-      <tr><th>Matriculaciones</th><td>{{ conversion_count }}</td></tr>
-      <tr><th>Comisiones total</th><td>{{ '%.2f'|format(commission_sum) }}</td></tr>
-      <tr><th>Pagadas</th><td>{{ '%.2f'|format(paid_sum) }}</td></tr>
-      <tr><th>Pendientes</th><td>{{ '%.2f'|format(pending_sum) }}</td></tr>
+      <div class="col-6 col-lg-2">
+      <div class="card text-center shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="text-muted">Leads</h6>
+          <h3 class="mb-0 fw-bold">{{ lead_count }}</h3>
+        </div>
+      </div>
+    </div>
+      <div class="col-6 col-lg-2">
+      <div class="card text-center shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="text-muted">Matriculaciones</h6>
+          <h3 class="mb-0 fw-bold">{{ conversion_count }}</h3>
+        </div>
+      </div>
+    </div>
+      <div class="col-6 col-lg-2">
+      <div class="card text-center shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="text-muted">Comisiones total</h6>
+          <h3 class="mb-0 fw-bold">{{ '%.2f'|format(commission_sum) }}</h3>
+        </div>
+      </div>
+    </div>
+      <div class="col-6 col-lg-2">
+      <div class="card text-center shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="text-muted">Pagadas</h6>
+          <h3 class="mb-0 fw-bold text-success">{{ '%.2f'|format(paid_sum) }}</h3>
+        </div>
+      </div>
+    </div>
+      <div class="col-6 col-lg-2">
+      <div class="card text-center shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="text-muted">Pendientes</h6>
+          <h3 class="mb-0 fw-bold text-warning">{{ '%.2f'|format(pending_sum) }}</h3>
+        </div>
+      </div>
+    </div>
     </tbody>
-  </table>
+  </div>
 </div>
 
 <!-- Charts -->
