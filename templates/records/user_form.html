@@ -1,25 +1,27 @@
 {% extends 'layouts/base.html' %}
 {% block title %}{{ 'Editar' if user else 'Nuevo' }} Usuario{% endblock %}
 {% block content %}
-<h2>{{ 'Editar' if user else 'Nuevo' }} usuario</h2>
-<form method="post" class="col-md-6">
-  <div class="mb-3">
+<h2 class="fw-semibold mb-4 text-center">{{ 'Editar' if user else 'Nuevo' }} Usuario</h2>
+<div class="card shadow-sm border border-secondary-subtle bg-light mx-auto" style="max-width: 1000px;">
+  <div class="card-body">
+    <form id="userForm" method="post" class="row g-3">
+  <div class="col-md-4">
     <label class="form-label" for="email">Email</label>
     <input type="email" class="form-control" id="email" name="email" value="{{ user.email if user }}" required />
   </div>
-  <div class="mb-3">
+  <div class="col-md-4">
     <label class="form-label" for="name">Nombre</label>
     <input type="text" class="form-control" id="name" name="name" value="{{ user.name if user }}" required />
   </div>
-  <div class="mb-3">
+  <div class="col-md-4">
     <label class="form-label" for="lastname">Apellido</label>
     <input type="text" class="form-control" id="lastname" name="lastname" value="{{ user.lastname if user }}" />
   </div>
-  <div class="mb-3">
+  <div class="col-md-4">
     <label class="form-label" for="cellular">Celular</label>
     <input type="text" class="form-control" id="cellular" name="cellular" value="{{ user.cellular if user }}" />
   </div>
-  <div class="mb-3">
+  <div class="col-md-4">
     <label class="form-label" for="role_id">Rol</label>
     <select class="form-select" id="role_id" name="role_id">
       {% for r in roles %}
@@ -27,7 +29,7 @@
       {% endfor %}
     </select>
   </div>
-  <div class="mb-3">
+  <div class="col-md-4">
     <label class="form-label" for="state_id">Estado</label>
     <select class="form-select" id="state_id" name="state_id">
       {% for val, label in state_choices %}
@@ -35,11 +37,36 @@
       {% endfor %}
     </select>
   </div>
-  <div class="mb-3">
+  <div class="col-md-4">
     <label class="form-label" for="password">Contraseña {% if user %}(dejar en blanco para mantener){% endif %}</label>
     <input type="password" class="form-control" id="password" name="password" />
   </div>
-  <button type="submit" class="btn btn-primary">Guardar</button>
-  <a href="{{ url_for('users.users_list') }}" class="btn btn-secondary">Cancelar</a>
-</form>
+  
+  
+      <div class="col-12 text-center pt-3">
+        <button type="submit" class="btn btn-primary me-2">Guardar</button>
+        <a href="{{ url_for('users.users_list') }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div id="userFormLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const form = document.getElementById('userForm');
+    const overlay = document.getElementById('userFormLoading');
+    if(form){
+      form.addEventListener('submit', function(e){
+        if(form.checkValidity()){
+          overlay.classList.remove('d-none');
+          overlay.classList.add('d-flex');
+        }
+      });
+    }
+  });
+</script>
 {% endblock %}
