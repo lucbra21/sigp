@@ -1,0 +1,36 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Notas de Crédito/Débito{% endblock %}
+{% block content %}
+<h2>Notas de Crédito y Débito</h2>
+<a class="btn btn-success me-2 mb-3" href="{{ url_for('adjustments.new_note_page', note_type='C') }}">Nueva nota de crédito</a>
+<a class="btn btn-danger mb-3" href="{{ url_for('adjustments.new_note_page', note_type='D') }}">Nueva nota de débito</a>
+<table class="table table-bordered table-sm">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Tipo</th>
+      <th>Prescriptor</th>
+      <th>Monto</th>
+      <th>Fecha nota</th>
+      <th>Concepto</th>
+      <th>Creada</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for n in notes %}
+    <tr>
+      <td>{{ n.id }}</td>
+      <td>
+          {% if n.type=='Crédito' %}<span class="badge bg-success">Crédito{% else %}<span class="badge bg-danger">Débito{% endif %}</span>
+        </td>
+      <td>{{ n.prescriptor }}</td>
+      <td>{% set sign = '+' if n.type=='Crédito' else '-' %}{{ sign }} {{ '%.2f'|format(n.amount) }}</td>
+      <td>{{ n.note_date.strftime('%d/%m/%Y') if n.note_date }}</td>
+      <td>{{ n.concept }}</td>
+      <td>{{ n.created_at.strftime('%d/%m/%Y %H:%M') if n.created_at }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if not notes %}<p>No hay notas.</p>{% endif %}
+{% endblock %}

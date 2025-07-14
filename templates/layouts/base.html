@@ -63,6 +63,7 @@
                             {% if can('manage_payments') %}
                             <li><a class="dropdown-item" href="{{ url_for('admin.pay_approval') }}">Aprobación de pagos</a></li>
 <li><a class="dropdown-item" href="{{ url_for('settlements.pending_all') }}">Rendición facturas</a></li>
+<li><a class="dropdown-item" href="{{ url_for('adjustments.adjustments_page') }}">Ajustes</a></li>
                             {% endif %}
                         </ul>
                     </li>
@@ -73,6 +74,7 @@
                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                             <li><a class="dropdown-item" href="{{ url_for('admin.pay_approval') }}">Aprobación de pagos</a></li>
 <li><a class="dropdown-item" href="{{ url_for('settlements.pending_all') }}">Rendición facturas</a></li>
+<li><a class="dropdown-item" href="{{ url_for('adjustments.adjustments_page') }}">Ajustes</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('admin.list_suspended') }}">Pagos suspendidos</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('admin.list_canceled') }}">Pagos anulados</a></li>
                         </ul>
