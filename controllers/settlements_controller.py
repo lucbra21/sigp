@@ -78,7 +78,7 @@ def pending_all():
     presc_map = {p.id: (getattr(p, label_col.key) if label_col else str(p.id)) for p in prescriptors}
 
     return render_template(
-        "settlements/pending_all.html",
+        "list/settlements_pending_all.html",
         invoices=invoices,
         prescriptors=prescriptors,
         presc_sel=prescriptor_id or "",
@@ -110,7 +110,7 @@ def select_prescriptor():
         prescriptors_q = prescriptors_q.filter(label_col.ilike(f"%{q}%"))
     order_col = label_col or Prescriptor.id
     prescriptors = prescriptors_q.order_by(order_col).limit(50).all()
-    return render_template("settlements/select.html", prescriptors=prescriptors, q=q, label_attr=label_col.key if label_col is not None else None)
+    return render_template("list/settlements_select.html", prescriptors=prescriptors, q=q, label_attr=label_col.key if label_col is not None else None)
 
 
 @settlements_bp.get("/pending/<prescriptor_id>")
@@ -143,7 +143,7 @@ def invoice_detail(invoice_id):
     ledgers = []
     if Ledger is not None:
         ledgers = db.session.query(Ledger).filter(Ledger.invoice_id == inv.id).all()
-    return render_template("settlements/invoice_detail.html", inv=inv, ledgers=ledgers)
+    return render_template("records/settlement_invoice_detail.html", inv=inv, ledgers=ledgers)
 
 
 @settlements_bp.post("/settle")
