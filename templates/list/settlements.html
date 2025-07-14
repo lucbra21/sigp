@@ -1,0 +1,76 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Rendición de facturas{% endblock %}
+{% block content %}
+<h2>Rendición de facturas</h2>
+<form method="get" class="row g-2 align-items-end mb-3" id="filterForm">
+  <div class="col-md-4">
+    <label class="form-label">Prescriptor</label>
+    <select name="prescriptor" class="form-select">
+      <option value="">Todos</option>
+      {% for pid,name in prescriptors %}
+      <option value="{{ pid }}" {% if pid|string == presc_sel %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+<div class="col-md-2 align-self-end">
+  <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
+</div>
+<div class="col-md-2 align-self-end">
+  <a href="#" class="btn btn-primary w-100" id="genBtn" target="_blank">Generar rendición</a>
+</div>
+</form>
+<form method="post" action="{{ url_for('admin.settlements_save') }}" enctype="multipart/form-data">
+
+<table class="table table-bordered table-sm mt-3">
+  <thead>
+    <tr>
+      {% if presc_sel %}<th></th>{% endif %}
+      <th>Prescriptor</th>
+      <th>Número</th>
+      <th>Fecha</th>
+      <th>Total</th>
+      <th>Monto rendido</th>
+      <th>Comprobante</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for inv in invoices %}
+    <tr>
+      {% if presc_sel %}<td><input type="checkbox" name="selected_ids" value="{{ inv.id }}"/></td>{% endif %}
+      <td>{{ presc_map.get(inv.prescriptor_id, inv.prescriptor_id) }}</td>
+      <td>{{ inv.number }}</td>
+      <td>{{ inv.invoice_date }}</td>
+      <td>{{ '%.2f'|format(inv.total) }} €</td>
+      <td><input type="number" name="amount_{{ inv.id }}" class="form-control form-control-sm" step="0.01" value="{{ '%.2f'|format(inv.total) }}"></td>
+      <td>
+        <input type="file" name="file_{{ inv.id }}" class="form-control form-control-sm"/>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if presc_sel %}
+<div class="mt-2">
+  <button type="submit" class="btn btn-success" onclick="return confirm('¿Guardar rendición?');">Guardar rendición</button>
+</div>
+{% endif %}
+{% if invoices|length == 0 %}<p>No hay facturas pendientes de rendición.</p>{% endif %}
+</form>
+<script>
+  ('click',()=>{
+    document.querySelectorAll('.rowchk').forEach(cb=>cb.checked=true);
+  });
+  ('click',()=>{
+    document.querySelectorAll('.rowchk').forEach(cb=>cb.checked=false);
+  });
+  ('change',e=>{
+    document.querySelectorAll('.rowchk').forEach(cb=>cb.checked=e.target.checked);
+  });
+// button logic
+  document.getElementById('genBtn').addEventListener('click',function(e){
+    const sel=document.querySelector('select[name=prescriptor]').value;
+    if(!sel){e.preventDefault();alert('Selecciona un prescriptor');return;}
+    this.href='{{ url_for('admin.settlements_form') }}?prescriptor='+sel;
+  });
+</script>
+{% endblock %}

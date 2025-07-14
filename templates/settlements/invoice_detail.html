@@ -1,0 +1,29 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Detalle factura {{ inv.id }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h3>Factura {{ inv.id }}</h3>
+  <table class="table table-sm table-bordered w-auto">
+    <tbody>
+      <tr><th>ID</th><td>{{ inv.id }}</td></tr>
+      <tr><th>Prescriptor</th><td>{{ inv.prescriptor_id }}</td></tr>
+      <tr><th>Fecha</th><td>{{ inv.invoice_date }}</td></tr>
+      <tr><th>Total</th><td>{{ '%.2f'|format(inv.total) }}</td></tr>
+      {% if inv.paid_at %}<tr><th>Pagado</th><td>{{ inv.paid_at }}</td></tr>{% endif %}
+      {% if inv.paid_amount %}<tr><th>Monto pagado</th><td>{{ '%.2f'|format(inv.paid_amount) }}</td></tr>{% endif %}
+      {% if inv.receipt_path %}<tr><th>Comprobante</th><td><a href="{{ url_for('static', filename='receipts/' ~ inv.receipt_path) }}" target="_blank">Ver</a></td></tr>{% endif %}
+    </tbody>
+  </table>
+<h5 class="mt-4">Ledgers</h5>
+  <table class="table table-sm table-bordered w-auto">
+    <thead><tr><th>ID</th><th>Monto</th><th>State</th></tr></thead>
+    <tbody>
+      {% for l in ledgers %}
+      <tr><td>{{ l.id }}</td><td>{{ '%.2f'|format(l.amount) }}</td><td>{{ l.state_id }}</td></tr>
+      {% else %}
+      <tr><td colspan="3" class="text-center">Sin ledgers asociados</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

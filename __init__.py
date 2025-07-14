@@ -70,6 +70,7 @@ def create_app(config_class=Config):
     from .controllers.notifications_controller import notifications_bp
     from .controllers.leads_controller import leads_bp
     from .controllers.landing_controller import landing_bp
+    from .controllers.settlements_controller import settlements_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
@@ -90,6 +91,7 @@ def create_app(config_class=Config):
     app.register_blueprint(notifications_bp)
     app.register_blueprint(leads_bp)
     app.register_blueprint(landing_bp)
+    app.register_blueprint(settlements_bp)
 
     # ---- context processors ----
     @app.context_processor

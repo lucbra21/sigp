@@ -44,6 +44,9 @@ class Config:
     INVOICE_ALLOWED_EXT = {"pdf", "jpg", "jpeg", "png"}
     INVOICE_MAX_MB = 5
 
+    # Comprobantes de pago a prescriptores
+    RECEIPT_UPLOAD_FOLDER = "static/receipts"
+
     # config.py  (modo desarrollo)
     SQLALCHEMY_ECHO = True
 
