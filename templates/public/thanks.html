@@ -1,11 +1,18 @@
 {% extends 'layouts/landing_base.html' %}
 {% block title %}¡Gracias!{% endblock %}
+
+{% block extra_css %}
+<style>
+  body{
+    background:url("{{ url_for('static', filename='img/squeeze page/confetti-25.gif') }}") center/cover repeat fixed !important;
+  }
+</style>
+{% endblock %}
 {% block content %}
-<div class="row justify-content-center py-5">
+<div class="d-flex justify-content-center align-items-center min-vh-100">
   <div class="col-md-6 text-center">
     <h1 class="display-4 mb-4">¡Gracias por tu interés!</h1>
     <p class="lead">En breve nos pondremos en contacto para brindarte más información.</p>
     <a href="{{ url_for('landing.landing_page', prescriptor_id=prescriptor.id) }}" class="btn btn-primary mt-3">Volver a la página anterior</a>
   </div>
-</div>
 {% endblock %}

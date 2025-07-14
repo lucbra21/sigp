@@ -1,77 +1,116 @@
 {% extends 'layouts/landing_base.html' %}
 {% block title %}{{ prescriptor.squeeze_page_name or 'Prescriptor' }} | SIGP{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-lg-8 text-center">
-    <h1 class="display-5 mb-4">{{ prescriptor.squeeze_page_name }}</h1>
-    {% if prescriptor.photo_url %}
-      <img src="{{ prescriptor.photo_url }}" class="rounded-circle mb-4" alt="Foto de {{ prescriptor.squeeze_page_name }}" style="max-width: 200px;">
-    {% endif %}
-  </div>
-</div>
 
-{% if images %}
-<div id="galleryCarousel" class="carousel slide mb-5" data-bs-ride="carousel">
-  <div class="carousel-inner">
-    {% for img in images %}
-    <div class="carousel-item {% if loop.first %}active{% endif %}">
-      <img src="{{ img }}" class="d-block w-100" alt="Imagen {{ loop.index }}">
+<div class="landing-hero">
+  <div class="hero-content col-md-2">
+      <div class="w-100" style="max-width: 600px;">
+        <div class="text-center">
+          <h1 class="display-5 mb-4" style="color: #ffffff;">{{ prescriptor.squeeze_page_name }}</h1>
+          {% if prescriptor.photo_url %}
+            <img src="{{ prescriptor.photo_url }}" class="rounded-circle mb-4" alt="Foto de {{ prescriptor.squeeze_page_name }}" style="max-width: 200px;">
+          {% endif %}
+        </div>
     </div>
-    {% endfor %}
   </div>
-  <button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel" data-bs-slide="prev">
-    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-    <span class="visually-hidden">Anterior</span>
-  </button>
-  <button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel" data-bs-slide="next">
-    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-    <span class="visually-hidden">Siguiente</span>
-  </button>
-</div>
-{% endif %}
 
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h2 class="h4 mb-3">Déjanos tus datos</h2>
-        <form method="post">
-          {{ form.hidden_tag() }}
-          <div class="mb-3">
-            {{ form.name.label(class="form-label") }}
-            {{ form.name(class="form-control", placeholder="Tu nombre") }}
-            {% for error in form.name.errors %}
-            <div class="text-danger small">{{ error }}</div>
-            {% endfor %}
-          </div>
-          <div class="mb-3">
-            {{ form.email.label(class="form-label") }}
-            {{ form.email(class="form-control", placeholder="Tu email") }}
-            {% for error in form.email.errors %}
-            <div class="text-danger small">{{ error }}</div>
-            {% endfor %}
-          </div>
-          <div class="mb-3">
-            {{ form.cellular.label(class="form-label") }}
-            {{ form.cellular(class="form-control", placeholder="Teléfono") }}
-            {% for error in form.cellular.errors %}
-            <div class="text-danger small">{{ error }}</div>
-            {% endfor %}
-          </div>
-          <div class="mb-3">
-            {{ form.program_info_id.label(class="form-label") }}
-            {{ form.program_info_id(class="form-select") }}
-            {% for error in form.program_info_id.errors %}
-            <div class="text-danger small">{{ error }}</div>
-            {% endfor %}
-          </div>
-          <div class="d-grid">
-            {{ form.submit(class="btn btn-primary btn-lg") }}
-          </div>
-        </form>
+
+  <div class="row justify-content-center col-md-9">
+    <div class="col-md-9">
+      <div class="et_pb_with_border et_pb_column_4_4 et_pb_column et_pb_column_1  et_pb_css_mix_blend_mode_passthrough et-last-child">
+				
+				
+				<div class="et_pb_module et_pb_text et_pb_text_0  et_pb_text_align_center et_pb_bg_layout_light">
+				
+				
+				<div class="et_pb_text_inner"><h1 style="text-align: center;font-family: 'Barlow Semi Condensed', Helvetica, Arial, Lucida, sans-serif;
+    font-weight: 400;
+    font-style: italic;
+    font-size: 57px;
+    color: #FFFFFF !important;
+    letter-spacing: 4px;
+    line-height: 0.9em;
+    margin-top: 20px;
+    text-shadow: 0em 0.1em 0.1em rgba(0, 0, 0, 0.4);
+    transition: line-height 300ms ease 0ms;">SPORTS DATA CAMPUS</h1></div>
+			</div><div class="et_pb_module et_pb_text et_pb_text_1  et_pb_text_align_center et_pb_bg_layout_light">
+				
+				
+				<div class="et_pb_text_inner" style="    line-height: 0.9em;
+    font-family: 'Barlow Condensed', Helvetica, Arial, Lucida, sans-serif;
+    font-size: 36px;
+    letter-spacing: 5px;
+    line-height: 0.9em;
+    padding-right: 0px !important;
+    padding-left: 0px !important;"
+    ><p style="text-align: center; color: #FFFFFF !important;">PON TU PASIÓN AL SERVICIO DEL FUTURO</p></div>
+			</div>
+			</div>
+
+      <div class="card" style="margin-top: 60px;background-color: rgba(255, 255, 255, 0.25);color: white;">
+        <div class="card-body">
+          <h2 class="h4 mb-3">Déjanos tus datos</h2>
+          <form id="leadForm" method="post">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+              {{ form.name.label(class="form-label") }}
+              {{ form.name(class="form-control", placeholder="Tu nombre") }}
+              {% for error in form.name.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="mb-3">
+              {{ form.email.label(class="form-label") }}
+              {{ form.email(class="form-control", placeholder="Tu email") }}
+              {% for error in form.email.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="mb-3">
+              {{ form.cellular.label(class="form-label") }}
+              {{ form.cellular(class="form-control", placeholder="Teléfono") }}
+              {% for error in form.cellular.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="mb-3">
+              {{ form.program_info_id.label(class="form-label") }}
+              {{ form.program_info_id(class="form-select") }}
+              {% for error in form.program_info_id.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="d-grid">
+              {{ form.submit(class="btn btn-primary btn-lg") }}
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(0,0,0,.5);z-index:1050;">
+  <div class="spinner-border text-light" role="status" aria-hidden="true"></div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const form = document.getElementById('leadForm');
+    const overlay = document.getElementById('loadingOverlay');
+    if(form){
+      form.addEventListener('submit', function(e){
+        if(form.checkValidity()){
+          overlay.classList.remove('d-none');
+          overlay.classList.add('d-flex');
+        }
+      });
+    }
+  });
+</script>
 </div>
 {% endblock %}
