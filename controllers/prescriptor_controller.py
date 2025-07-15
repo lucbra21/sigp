@@ -390,6 +390,9 @@ def list_prescriptors():
             Types.name.label("tipo"),
             States.name.label("estado"),
             Users.name.label("usuario"),
+            Model.sub_state_id.label("sub_state_id"),
+            Model.confidence_level_id.label("confidence_level_id"),
+            Model.squeeze_page_status.label("squeeze_page_status"),
         )
         .outerjoin(Types, Types.id == Model.type_id)
         .outerjoin(States, States.id == Model.state_id)
@@ -412,18 +415,49 @@ def list_prescriptors():
         .all()
     )
 
+    # Build label maps
+    substate_choices = _get_select_choices("substate_prescriptor")
+    conf_choices = _get_select_choices("confidence_level")
+    sub_map = {int(val): lbl for val, lbl in substate_choices if val}
+    conf_map = {int(val): lbl for val, lbl in conf_choices if val}
+
+    # Build list of simple dicts/namespaces for template (avoid mutating Row objects)
+    from types import SimpleNamespace
+    display_items = []
+    for row in items:
+        mapping = row._mapping if hasattr(row, '_mapping') else row.__dict__
+        sid_raw = mapping.get('sub_state_id') if isinstance(mapping, dict) else getattr(row, 'sub_state_id', None)
+        cid_raw = mapping.get('confidence_level_id') if isinstance(mapping, dict) else getattr(row, 'confidence_level_id', None)
+        try:
+            sid = int(sid_raw) if sid_raw is not None else None
+        except (ValueError, TypeError):
+            sid = None
+        try:
+            cid = int(cid_raw) if cid_raw is not None else None
+        except (ValueError, TypeError):
+            cid = None
+        data = dict(mapping)
+        data['sub_state_name'] = sub_map.get(sid, '')
+        data['confidence_name'] = conf_map.get(cid, '')
+        # Squeeze page status directo
+        data['squeeze_page_status'] = mapping.get('squeeze_page_status', getattr(row, 'squeeze_page_status', ''))
+        display_items.append(SimpleNamespace(**data))
+
     # Para selects del filtro
     type_choices = _get_select_choices("prescriptor_types")
     state_choices = _get_select_choices("state_prescriptor")
 
+
     return render_template(
         "list/prescriptors.html",
-        items=items,
+        items=display_items,
         page=page,
         per_page=per_page,
         filters={"nombre": nombre_f, "tipo": tipo_f, "estado": estado_f},
         type_choices=type_choices,
         state_choices=state_choices,
+        sub_map=sub_map,
+        conf_map=conf_map,
         total=total,
     )
 

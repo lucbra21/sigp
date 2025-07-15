@@ -44,20 +44,22 @@
 <div class="card table-card p-0 mb-4"><table class="table table-hover align-middle mb-0">
     <thead>
         <tr>
-            <th>ID</th>
             <th>Nombre</th>
             <th>Tipo</th>
-            <th>Estado</th>
+            <th>Sub&nbsp;Estado</th>
+            <th>Nivel confianza</th>
+            <th>Estado squeeze</th>
             <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
         {% for p in items %}
         <tr>
-            <td>{{ p.id }}</td>
             <td>{{ p.nombre }}</td>
             <td>{{ p.tipo }}</td>
-            <td>{{ p.estado }}</td>
+            <td>{{ p.sub_state_name }}</td>
+            <td>{{ p.confidence_name }}</td>
+            <td>{{ p.squeeze_page_status }}</td>
             <td>
                 <a href="{{ url_for('prescriptors.edit_prescriptor', prescriptor_id=p.id) }}" class="btn btn-sm btn-secondary">Editar</a>
                 {% if can('update_prescriptor_commission') %}
@@ -89,6 +91,8 @@
     const btnNuevo=document.getElementById('btnNuevo');
     if(btnNuevo){btnNuevo.addEventListener('click',show);}    
     document.querySelectorAll('.pagination a.page-link').forEach(a=>a.addEventListener('click',show));
+    // Editar y Comisiones
+    document.querySelectorAll('a.btn-secondary, a.btn-warning').forEach(a=>a.addEventListener('click',show));
   });
 </script>
 {% endblock %}

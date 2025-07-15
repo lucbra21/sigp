@@ -29,9 +29,19 @@ def state_leads_list():
         return "Modelo state_lead no disponible", 500
 
     q = request.args.get("q", "").strip()
+    color_filter = request.args.get("color", "").strip()
+
     query = db.session.query(StateLead)
     if q:
         query = query.filter(StateLead.name.ilike(f"%{q}%"))
+    has_color = hasattr(StateLead, "color")
+    if has_color:
+        if color_filter:
+            query = query.filter(StateLead.color == color_filter)
+        # Distinct available colors for filter dropdown
+        colors_available = [c[0] for c in db.session.query(StateLead.color).distinct().all() if c[0]]
+    else:
+        colors_available = []
 
     page = int(request.args.get("page", 1))
     per_page = 10
@@ -47,6 +57,8 @@ def state_leads_list():
         "list/state_leads.html",
         leads=leads,
         q=q,
+        color_filter=color_filter if 'color_filter' in locals() else '',
+        colors_available=colors_available,
         page=page,
         pages=pages,
     )
@@ -65,6 +77,8 @@ def _state_lead_form(lead_id=None):
 
     if request.method == "POST":
         name = request.form.get("name", "").strip()
+        description = request.form.get("description", "").strip()
+        color = request.form.get("color", "").strip()
         if not name:
             flash("El nombre es obligatorio", "warning")
         else:
@@ -73,6 +87,10 @@ def _state_lead_form(lead_id=None):
                     lead = StateLead(id=None)  # auto-increment handled by DB
                     db.session.add(lead)
                 lead.name = name
+                if hasattr(lead, "description"):
+                    lead.description = description or None
+                if hasattr(lead, "color"):
+                    lead.color = color or None
                 db.session.commit()
                 flash("Estado guardado", "success")
                 return redirect(url_for("state_lead.state_leads_list"))
