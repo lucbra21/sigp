@@ -36,7 +36,7 @@
 
 <div class="card shadow-sm mb-4 bg-light border border-secondary-subtle rounded">
   <div class="card-body">
-    <form class="row row-cols-lg-auto g-3 align-items-end" method="get">
+    <form id="usersFilterForm" class="row row-cols-lg-auto g-3 align-items-end" method="get">
   <div class="col-auto">
     <input type="text" name="q" class="form-control" placeholder="Filtrar por email, nombre o apellido" value="{{ q }}" />
   </div>
@@ -111,4 +111,21 @@
     {% endfor %}
   </ul>
 </nav>
+
+<!-- Loading overlay -->
+<div id="usersFilterLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const f = document.getElementById('usersFilterForm');
+    const ov = document.getElementById('usersFilterLoading');
+    if(f){
+      f.addEventListener('submit', function(){
+        ov.classList.remove('d-none');
+        ov.classList.add('d-flex');
+      });
+    }
+  });
+</script>
 {% endblock %}
