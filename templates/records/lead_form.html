@@ -1,16 +1,67 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Nuevo lead{% endblock %}
 {% block content %}
-<h2>Nuevo lead</h2>
-<form method="post" action="{{ action }}">
-    {{ form.csrf_token }}
-    <div class="mb-3">{{ form.prescriptor_id.label }} {{ form.prescriptor_id(class="form-select") }}</div>
-    <div class="mb-3">{{ form.program_info_id.label }} {{ form.program_info_id(class="form-select") }}</div>
-    <div class="mb-3">{{ form.state_id.label }} {{ form.state_id(class="form-select") }}</div>
-    <div class="mb-3">{{ form.candidate_name.label }} {{ form.candidate_name(class="form-control") }}</div>
-    <div class="mb-3">{{ form.candidate_email.label }} {{ form.candidate_email(class="form-control") }}</div>
-    <div class="mb-3">{{ form.candidate_cellular.label }} {{ form.candidate_cellular(class="form-control") }}</div>
-    {{ form.submit(class="btn btn-success") }}
-    <a href="{{ url_for('leads.leads_list') }}" class="btn btn-secondary">Cancelar</a>
-</form>
+<h2 class="fw-semibold mb-4 text-center">{{ 'Editar' if lead else 'Nuevo' }} Lead</h2>
+<div class="card shadow-sm border border-secondary-subtle bg-light mx-auto" style="max-width:900px;">
+  <div class="card-body">
+    <form id="leadForm" method="post" action="{{ action }}" class="row g-3 needs-validation" novalidate>
+      {{ form.csrf_token }}
+      <div class="col-md-4">
+        <label class="form-label" for="prescriptor_id">Prescriptor <span class="text-danger">*</span></label>
+        {{ form.prescriptor_id(class="form-select", id="prescriptor_id", required=True) }}
+        <div class="invalid-feedback">Seleccione un prescriptor.</div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="program_info_id">Programa</label>
+        {{ form.program_info_id(class="form-select", id="program_info_id") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="state_id">Estado</label>
+        {{ form.state_id(class="form-select", id="state_id") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="candidate_name">Nombre candidato <span class="text-danger">*</span></label>
+        {{ form.candidate_name(class="form-control", id="candidate_name", required=True) }}
+        <div class="invalid-feedback">Ingrese el nombre del candidato.</div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="candidate_email">Email candidato</label>
+        {{ form.candidate_email(class="form-control", id="candidate_email") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="candidate_cellular">Celular candidato</label>
+        {{ form.candidate_cellular(class="form-control", id="candidate_cellular") }}
+      </div>
+      <div class="col-12 text-center pt-3">
+        <button type="submit" class="btn btn-primary me-2">Guardar</button>
+        <a href="{{ url_for('leads.leads_list') }}" class="btn btn-secondary btn-cancel">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div id="leadFormLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const form=document.getElementById('leadForm');
+    const ov=document.getElementById('leadFormLoading');
+    if(form){
+      form.addEventListener('submit',e=>{
+        if(!form.checkValidity()){
+          e.preventDefault();
+          e.stopPropagation();
+        }else{
+          ov.classList.remove('d-none');ov.classList.add('d-flex');
+        }
+        form.classList.add('was-validated');
+      });
+    }
+    // overlay también al cancelar
+    document.querySelector('.btn-cancel')?.addEventListener('click',()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});
+  });
+</script>
 {% endblock %}

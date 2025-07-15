@@ -1,36 +1,60 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Gestión de leads{% endblock %}
 {% block content %}
-<h2>Gestión de leads</h2>
-<a href="{{ url_for('leads.new_lead') }}" class="btn btn-primary mb-3 me-3">Nuevo lead</a>
-<form method="get" class="row g-2 align-items-end mb-3">
-  <div class="col-md-3">
-    <label class="form-label">Candidato</label>
-    <input type="text" name="candidate" value="{{ filters.candidate }}" class="form-control" placeholder="Nombre">
-  </div>
-  <div class="col-md-3">
-    <label class="form-label">Prescriptor</label>
-    <select name="prescriptor" class="form-select">
-      <option value="">Todos</option>
-      {% for pid, pname in presc_choices %}
-      <option value="{{ pid }}" {% if filters.prescriptor==pid %}selected{% endif %}>{{ pname }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-3">
-    <label class="form-label">Estado</label>
-    <select name="state" class="form-select">
-      <option value="">Todos</option>
-      {% for sid, sname in state_choices %}
-      <option value="{{ sid }}" {% if filters.state==sid|string %}selected{% endif %}>{{ sname }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-2">
-    <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
-  </div>
+<!-- Loading overlay -->
+<div id="leadsLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-semibold">Gestión de Leads</h2>
+
+  {% if can('create_lead') %}
+  <a href="{{ url_for('leads.new_lead') }}" class="btn btn-primary mb-3 me-3 btn-loading">Nuevo lead</a>
+  {% endif %}
+</div>
+
+
+
+<div class="card shadow-sm mb-4 bg-light border border-secondary-subtle rounded">
+  <div class="card-body">
+    <form id="usersFilterForm" class="row row-cols-lg-auto g-3 align-items-end" method="get">
+      <div class="col-auto">
+        <label class="form-label">Candidato</label>
+        <input type="text" name="candidate" value="{{ filters.candidate }}" class="form-control" placeholder="Nombre">
+      </div>
+      <div class="col-auto">
+        <label class="form-label">Prescriptor</label>
+        <select name="prescriptor" class="form-select">
+          <option value="">Todos</option>
+          {% for pid, pname in presc_choices %}
+          <option value="{{ pid }}" {% if filters.prescriptor==pid %}selected{% endif %}>{{ pname }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <label class="form-label">Estado</label>
+        <select name="state" class="form-select">
+          <option value="">Todos</option>
+          {% for sid, sname in state_choices %}
+          <option value="{{ sid }}" {% if filters.state==sid|string %}selected{% endif %}>{{ sname }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-loading">Filtrar</button>
+      </div>
 </form>
-<table class="table table-bordered table-sm">
+  </div>
+</div>
+
+
+
+<div class="card-body">
+    
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
     <thead>
         <tr>
             <th>Fecha</th>
@@ -49,25 +73,25 @@
             <td>{{ l.candidate_name or '-' }}<br><small>{{ l.candidate_email }}</small></td>
             <td>{{ pres_map.get(l.prescriptor_id, l.prescriptor_id) }}</td>
             <td>{{ l.candidate_cellular or '-' }}</td>
-            <td>{{ l.commercial_id or '-' }}</td>
+            <td>{{ commercial_map.get(l.commercial_id, l.commercial_id or '-') }}</td>
             <td>{{ state_map.get(l.state_id, l.state_id) }}</td>
             {% if can('update_leads') or can('delete_leads') or can('view_leads') %}
             <td>
               {% if can('update_leads') %}
-              <a href="{{ url_for('leads.edit_lead', lead_id=l.id) }}" class="btn btn-sm btn-secondary me-1">Editar</a>
+              <a href="{{ url_for('leads.edit_lead', lead_id=l.id) }}" class="btn btn-sm btn-secondary me-1 btn-loading" title="Editar"><i class="bi bi-pencil"></i></a>
               {% endif %}
               {% if can('view_leads') %}
-              <a href="{{ url_for('leads.lead_history', lead_id=l.id) }}" class="btn btn-sm btn-info me-1">Histórico</a>
-               <a href="{{ url_for('leads.update_status', lead_id=l.id) }}" class="btn btn-sm btn-warning me-1">Actualizar estado</a>
+              <a href="{{ url_for('leads.lead_history', lead_id=l.id) }}" class="btn btn-sm btn-info me-1 btn-loading">Histórico</a>
+               <a href="{{ url_for('leads.update_status', lead_id=l.id) }}" class="btn btn-sm btn-warning me-1 btn-loading" data-confirm="¿Actualizar estado?">Actualizar estado</a>
               {% endif %}
               {% if can('delete_leads') and l.state_id==6 %}
-              <form method="post" action="{{ url_for('leads.delete_lead', lead_id=l.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar lead?');">
-                <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+              <form method="post" action="{{ url_for('leads.delete_lead', lead_id=l.id) }}" class="d-inline">
+                 <button type="submit" class="btn btn-sm btn-danger btn-loading" data-confirm="¿Eliminar lead?" title="Eliminar"><i class="bi bi-trash"></i></button>
               </form>
               {% endif %}
               {% if can('delete_leads') and l.is_test %}
-               <form method="post" action="{{ url_for('leads.delete_test_lead', lead_id=l.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar lead de prueba?');">
-                 <button type="submit" class="btn btn-sm btn-danger">Eliminar test</button>
+               <form method="post" action="{{ url_for('leads.delete_test_lead', lead_id=l.id) }}" class="d-inline">
+                 <button type="submit" class="btn btn-sm btn-danger btn-loading" data-confirm="¿Eliminar lead de prueba?" title="Eliminar test"><i class="bi bi-trash"></i></button>
                </form>
                {% endif %}
             </td>
@@ -75,6 +99,39 @@
         </tr>
     {% endfor %}
     </tbody>
-</table>
+    </table>
+  </div>
+</div>
 {% if total==0 %}<p>No hay leads.</p>{% endif %}
+
+{% set pages = (total // per_page) + (1 if total % per_page else 0) %}
+{% if pages > 1 %}
+<nav class="d-flex justify-content-center mt-4">
+  <ul class="pagination pagination-sm pagination-glass mb-0">
+    {% for p in range(1, pages+1) %}
+    <li class="page-item {% if p==page %}active{% endif %}"><a class="page-link" href="?candidate={{ filters.candidate }}&prescriptor={{ filters.prescriptor }}&state={{ filters.state }}&page={{ p }}">{{ p }}</a></li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endif %}
+
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const ov=document.getElementById('leadsLoading');
+    if(!ov) return;
+    const show=()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');};
+
+    // filtro GET
+    const filterForm=document.querySelector('form[method="get"]');
+    if(filterForm){filterForm.addEventListener('submit',show);}    
+
+    // delegación para cualquier .btn-loading (a, button)
+    document.body.addEventListener('click',e=>{
+      const trg=e.target.closest('.btn-loading');
+      if(!trg) return;
+      show();
+      // no preventDefault; dejar fluir
+    });
+  });
+</script>
 {% endblock %}

@@ -99,6 +99,16 @@ def leads_list():
         pres_rows = db.session.query(Prescriptor).filter(Prescriptor.id.in_(pres_ids)).all()
         pres_map = {p.id: _presc_label(p) for p in pres_rows}
 
+    # Mapear comercial (usuario) id -> nombre completo
+    commercial_map = {}
+    if User is not None and leads:
+        com_ids = {l.commercial_id for l in leads if l.commercial_id}
+        if com_ids:
+            user_rows = db.session.query(User).filter(User.id.in_(com_ids)).all()
+            for u in user_rows:
+                nombre = f"{getattr(u,'name','')} {getattr(u,'lastname','')}".strip() or getattr(u,'email',u.id)
+                commercial_map[u.id] = nombre
+
     # Mapear id -> nombre de estado
     state_map = {}
     if StateLead is not None and leads:
@@ -120,6 +130,7 @@ def leads_list():
         "list/leads_list.html",
         leads=leads,
         pres_map=pres_map,
+        commercial_map=commercial_map,
         state_map=state_map,
         presc_choices=presc_choices,
         state_choices=state_choices,
@@ -308,7 +319,40 @@ def new_lead():
 @login_required
 @require_perm("delete_leads")
 def delete_lead(lead_id):
-    """Eliminar leads cuyo estado sea 6."""
+    """Eliminar un lead solo si su estado es 6 (cerrado) para evitar borrar leads activos."""
+    Lead = getattr(Base.classes, "leads", None)
+    LeadHistory = getattr(Base.classes, "lead_history", None)
+    Ledger = getattr(Base.classes, "ledger", None)
+    if Lead is None:
+        abort(404)
+
+    lead = db.session.get(Lead, lead_id)
+    if lead is None:
+        flash("Lead no encontrado", "warning")
+        return redirect(url_for("leads.leads_list"))
+
+    # Solo permitir eliminar si state_id == 6
+    if getattr(lead, "state_id", None) != 6:
+        flash("Solo se pueden eliminar leads con estado 6", "warning")
+        return redirect(url_for("leads.leads_list"))
+
+    try:
+        # Borrar ledger asociado
+        if Ledger is not None:
+            db.session.query(Ledger).filter(Ledger.lead_id == lead_id).delete()
+        # Borrar historial
+        if LeadHistory is not None:
+            db.session.query(LeadHistory).filter(LeadHistory.lead_id == lead_id).delete()
+        # Borrar lead
+        db.session.delete(lead)
+        db.session.commit()
+        flash("Lead eliminado", "success")
+    except Exception as exc:  # pylint: disable=broad-except
+        db.session.rollback()
+        current_app.logger.error("Error eliminando lead %s: %s", lead_id, exc)
+        flash("No se pudo eliminar el lead", "danger")
+
+    return redirect(url_for("leads.leads_list"))
 
 # ---------------------------------------------------------------------------
 # Historial

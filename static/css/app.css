@@ -35,3 +35,27 @@
   background: #f1f5ff;
   color: #0056d2;
 }
+
+.pagination-glass .page-link{
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(0,0,0,.1);
+  border-radius: 30px;
+  color:#333;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+  transition:all .2s;
+}
+.pagination-glass .page-link:hover{
+  background: rgba(0,86,210,0.1);
+  color:#0056d2;
+}
+.pagination-glass .page-item.active .page-link{
+  background:#0056d2;
+  color:#fff;
+  border-color:#0056d2;
+}
+.pagination-glass .page-item.disabled .page-link{
+  opacity:.5;
+  pointer-events:none;
+}
