@@ -1,5 +1,10 @@
 # sigp
 
+## Ejecución Local
+```bash
+FLASK_APP=sigp:create_app flask --debug run --port 5001  
+```
+
 ## Migraciones de base de datos (Alembic)
 
 El proyecto parte de la revisión **baseline_20250708**.  Todas las migraciones
