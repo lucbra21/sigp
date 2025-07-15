@@ -1,148 +1,172 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Formulario Prescriptor{% endblock %}
 {% block content %}
-<h2>Formulario Prescriptor
+<h2 class="fw-semibold mb-4 text-center">{{ 'Editar' if edit else 'Nuevo' }} Prescriptor
 
 </h2>
-<form method="post" action="{{ action }}" enctype="multipart/form-data">
+<div class="card shadow-sm border border-secondary-subtle bg-light mx-auto" style="max-width:1000px;">
+  <div class="card-body">
+<form id="prescriptorForm" method="post" action="{{ action }}" enctype="multipart/form-data" class="row g-3">
     {{ form.csrf_token }}
-    <div class="mb-3">
+    <div class="col-md-4">
         {{ form.user_id.label(class="form-label") }}
         {{ form.user_id(class="form-control") }}
         {% for err in form.user_id.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
     </div>
-    <div class="mb-3">
+    <div class="col-md-4">
         {{ form.squeeze_page_name.label(class="form-label") }}
         {{ form.squeeze_page_name(class="form-control", placeholder="Ingrese nombre") }}
         {% for err in form.squeeze_page_name.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
     </div>
-    <div class="mb-3">
-        {% if form.type_id is defined %}
+    {% if form.type_id is defined %}
+    <div class="col-md-4">
         {{ form.type_id.label(class="form-label") }}
         {{ form.type_id(class="form-select") }}
-        {% endif %}
     </div>
-    <div class="mb-3">
-        {% if form.proposed_type_id is defined %}
+{% endif %}
+    {% if form.proposed_type_id is defined %}
+    <div class="col-md-4">
         {{ form.proposed_type_id.label(class="form-label") }}
         {{ form.proposed_type_id(class="form-select") }}
-        {% endif %}
     </div>
-    <div class="mb-3">
-        {% if form.state_id is defined %}
+    {% endif %}
+    {% if form.state_id is defined %}
+    <div class="col-md-4">
         {{ form.state_id.label(class="form-label") }}
         {{ form.state_id(class="form-select") }}
         {% for err in form.state_id.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
-    {% endif %}
     </div>
-    <div class="mb-3">
-        {% if form.sub_state is defined %}
+    {% endif %}
+    {% if form.sub_state is defined %}
+    <div class="col-md-4">
         {{ form.sub_state.label(class="form-label") }}
         {{ form.sub_state(class="form-select") }}
         {% for err in form.sub_state.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+    </div>
     {% endif %}
+    {% if form.email is defined %}
+    <div class="col-md-4">
+        {{ form.email.label(class="form-label") }}
+        {{ form.email(class="form-control") }}
+        {% for err in form.email.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
     </div>
-    <div class="mb-3">
-        {% if form.squeeze_url_tst is defined %}
-        {{ form.squeeze_url_tst.label(class="form-label") }}
-        {{ form.squeeze_url_tst(class="form-control") }}
-        {% for err in form.squeeze_url_tst.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
     {% endif %}
+    {% if form.cellular is defined %}
+    <div class="col-md-4">
+        {{ form.cellular.label(class="form-label") }}
+        {{ form.cellular(class="form-control") }}
+        {% for err in form.cellular.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
     </div>
-    <div class="mb-3">
-        {% if form.squeeze_url_prd is defined %}
-        {{ form.squeeze_url_prd.label(class="form-label") }}
-        {{ form.squeeze_url_prd(class="form-control") }}
-        {% for err in form.squeeze_url_prd.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
     {% endif %}
-    </div>
-    <div class="mb-3">
-         {% if form.observations is defined %}
-         {{ form.observations.label(class="form-label") }}
-         {{ form.observations(class="form-control", rows="3") }}
-     {% endif %}
-     </div>
-    <div class="mb-3">
-         {% if form.email is defined %}
-         {{ form.email.label(class="form-label") }}
-         {{ form.email(class="form-control") }}
-         {% for err in form.email.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
-     {% endif %}
-    </div>
-    <div class="mb-3">
-         {% if form.cellular is defined %}
-         {{ form.cellular.label(class="form-label") }}
-         {{ form.cellular(class="form-control") }}
-         {% for err in form.cellular.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
-     {% endif %}
-    </div>
-    <div class="mb-3">
-          {% if form.confidence_level_id is defined %}
+    {% if form.confidence_level_id is defined %}
+    <div class="col-md-4">
         {{ form.confidence_level_id.label(class="form-label") }}
         {{ form.confidence_level_id(class="form-select") }}
         {% for err in form.confidence_level_id.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
-    {% endif %}
     </div>
-    <div class="mb-3">
-         {% if form.squeeze_page_status is defined %}
+    {% endif %}
+    {% if form.squeeze_page_status is defined %}
+    <div class="col-md-4">
         {{ form.squeeze_page_status.label(class="form-label") }}
         {{ form.squeeze_page_status(class="form-select") }}
         {% for err in form.squeeze_page_status.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
-{% endif %}
     </div>
-
+    {% endif %}
+    <div class="col-md-12">
+        {% if form.observations is defined %}
+        {{ form.observations.label(class="form-label") }}
+        {{ form.observations(class="form-control", rows="3") }}
+        {% endif %}
+    </div>
+    {% if edit %}
     <!-- Multimedia y redes sociales -->
-    <div class="mb-3">{% if form.photo_file is defined %}
+    <div class="col-md-4">
         {{ form.photo_file.label(class="form-label") }}
         {{ form.photo_file(class="form-control-file") }}
-        {% if image_urls and image_urls.photo %}<a href="{{ image_urls.photo }}" target="_blank"><img src="{{ image_urls.photo }}" class="img-thumbnail mt-1" style="max-width:120px"></a>{% endif %}
-    {% endif %}</div>
-    <div class="mb-3">{% if form.squeeze_page_image_1_file is defined %}
+        {% if image_urls and image_urls.photo %}
+  <a href="{{ image_urls.photo }}" target="_blank"><img src="{{ image_urls.photo }}" class="img-thumbnail mt-1" style="max-width:120px"></a>
+{% endif %}
+    </div>
+    <div class="col-md-4 mb-3">
         {{ form.squeeze_page_image_1_file.label(class="form-label") }}
         {{ form.squeeze_page_image_1_file(class="form-control-file") }}
-        {% if image_urls and image_urls.img1 %}<a href="{{ image_urls.img1 }}" target="_blank"><img src="{{ image_urls.img1 }}" class="img-thumbnail mt-1" style="max-width:120px"></a>{% endif %}
-    {% endif %}</div>
-    <div class="mb-3">{% if form.squeeze_page_image_2_file is defined %}
+        {% if image_urls and image_urls.img1 %}
+  <a href="{{ image_urls.img1 }}" target="_blank"><img src="{{ image_urls.img1 }}" class="img-thumbnail mt-1" style="max-width:120px"></a>
+{% endif %}
+    </div>
+    <div class="col-md-4 mb-3">
         {{ form.squeeze_page_image_2_file.label(class="form-label") }}
         {{ form.squeeze_page_image_2_file(class="form-control-file") }}
-        {% if image_urls and image_urls.img2 %}<a href="{{ image_urls.img2 }}" target="_blank"><img src="{{ image_urls.img2 }}" class="img-thumbnail mt-1" style="max-width:120px"></a>{% endif %}
-    {% endif %}</div>
-    <div class="mb-3">{% if form.squeeze_page_image_3_file is defined %}
+        {% if image_urls and image_urls.img2 %}
+  <a href="{{ image_urls.img2 }}" target="_blank"><img src="{{ image_urls.img2 }}" class="img-thumbnail mt-1" style="max-width:120px"></a>
+{% endif %}
+    </div>
+    <div class="col-md-4 mb-3">
         {{ form.squeeze_page_image_3_file.label(class="form-label") }}
         {{ form.squeeze_page_image_3_file(class="form-control-file") }}
-        {% if image_urls and image_urls.img3 %}<a href="{{ image_urls.img3 }}" target="_blank"><img src="{{ image_urls.img3 }}" class="img-thumbnail mt-1" style="max-width:120px"></a>{% endif %}
-    {% endif %}</div>
-    <div class="mb-3">{% if form.face_url is defined %}
+        {% if image_urls and image_urls.img3 %}
+  <a href="{{ image_urls.img3 }}" target="_blank"><img src="{{ image_urls.img3 }}" class="img-thumbnail mt-1" style="max-width:120px"></a>
+{% endif %}
+    </div>
+    <div class="col-md-4 mb-3">
         {{ form.face_url.label(class="form-label") }}
         {{ form.face_url(class="form-control") }}
-    {% endif %}</div>
-    <div class="mb-3">{% if form.linkedin_url is defined %}
+    </div>
+    <div class="col-md-4 mb-3">
         {{ form.linkedin_url.label(class="form-label") }}
         {{ form.linkedin_url(class="form-control") }}
-    {% endif %}</div>
-    <div class="mb-3">{% if form.instagram_url is defined %}
+    </div>
+    <div class="col-md-4 mb-3">
         {{ form.instagram_url.label(class="form-label") }}
         {{ form.instagram_url(class="form-control") }}
-    {% endif %}</div>
-    <div class="mb-3">{% if form.x_url is defined %}
+    </div>
+    <div class="col-md-4 mb-3">
         {{ form.x_url.label(class="form-label") }}
         {{ form.x_url(class="form-control") }}
-    {% endif %}</div>
+    </div>
 
 {% if form.contract_file is defined %}
-    <div class="mb-3">
+    <div class="col-md-4 mb-3">
         {{ form.contract_file.label(class="form-label") }}
         {{ form.contract_file(class="form-control") }}
         {% for err in form.contract_file.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
         {% if contract_url %}
             <a href="{{ contract_url }}" target="_blank" class="btn btn-link">Descargar contrato existente</a>
-        {% endif %}
+{% endif %}
     </div>
+{% endif %} 
 {% endif %}
 
-<div class="d-flex justify-content-between">
-        {{ form.submit(class="btn btn-success") }}
-        <a href="{{ url_for('prescriptors.list_prescriptors') }}" class="btn btn-secondary">Cancelar</a>
+<div class="col-12 text-center pt-3">
+        <button type="submit" class="btn btn-primary me-2">Guardar</button>
+        <a href="{{ url_for('prescriptors.list_prescriptors') }}" class="btn btn-secondary" id="cancelPrescriptor">Cancelar</a>
     </div>
 </form>
+  </div>
+</div>
+<!-- Loading overlay -->
+<div id="prescriptorFormLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const form = document.getElementById('prescriptorForm');
+    const overlay = document.getElementById('prescriptorFormLoading');
+    if(form){
+      form.addEventListener('submit', function(){
+        if(form.checkValidity()){
+          overlay.classList.remove('d-none');
+          overlay.classList.add('d-flex');
+        }
+      });
+    }
+    const cancelBtn = document.getElementById('cancelPrescriptor');
+    if(cancelBtn){
+      cancelBtn.addEventListener('click', function(){
+        overlay.classList.remove('d-none');
+        overlay.classList.add('d-flex');
+      });
+    }
+  });
+</script>
 {% endblock %}
