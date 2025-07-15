@@ -1,13 +1,78 @@
 {% extends 'layouts/base.html' %}
 {% block title %}{{ 'Editar' if lead else 'Nuevo' }} estado{% endblock %}
 {% block content %}
-<h2>{{ 'Editar' if lead else 'Nuevo' }} estado de lead</h2>
-<form method="post">
-  <div class="mb-3">
-    <label class="form-label" for="name">Nombre</label>
-    <input class="form-control" id="name" name="name" required value="{{ lead.name if lead else '' }}" />
+<h2 class="fw-semibold mb-4 text-center">{{ 'Editar' if lead else 'Nuevo' }} Estado de Lead</h2>
+<div class="card shadow-sm border border-secondary-subtle bg-light mx-auto" style="max-width:600px;">
+  <div class="card-body">
+    <form id="stateLeadForm" method="post" class="row g-3 needs-validation" novalidate>
+      <div class="col-12">
+        <label for="name" class="form-label">Nombre <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-tag"></i></span>
+          <input type="text" class="form-control" id="name" name="name" value="{{ lead.name if lead }}" required />
+          <div class="invalid-feedback">El nombre es obligatorio.</div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <label for="description" class="form-label">Descripción</label>
+        <textarea id="description" name="description" class="form-control" rows="3">{{ lead.description if lead }}</textarea>
+      </div>
+
+      <div class="col-12">
+        <label for="color" class="form-label">Color</label>
+        <select id="color" name="color" class="form-select">
+          <option value="">- Sin color -</option>
+          {% set color_choices = [
+            '#198754','#0d6efd','#6610f2','#6f42c1','#d63384','#fd7e14','#dc3545','#20c997','#0dcaf0','#adb5bd'
+          ] %}
+          {% for c in color_choices %}
+          <option value="{{ c }}" {% if lead and lead.color==c %}selected{% endif %} data-color="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12 text-center pt-3">
+        <button type="submit" class="btn btn-primary me-2">Guardar</button>
+        <a href="{{ url_for('state_lead.state_leads_list') }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
   </div>
-  <button type="submit" class="btn btn-primary">Guardar</button>
-  <a href="{{ url_for('state_lead.state_leads_list') }}" class="btn btn-secondary">Cancelar</a>
-</form>
+</div>
+
+<!-- Loading overlay -->
+<div id="stateLeadFormLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    // bootstrap validation
+    const form=document.getElementById('stateLeadForm');
+    const ov=document.getElementById('stateLeadFormLoading');
+    if(form){
+      form.addEventListener('submit',e=>{
+        if(!form.checkValidity()){
+          e.preventDefault();
+          e.stopPropagation();
+        }else{
+          ov.classList.remove('d-none');ov.classList.add('d-flex');
+        }
+        form.classList.add('was-validated');
+      });
+    }
+
+    // pinta badges en opciones de color
+    document.querySelectorAll('#color option[data-color]').forEach(opt=>{
+      const clr=opt.dataset.color;
+      opt.style.background=clr;
+      opt.style.color='#fff';
+    });
+
+    // botón cancelar muestra overlay para coherencia
+    const btnCancel=document.querySelector('#stateLeadForm a.btn-secondary');
+    if(btnCancel){btnCancel.addEventListener('click',()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});}
+  });
+</script>
+
 {% endblock %}
