@@ -184,7 +184,23 @@ def list_media():
     q = db.session.query(Media)
     if cat_id and Assoc is not None:
         q = q.join(Assoc, Assoc.media_id == Media.id).filter(Assoc.category_id == cat_id)
-    files = q.order_by(Media.created_at.desc()).limit(100).all()
+    # recuperamos archivos y nombre de categoría en una sola consulta
+    files = []
+    if Category:
+        rows = (
+            q.outerjoin(Category, Category.id == getattr(Media, 'category_id', None))
+             .with_entities(Media, Category.name.label("cat_name"))
+             .order_by(Media.created_at.desc())
+             .limit(100)
+             .all()
+        )
+        for media_obj, cat_name in rows:
+            media_obj.category_name = cat_name or "-"
+            files.append(media_obj)
+    else:
+        files = q.order_by(Media.created_at.desc()).limit(100).all()
+        for f in files:
+            f.category_name = "-"
 
     cats = db.session.query(Category).order_by(Category.name).all() if Category else []
     return render_template("list/media_files.html", files=files, cats=cats, selected_cat=cat_id)

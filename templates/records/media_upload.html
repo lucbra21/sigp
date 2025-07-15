@@ -1,8 +1,9 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Subir archivo{% endblock %}
 {% block content %}
-<h2>Subir archivo multimedia</h2>
-<form method="post" enctype="multipart/form-data" action="{{ action }}" id="uploadForm">
+<h2 class="fw-semibold mb-4 text-center">Subir archivo multimedia</h2>
+<div class="card form-card mx-auto" style="max-width:700px;">
+  <form method="post" enctype="multipart/form-data" action="{{ action }}" id="uploadForm" class="row g-3">
     {{ form.csrf_token }}
     <div class="mb-3">{{ form.source_type.label }} {{ form.source_type(class="form-select", id='sourceSelect') }}</div>
     <div class="mb-3">{{ form.category.label }} {{ form.category(class="form-select") }}</div>
@@ -10,9 +11,12 @@
     <div class="mb-3">{{ form.description.label }} {{ form.description(class="form-control") }}</div>
     <div class="mb-3" id="fileField">{{ form.file.label }} {{ form.file(class="form-control") }}</div>
     <div class="mb-3 d-none" id="urlField">{{ form.url.label }} {{ form.url(class="form-control") }}</div>
-    {{ form.submit(class="btn btn-success") }}
-    <a href="{{ url_for('multimedia.list_media') }}" class="btn btn-secondary">Cancelar</a>
+    <div class="col-12 d-flex justify-content-center gap-2 mt-2">
+      {{ form.submit(class="btn btn-primary") }}
+      <a href="{{ url_for('multimedia.list_media') }}" class="btn btn-secondary">Cancelar</a>
+    </div>
 </form>
+</div>
 <script>
     const sourceSel = document.getElementById('sourceSelect');
     const fileDiv = document.getElementById('fileField');
@@ -24,5 +28,15 @@
     }
     sourceSel.addEventListener('change', toggleFields);
     document.addEventListener('DOMContentLoaded', toggleFields);
+    const f=document.getElementById('uploadForm');
+    function showLoading(){const ov=document.getElementById('uploadLoading');if(ov){ov.classList.remove('d-none');ov.classList.add('d-flex');}}
+    if(f){f.addEventListener('submit',()=>{if(f.checkValidity()){showLoading();}})}
+    const cancel=document.querySelector('a.btn-secondary');
+    if(cancel){cancel.addEventListener('click',showLoading);}
 </script>
+
+<!-- Loading overlay -->
+<div id="uploadLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
 {% endblock %}

@@ -1,8 +1,13 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Archivos multimedia{% endblock %}
 {% block content %}
-<h2>Archivos multimedia</h2>
-<form class="row g-3 mb-3" method="get" action="{{ url_for('multimedia.list_media') }}">
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Archivos multimedia</h2>
+  <a href="{{ url_for('multimedia.upload_media') }}" id="uploadBtn" class="btn btn-primary">Subir nuevo</a>
+</div>
+<div class="card filter-card mb-4 shadow-sm">
+  <div class="card-body">
+    <form id="mediaFilterForm" class="row row-cols-lg-auto g-3 align-items-end" method="get" action="{{ url_for('multimedia.list_media') }}">
     <div class="col-auto">
         <select name="category_id" class="form-select">
             <option value="">Todas las categorías</option>
@@ -12,17 +17,21 @@
         </select>
     </div>
     <div class="col-auto"><button type="submit" class="btn btn-outline-primary">Filtrar</button></div>
-    <div class="col-auto ms-auto"><a href="{{ url_for('multimedia.upload_media') }}" class="btn btn-primary">Subir nuevo</a></div>
+    
 </form>
-<table class="table table-bordered table-sm">
+  </div>
+</div>
+<div class="card table-card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
     <thead>
-        <tr><th>ID</th><th>Título</th><th>Tipo</th><th>Tamaño</th><th>Subido</th><th>Descargar</th></tr>
+        <tr><th>Título</th><th>Categoría</th><th>Tipo</th><th>Tamaño</th><th>Subido</th><th>Descargar</th></tr>
     </thead>
     <tbody>
         {% for f in files %}
         <tr>
-            <td>{{ f.id }}</td>
             <td>{{ f.title or f.original_name }}</td>
+            <td>{{ f.category_name }}</td>
             <td>{{ f.mime_type }}</td>
             <td>{% if f.size_bytes %}{{ (f.size_bytes / 1024)|round(1) }} KB{% else %}-{% endif %}</td>
             <td>{{ f.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
@@ -36,5 +45,21 @@
         </tr>
         {% endfor %}
     </tbody>
-</table>
+    </table>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div id="mediaFilterLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const f=document.getElementById('mediaFilterForm');
+    const ov=document.getElementById('mediaFilterLoading');
+    if(f){f.addEventListener('submit',()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});}
+    const up=document.getElementById('uploadBtn');
+    if(up){up.addEventListener('click',()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});}
+  });
+</script>
 {% endblock %}
