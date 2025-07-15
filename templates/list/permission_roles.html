@@ -10,4 +10,19 @@
   </li>
   {% endfor %}
 </ul>
+
+<!-- Loading overlay -->
+<div id="assignPermLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.querySelectorAll('a.btn.btn-sm.btn-primary').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const ov=document.getElementById('assignPermLoading');
+        if(ov){ov.classList.remove('d-none');ov.classList.add('d-flex');}
+      });
+    });
+  });
+</script>
 {% endblock %}

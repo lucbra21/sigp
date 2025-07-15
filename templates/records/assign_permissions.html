@@ -2,7 +2,8 @@
 {% block title %}Permisos de {{ role.name }}{% endblock %}
 {% block content %}
 <h2>Permisos para {{ role.name }}</h2>
-<form method="post">
+<form id="permForm" method="post">
+  <div class="card table-card shadow-sm mb-3">
   <div class="table-responsive">
     <table class="table table-bordered align-middle">
       <thead class="table-light">
@@ -33,7 +34,24 @@
       </tbody>
     </table>
   </div>
-  <button type="submit" class="btn btn-primary">Guardar</button>
-  <a href="{{ url_for('permissions.roles_select') }}" class="btn btn-secondary">Volver</a>
+</div>
+  <div class="d-flex justify-content-center gap-2">
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{{ url_for('permissions.roles_select') }}" class="btn btn-secondary">Volver</a>
+  </div>
 </form>
+
+<!-- Loading overlay -->
+<div id="permFormLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const f=document.getElementById('permForm');
+    const ov=document.getElementById('permFormLoading');
+    if(f){f.addEventListener('submit',()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});}
+    const back=document.querySelector('a.btn-secondary');
+    if(back){back.addEventListener('click',()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});}
+  });
+</script>
 {% endblock %}
