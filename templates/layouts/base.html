@@ -116,17 +116,17 @@
                     </li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard.prescriptor_report') }}">Dashboard</a></li>
                 </ul>
-                <div class="d-flex">
-                    <span class="navbar-text me-3">Bienvenido {{ current_user.email }}</span>
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">Logout</a>
-                </div>
-                <li class="nav-item me-2">
+                <div class="d-flex align-items-center">
                     {% set unread = unread_count() %}
-                    <a class="nav-link position-relative" href="{{ url_for('notifications.my_notifications') }}" title="No leídas: {{ unread }}">
-                        <i class="fs-4 {% if unread %}bi bi-bell-fill text-danger{% else %}bi bi-bell text-secondary{% endif %}"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill {% if unread %}bg-danger{% else %}bg-secondary{% endif %}">{{ unread }}</span>
+                    <a class="position-relative badge bg-white text-dark shadow-sm me-3" style="border:1px solid rgba(0,0,0,.15);" href="{{ url_for('notifications.my_notifications') }}" title="Notificaciones">
+                        <i class="fs-5 notif-bell {% if unread %}bi bi-bell-fill text-danger{% else %}bi bi-bell text-secondary{% endif %}"></i>
+                        {% if unread %}<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ unread }}</span>{% endif %}
                     </a>
-                </li>
+                    <span class="badge bg-white text-dark shadow-sm me-3 d-flex align-items-center" style="border:1px solid rgba(0,0,0,.15);padding: 10px;">
+                        <i class="bi bi-person-circle me-1"></i>{{ current_user.email }}
+                    </span>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary d-flex align-items-center" title="Cerrar sesión"><i class="bi bi-box-arrow-right"></i></a>
+                </div>
             </div>
         </div>
     </nav>
