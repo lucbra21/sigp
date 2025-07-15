@@ -1,17 +1,35 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Nuevo Rol{% endblock %}
 {% block content %}
-<h2>Nuevo rol</h2>
-<form method="post" class="col-md-6">
+<h2 class="fw-semibold mb-4 text-center">{{ 'Editar' if role else 'Nuevo' }} Rol</h2>
+<div class="card form-card mx-auto" style="max-width:700px;">
+  <form id="roleForm" method="post" class="row g-3">
   <div class="mb-3">
     <label class="form-label" for="name">Nombre</label>
     <input type="text" class="form-control" id="name" name="name" value="{{ q }}{{ role.name if role }}" required />
   </div>
-  <div class="mb-3">
+  <div class="col-md-12">
     <label class="form-label" for="description">Descripción</label>
     <textarea class="form-control" id="description" name="description" rows="3">{{ role.description if role }}</textarea>
   </div>
-  <button type="submit" class="btn btn-primary">Guardar</button>
-  <a href="{{ url_for('roles.roles_list') }}" class="btn btn-secondary">Cancelar</a>
-</form>
+  <div class="col-12 d-flex justify-content-center gap-2 mt-3">
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <a href="{{ url_for('roles.roles_list') }}" class="btn btn-secondary">Cancelar</a>
+  </div>
+  </form>
+</div>
+
+<!-- Loading overlay -->
+<div id="roleFormLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const f=document.getElementById('roleForm');
+    const ov=document.getElementById('roleFormLoading');
+    if(f){f.addEventListener('submit',()=>{if(f.checkValidity()){ov.classList.remove('d-none');ov.classList.add('d-flex');}})}
+    const cancel=document.querySelector('#roleForm + div a.btn-secondary')||document.querySelector('a.btn-secondary');
+    if(cancel){cancel.addEventListener('click',()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});}
+  });
+</script>
 {% endblock %}

@@ -1,0 +1,46 @@
+/* Global UI elements for tables, filters, pagination */
+
+/* Filter card with light background and subtle border */
+.filter-card{
+  background: #f8f9fa!important; /* Bootstrap light */
+  border: 1px solid rgba(108,117,125,.25)!important; /* secondary-subtle */
+  border-radius: .5rem!important;
+}
+
+/* Table card (wrapper) */
+.table-card{
+  box-shadow: 0 4px 12px rgba(0,0,0,.05);
+  border-radius: .5rem;
+}
+
+/* Glassmorphism style for pagination */
+.pagination-glass{
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background: rgba(255,255,255,.6);
+  border-radius: .75rem;
+  padding: .25rem .5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,.08);
+}
+.pagination-glass .page-link{
+  border: none;
+  color: #0056d2;
+  background: transparent;
+}
+.pagination-glass .page-item.active .page-link{
+  background:#0056d2;
+  color:#fff;
+}
+.pagination-glass .page-item.disabled .page-link{
+  opacity:.5;
+  pointer-events:none;
+}
+
+/* Form card */
+.form-card{
+  background:#ffffff!important;
+  border:1px solid rgba(108,117,125,.25)!important;
+  border-radius:.5rem!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
+  padding:1.5rem;
+}

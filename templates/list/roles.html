@@ -7,7 +7,9 @@
   <a href="{{ url_for('roles.role_new') }}" class="btn btn-success">Agregar nuevo</a>
   {% endif %}
 </div>
-<form class="row mb-3" method="get">
+<div class="card filter-card mb-4 shadow-sm">
+  <div class="card-body">
+    <form id="rolesFilterForm" class="row row-cols-lg-auto g-3 align-items-end" method="get">
   <div class="col-auto">
     <input type="text" name="q" class="form-control" placeholder="Filtrar por nombre" value="{{ q }}" />
   </div>
@@ -15,7 +17,12 @@
     <button type="submit" class="btn btn-primary">Filtrar</button>
   </div>
 </form>
-<table class="table table-striped">
+  </div>
+</div>
+
+<div class="card table-card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
   <thead>
     <tr>
       <th>ID</th>
@@ -43,10 +50,12 @@
     </tr>
     {% endfor %}
   </tbody>
-</table>
+    </table>
+  </div>
+</div>
 
 <nav aria-label="Paginación roles">
-  <ul class="pagination">
+  <ul class="pagination pagination-sm pagination-glass justify-content-center">
     {% for p in range(1, pages + 1) %}
     <li class="page-item {% if p == page %}active{% endif %}">
       <a class="page-link" href="?q={{ q }}&page={{ p }}">{{ p }}</a>
@@ -54,4 +63,16 @@
     {% endfor %}
   </ul>
 </nav>
+
+<!-- Loading overlay -->
+<div id="rolesFilterLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const f=document.getElementById('rolesFilterForm');
+    const ov=document.getElementById('rolesFilterLoading');
+    if(f){f.addEventListener('submit',()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});}
+  });
+</script>
 {% endblock %}

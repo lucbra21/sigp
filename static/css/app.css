@@ -1,5 +1,6 @@
 /* Custom navbar glass style */
 .navbar-custom{
+  z-index:1055!important;
   background: rgba(255,255,255,0.8);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -25,6 +26,7 @@
 }
 
 .dropdown-menu{
+  z-index:2000!important;
   border-radius: .5rem;
   box-shadow: 0 8px 24px rgba(0,0,0,.15);
 }
