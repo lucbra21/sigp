@@ -53,7 +53,7 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="prescDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Prescripción</a>
                         <ul class="dropdown-menu" aria-labelledby="prescDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('leads.leads_list') }}">Gestión de leads</a></li>
+                            
                             {% if can('read_own_leads') %}
                             <li><a class="dropdown-item" href="{{ url_for('leads.my_leads') }}">Mis leads</a></li>
                             {% endif %}
@@ -62,11 +62,7 @@
                             <li><a class="dropdown-item" href="{{ url_for('prescriptors.new_invoice') }}">Subir factura</a></li>
                              <li><a class="dropdown-item" href="{{ url_for('prescriptors.my_ledger') }}">Mi libro mayor</a></li>
                             {% endif %}
-                            {% if can('manage_payments') %}
-                            <li><a class="dropdown-item" href="{{ url_for('admin.pay_approval') }}">Aprobación de pagos</a></li>
-<li><a class="dropdown-item" href="{{ url_for('settlements.pending_all') }}">Rendición facturas</a></li>
-<li><a class="dropdown-item" href="{{ url_for('adjustments.adjustments_page') }}">Ajustes</a></li>
-                            {% endif %}
+                            
                         </ul>
                     </li>
                     {% endif %}
@@ -74,6 +70,7 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('leads.leads_list') }}">Gestión de leads</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('admin.pay_approval') }}">Aprobación de pagos</a></li>
 <li><a class="dropdown-item" href="{{ url_for('settlements.pending_all') }}">Rendición facturas</a></li>
 <li><a class="dropdown-item" href="{{ url_for('adjustments.adjustments_page') }}">Ajustes</a></li>

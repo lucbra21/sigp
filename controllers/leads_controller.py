@@ -508,11 +508,26 @@ def update_status(lead_id):
         else:
             lead.observations = obs
         lead.state_id = new_state
-        # asignar comercial: sólo la primera vez que pasa a Matriculado
-        if new_state == MATRICULADO_ID and not getattr(lead, 'commercial_id', None):
+        # Asignar comercial:
+        # – Si el lead NO tiene comercial asignado y el estado previo era
+        #   «Pendiente de contactar» (o equivalente) y el nuevo estado es
+        #   diferente.
+        # – Mantener lógica anterior para la transición a Matriculado.
+        if not getattr(lead, 'commercial_id', None):
             try:
-                lead.commercial_id = current_user.id
+                asignar = False
+                # Detectar si el estado previo es "Pendiente de contactar"
+                if StateLead is not None and old_state_id is not None:
+                    prev_state = db.session.get(StateLead, old_state_id)
+                    if prev_state:
+                        name_upper = prev_state.name.upper()
+                        if "PENDIENTE" in name_upper and "CONTACT" in name_upper:
+                            asignar = True
+                # También asignar si pasa a Matriculado (compatibilidad lógica anterior)
+                if asignar or new_state == MATRICULADO_ID:
+                    lead.commercial_id = current_user.id
             except Exception:
+                # Evitar que un fallo al asignar corte el flujo de actualización
                 pass
         try:
             db.session.commit()
