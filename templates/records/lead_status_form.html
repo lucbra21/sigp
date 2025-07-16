@@ -1,45 +1,59 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Actualizar estado{% endblock %}
 {% block content %}
-<h2>Actualizar estado Lead</h2>
-<form method="post" enctype="multipart/form-data">
+<h2 class="fw-semibold mb-4 text-center">Actualizar Estado del Lead</h2>
+<div class="card shadow-sm border border-secondary-subtle bg-light mx-auto" style="max-width:900px;">
+  <div class="card-body">
+<form id="leadStatusForm" method="post" enctype="multipart/form-data" class="row g-3 needs-validation" novalidate>
   {{ form.hidden_tag() }}
-  <div class="mb-3">
+  <div class="col-md-6 mb-3">
     {{ form.state_id.label(class="form-label") }}
     {{ form.state_id(class="form-select", id="stateSel") }}
   </div>
-  <div class="mb-3" id="grpProgram">
+  <div class="col-md-3 mb-3" id="grpStart">
+    {{ form.start_month.label(class="form-label") }}
+    {{ form.start_month(class="form-select") }}
+  </div>
+  <div class="col-md-3 mb-3" id="grpYear">
+    {{ form.start_year.label(class="form-label ms-3") }}
+    {{ form.start_year(class="form-control d-inline-block", style="width:120px") }}
+  </div>
+  <div class="col-md-6 mb-3" id="grpProgram">
     {{ form.program_id.label(class="form-label") }}
     {{ form.program_id(class="form-select") }}
   </div>
-  <div class="mb-3" id="grpEdition">
+  <div class="col-md-3 mb-3" id="grpEdition">
     {{ form.edition_id.label(class="form-label") }}
     {{ form.edition_id(class="form-select") }}
   </div>
-  <div class="mb-3" id="grpInstall">
+  <div class="col-md-3 mb-3" id="grpInstall">
     {{ form.installments.label(class="form-label") }}
     {{ form.installments(class="form-control") }}
   </div>
-  <div class="mb-3" id="grpReceipt">
+  <div class="col-md-12 mb-3" id="grpReceipt">
     {{ form.receipt.label(class="form-label") }}
     {{ form.receipt(class="form-control") }}
     {% if lead and lead.matricula_receipt %}
       <a href="{{ url_for('static', filename='uploads/receipts/' ~ lead.matricula_receipt) }}" target="_blank" class="d-block mt-2">Ver comprobante actual</a>
     {% endif %}
   </div>
-  <div class="mb-3" id="grpStart">
-    {{ form.start_month.label(class="form-label") }}
-    {{ form.start_month(class="form-select") }}
-    {{ form.start_year.label(class="form-label ms-3") }}
-    {{ form.start_year(class="form-control d-inline-block", style="width:120px") }}
-  </div>
+  
   <div class="mb-3" id="grpObs">
     {{ form.observations.label(class="form-label") }}
     {{ form.observations(class="form-control") }}
   </div>
-  <button type="submit" class="btn btn-primary">Guardar</button>
-  <a href="{{ url_for('leads.leads_list') }}" class="btn btn-secondary">Cancelar</a>
+    <div class="col-12 text-center pt-3">
+    <button type="submit" class="btn btn-primary me-2">Guardar</button>
+    <a href="{{ url_for('leads.leads_list') }}" class="btn btn-secondary btn-cancel">Cancelar</a>
+  </div>
 </form>
+</div>
+</div>
+
+<!-- Loading overlay -->
+<div id="leadStatusLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
 <script>
 function toggle() {
   const sel = document.getElementById('stateSel');
@@ -49,6 +63,7 @@ function toggle() {
   document.getElementById('grpEdition').style.display = showMat ? '' : 'none';
   document.getElementById('grpInstall').style.display = showMat ? '' : 'none';
   document.getElementById('grpStart').style.display = showMat ? '' : 'none';
+  document.getElementById('grpYear').style.display = showMat ? '' : 'none';
   document.getElementById('grpReceipt').style.display = showMat ? '' : 'none';
   document.getElementById('grpObs').style.display = showMat ? 'none' : '';
 }
@@ -77,5 +92,19 @@ if (document.getElementById('start_month')) {
   adjustYear();
   document.getElementById('start_month').addEventListener('change', adjustYear);
 }
+  // bootstrap validation + overlay
+  document.addEventListener('DOMContentLoaded',()=>{
+    const form=document.getElementById('leadStatusForm');
+    const ov=document.getElementById('leadStatusLoading');
+    if(form){
+      form.addEventListener('submit',e=>{
+        if(!form.checkValidity()){
+          e.preventDefault();e.stopPropagation();
+        }else{ov.classList.remove('d-none');ov.classList.add('d-flex');}
+        form.classList.add('was-validated');
+      });
+    }
+    document.querySelector('.btn-cancel')?.addEventListener('click',()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});
+  });
 </script>
 {% endblock %}
