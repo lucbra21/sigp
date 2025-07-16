@@ -422,6 +422,8 @@ def update_status(lead_id):
     if not lead:
         flash("Lead no encontrado", "warning")
         return redirect(url_for("leads.leads_list"))
+    # guardar estado previo para detectar transiciones
+    old_state_id = lead.state_id
     # no permitir cambios si ya esta completado
     if lead.state_id == COMPLETADO_ID:
         flash("Lead completado: no se puede modificar", "warning")
