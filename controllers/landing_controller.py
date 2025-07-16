@@ -55,8 +55,15 @@ def landing_page(prescriptor_id: str):
 
     form = PublicLeadForm()
     # Poblar choices de programas
-    if Program is not None:
-        prog_rows = db.session.query(Program).all()
+    # Poblar programas comisionables para este prescriptor (commission_value > 0)
+    PrescComm = getattr(Base.classes, "prescriptor_commission", None)
+    if Program is not None and PrescComm is not None:
+        prog_rows = (
+            db.session.query(Program)
+            .join(PrescComm, PrescComm.program_id == Program.id)
+            .filter(PrescComm.prescriptor_id == prescriptor_id, PrescComm.commission_value > 0)
+            .all()
+        )
         prog_choices = [("", "Seleccione programa")] + [
             (p.id, getattr(p, "name", getattr(p, "nombre", str(p.id)))) for p in prog_rows
         ]

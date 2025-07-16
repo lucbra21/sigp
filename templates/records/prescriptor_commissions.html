@@ -21,7 +21,49 @@
     {% endfor %}
   </tbody>
 </table>
-<button class="btn btn-primary">Guardar</button>
-<a href="{{ url_for('prescriptors.list_prescriptors') }}" class="btn btn-secondary">Volver</a>
+<div class="d-flex justify-content-center gap-2 mt-3">
+  <button id="saveBtn" class="btn btn-primary">
+    <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+    Guardar
+  </button>
+  <button id="cancelBtn" type="button" class="btn btn-secondary">
+    <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+    Volver
+  </button>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const saveBtn = document.getElementById('saveBtn');
+    const overlay = document.getElementById('commLoading');
+    const cancelBtn = document.getElementById('cancelBtn');
+    if(saveBtn){
+      saveBtn.addEventListener('click', function(){
+        const sp = this.querySelector('.spinner-border');
+        sp.classList.remove('d-none');
+        this.setAttribute('disabled', 'disabled');
+        overlay.classList.remove('d-none');
+        overlay.classList.add('d-flex');
+        this.closest('form').submit();
+      });
+    }
+    if(cancelBtn){
+      cancelBtn.addEventListener('click', function(){
+        const sp = this.querySelector('.spinner-border');
+        sp.classList.remove('d-none');
+        this.setAttribute('disabled', 'disabled');
+        // pequeña demora para que se vea el spinner
+        overlay.classList.remove('d-none');
+        overlay.classList.add('d-flex');
+        setTimeout(()=>{ window.location.href = "{{ url_for('prescriptors.list_prescriptors') }}"; }, 100);
+      });
+    }
+  });
+</script>
 </form>
+
+<!-- Loading overlay -->
+<div id="commLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
 {% endblock %}
