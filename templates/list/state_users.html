@@ -1,17 +1,24 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Estados de usuario{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="mb-0">Gestión de estados de usuario</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-semibold">Gestión de Estados de Usuarios</h2>
+  
   {% if can('create_state_user') %}
-  <a href="{{ url_for('state_user.new') }}" class="btn btn-success">Agregar nuevo</a>
+  <a href="{{ url_for('state_user.new') }}" id="btnNuevoUser" class="btn btn-success">Agregar nuevo</a>
   {% endif %}
 </div>
-<form class="row mb-3" method="get">
+<div class="card shadow-sm mb-4 bg-light border border-secondary-subtle rounded">
+  <div class="card-body">
+    <form id="userFilterForm" class="row row-cols-lg-auto g-3 align-items-end" method="get">
   <div class="col-auto"><input type="text" name="q" class="form-control" placeholder="Filtrar por nombre" value="{{ q }}"></div>
   <div class="col-auto"><button class="btn btn-primary" type="submit">Filtrar</button></div>
-</form>
-<table class="table table-striped">
+    </form>
+  </div>
+</div>
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
 <thead><tr><th>ID</th><th>Nombre</th><th>Acciones</th></tr></thead>
 <tbody>
 {% for r in rows %}
@@ -20,21 +27,48 @@
   <td>{{ r.name }}</td>
   <td>
     {% if can('update_state_user') %}
-    <a href="{{ url_for('state_user.edit', row_id=r.id) }}" class="btn btn-sm btn-primary">Editar</a>
+    <a href="{{ url_for('state_user.edit', row_id=r.id) }}" class="btn btn-sm btn-primary userActionBtn" title="Editar"><i class="bi bi-pencil-square"></i><span class="visually-hidden">Editar</span></a>
     {% endif %}
     {% if can('delete_state_user') %}
-    <form method="post" action="{{ url_for('state_user.delete', row_id=r.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar estado?');">
-      <button type="submit" class="btn btn-sm btn-danger">Borrar</button>
-    </form>
+    <form method="post" action="{{ url_for('state_user.delete', row_id=r.id) }}" class="d-inline" >
+      <button type="submit" class="btn btn-sm btn-danger deleteUserBtn" title="Borrar"><i class="bi bi-trash"></i><span class="visually-hidden">Borrar</span></button>
+        </form>
+  </div>
+</div>
     {% endif %}
   </td>
 </tr>
 {% endfor %}
 </tbody>
-</table>
-<nav><ul class="pagination">
+    </table>
+  </div>
+</div>
+<nav class="d-flex justify-content-center mt-4">
+  <ul class="pagination pagination-sm pagination-glass mb-0">
   {% for p in range(1, pages+1) %}
   <li class="page-item {% if p==page %}active{% endif %}"><a class="page-link" href="?q={{ q }}&page={{ p }}">{{ p }}</a></li>
   {% endfor %}
-</ul></nav>
+  </ul>
+</nav>
+<!-- Loading overlay -->
+<div id="userListLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const ov=document.getElementById('userListLoading');
+    function show(){ov.classList.remove('d-none');ov.classList.add('d-flex');}
+    const f=document.getElementById('userFilterForm');
+    if(f)f.addEventListener('submit',show);
+    const btnNuevo=document.getElementById('btnNuevoUser');
+    if(btnNuevo)btnNuevo.addEventListener('click',show);
+    document.querySelectorAll('.userActionBtn').forEach(a=>a.addEventListener('click',show));
+    document.querySelectorAll('.deleteUserBtn').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.preventDefault();const form=btn.closest('form');
+        Swal.fire({title:'¿Eliminar estado?',text:'Esta acción no se puede deshacer',icon:'warning',showCancelButton:true,confirmButtonText:'Sí',cancelButtonText:'Cancelar'}).then(r=>{if(r.isConfirmed){show();form.submit();}});
+      });
+    });
+  });
+</script>
 {% endblock %}
