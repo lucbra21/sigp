@@ -1,15 +1,46 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Nivel de confianza{% endblock %}
 {% block content %}
-<div class="container py-4">
-    <h2 class="mb-3">{{ 'Editar' if row else 'Nuevo' }} nivel de confianza</h2>
-    <form method="post">
-        <div class="mb-3">
-            <label class="form-label">Nombre</label>
-            <input type="text" name="name" class="form-control" value="{{ row.name if row else '' }}" required maxlength="30" />
+<h2 class="fw-semibold mb-4 text-center">{{ 'Editar' if row else 'Nuevo' }} Nivel de Confianza</h2>
+<div class="card shadow-sm border border-secondary-subtle bg-light mx-auto" style="max-width:600px;">
+  <div class="card-body">
+    <form id="confidenceLevelForm" method="post" class="row g-3 needs-validation" novalidate>
+      <div class="col-12">
+        <label for="name" class="form-label">Nombre <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-graph-up"></i></span>
+          <input type="text" class="form-control" id="name" name="name" value="{{ row.name if row }}" required maxlength="30" />
+          <div class="invalid-feedback">El nombre es obligatorio.</div>
         </div>
-        <button class="btn btn-primary">Guardar</button>
-        <a class="btn btn-secondary" href="{{ url_for('confidence_level.levels_list') }}">Cancelar</a>
+      </div>
+      <div class="col-12 text-center pt-3">
+        <button type="submit" class="btn btn-primary me-2">Guardar</button>
+        <a href="{{ url_for('confidence_level.levels_list') }}" class="btn btn-secondary">Cancelar</a>
+      </div>
     </form>
+  </div>
 </div>
+<!-- Loading overlay -->
+<div id="confidenceLevelFormLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando..."/>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const form=document.getElementById('confidenceLevelForm');
+    const overlay=document.getElementById('confidenceLevelFormLoading');
+    const show=()=>{overlay.classList.remove('d-none');overlay.classList.add('d-flex');};
+    if(form){
+      form.addEventListener('submit',e=>{
+        if(!form.checkValidity()){
+          e.preventDefault();e.stopPropagation();
+        }else{
+          show();
+        }
+        form.classList.add('was-validated');
+      });
+    }
+    const cancel=document.querySelector('#confidenceLevelForm + div a.btn-secondary, #confidenceLevelForm a.btn-secondary');
+    if(cancel){cancel.addEventListener('click',show);}    
+  });
+</script>
 {% endblock %}
