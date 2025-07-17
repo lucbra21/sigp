@@ -1,13 +1,28 @@
 {% extends 'layouts/base.html' %}
 {% block title %}{{ 'Editar' if program else 'Nuevo' }} programa{% endblock %}
 {% block content %}
-<h2>{{ 'Editar' if program else 'Nuevo' }} programa</h2>
-<form method="post">
+<h2 class="fw-semibold mb-4 text-center">{{ 'Editar' if program else 'Nuevo' }} Programa</h2>
+<div class="card shadow-sm border border-secondary-subtle bg-light mx-auto" style="max-width: 1000px;">
+  <div class="card-body">
+    
+  <form id="programForm" method="post" enctype="multipart/form-data" class="row g-3">
   <div class="row">
     <div class="col-md-6 mb-3">
       <label class="form-label" for="name">Nombre</label>
       <input class="form-control" id="name" name="name" required value="{{ program.name if program else '' }}" />
     </div>
+    <div class="col-md-6 mb-3">
+      <label class="form-label" for="campus_id">Campus</label>
+      <select class="form-select" id="campus_id" name="campus_id">
+        <option value="">-- Seleccione --</option>
+        {% set selected_campus = program.campus_id if program else '' %}
+        {% for c in campuses %}
+        <option value="{{ c.id }}" {{ 'selected' if selected_campus==c.id else '' }}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="row">
     <div class="col-md-6 mb-3">
       <label class="form-label" for="language">Idioma</label>
       <select class="form-select" id="language" name="language">
@@ -81,7 +96,37 @@
       <option value="Desactivado" {{ 'selected' if st=='Desactivado' else '' }}>Desactivado</option>
     </select>
   </div>
-  <button type="submit" class="btn btn-primary">Guardar</button>
-  <a href="{{ url_for('programs.programs_list') }}" class="btn btn-secondary">Cancelar</a>
-</form>
+  
+      <div class="col-12 text-center pt-3">
+        <button type="submit" class="btn btn-primary me-2">Guardar</button>
+        <a href="{{ url_for('programs.programs_list') }}" class="btn btn-secondary" id="cancelProgram">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Loading overlay -->
+<div id="programFormLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const form = document.getElementById('programForm');
+    const overlay = document.getElementById('programFormLoading');
+    if(form){
+      form.addEventListener('submit', function(){
+        if(form.checkValidity()){
+          overlay.classList.remove('d-none');
+          overlay.classList.add('d-flex');
+        }
+      });
+    }
+    const cancelBtn = document.getElementById('cancelProgram');
+    if(cancelBtn){
+      cancelBtn.addEventListener('click', function(){
+        overlay.classList.remove('d-none');
+        overlay.classList.add('d-flex');
+      });
+    }
+  });
+</script>
 {% endblock %}

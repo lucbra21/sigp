@@ -1,0 +1,44 @@
+{% extends 'layouts/base.html' %}
+{% block title %}{{ 'Editar' if campus else 'Nuevo' }} Campus{% endblock %}
+{% block content %}
+<h2 class="fw-semibold mb-4 text-center">{{ 'Editar' if campus else 'Nuevo' }} Campus</h2>
+<div class="card shadow-sm border border-secondary-subtle bg-light mx-auto" style="max-width: 600px;">
+  <div class="card-body">
+    <form id="campusForm" method="post" class="row g-3">
+      <div class="col-12">
+        <label class="form-label" for="name">Nombre</label>
+        <input class="form-control" id="name" name="name" required value="{{ campus.name if campus else '' }}">
+      </div>
+      <div class="col-12 text-center pt-3">
+        <button class="btn btn-primary me-2">Guardar</button>
+        <a href="{{ url_for('campus.campus_list') }}" class="btn btn-secondary" id="cancelCampus">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Loading overlay -->
+<div id="campusFormLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const form = document.getElementById('campusForm');
+    const overlay = document.getElementById('campusFormLoading');
+    if(form){
+      form.addEventListener('submit', function(){
+        if(form.checkValidity()){
+          overlay.classList.remove('d-none');
+          overlay.classList.add('d-flex');
+        }
+      });
+    }
+    const cancelBtn = document.getElementById('cancelCampus');
+    if(cancelBtn){
+      cancelBtn.addEventListener('click', function(){
+        overlay.classList.remove('d-none');
+        overlay.classList.add('d-flex');
+      });
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Campus{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-semibold">Gestión de Campus</h2>
+  {% if can_mod('campus') %}
+  <a href="{{ url_for('campus.campus_new') }}" class="btn btn-success" id="newCampusBtn">Agregar nuevo</a>
+  {% endif %}
+</div>
+
+<div class="card shadow-sm mb-4 bg-light border border-secondary-subtle rounded">
+  <div class="card-body">
+    <form id="campusFilterForm" class="row row-cols-lg-auto g-3 align-items-end" method="get">
+      <div class="col-auto">
+        <input type="text" name="q" class="form-control" placeholder="Filtrar por nombre" value="{{ q }}" />
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="card shadow-sm mt-4">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in campuses %}
+    <tr>
+      <td>{{ c.name }}</td>
+      <td class="text-end">
+        <a href="{{ url_for('campus.campus_edit', campus_id=c.id) }}" class="btn btn-sm btn-secondary editCampusBtn">Editar</a>
+        <form action="{{ url_for('campus.campus_delete', campus_id=c.id) }}" method="post" class="d-inline deleteCampusForm">
+          <button class="btn btn-sm btn-danger deleteCampusBtn">Eliminar</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+    </table>
+  </div>
+</div>
+<nav class="d-flex justify-content-center mt-4">
+  <ul class="pagination pagination-sm pagination-glass mb-0">
+    {% for p in range(1, pages + 1) %}
+    <li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="?q={{ q }}&page={{ p }}">{{ p }}</a></li>
+    {% endfor %}
+  </ul>
+</nav>
+<!-- Loading overlay -->
+<div id="campusListLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const overlay = document.getElementById('campusListLoading');
+    const newBtn = document.getElementById('newCampusBtn');
+    if(newBtn){
+      newBtn.addEventListener('click',()=>{
+        overlay.classList.remove('d-none');
+        overlay.classList.add('d-flex');
+      });
+    }
+    document.querySelectorAll('.editCampusBtn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        overlay.classList.remove('d-none');
+        overlay.classList.add('d-flex');
+      });
+    });
+  });
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const overlay = document.getElementById('campusListLoading');
+    document.querySelectorAll('.deleteCampusBtn').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.preventDefault();
+        const form = btn.closest('form');
+        if(!form) return;
+        Swal.fire({
+          title:'¿Eliminar campus?',
+          text:'Esta acción no se puede deshacer',
+          icon:'warning',
+          showCancelButton:true,
+          confirmButtonText:'Sí, eliminar',
+          cancelButtonText:'Cancelar'
+        }).then(res=>{
+          if(res.isConfirmed){
+            overlay.classList.remove('d-none');
+            overlay.classList.add('d-flex');
+            form.submit();
+          }
+        });
+      });
+    });
+  });
+</script>
+{% endblock %}

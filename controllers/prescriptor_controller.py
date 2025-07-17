@@ -807,7 +807,19 @@ def prescriptor_commissions(prescriptor_id):
         from sigp.common.prescriptor_utils import sync_commissions_for_prescriptor
         sync_commissions_for_prescriptor(prescriptor_id)
         rows = db.session.query(PrescComm).filter_by(prescriptor_id=prescriptor_id).all()
-    prog_rows = db.session.query(Program.id, Program.name).all()
-    prog_map = {pid: name for pid, name in prog_rows}
-    return render_template("records/prescriptor_commissions.html", rows=rows, presc=presc, prog_map=prog_map)
-
+    Campus = getattr(Base.classes, "campus", None)
+    prog_rows = db.session.query(Program.id, Program.name, Program.campus_id).all()
+    prog_map = {pid: name for pid, name, _ in prog_rows}
+    prog_campus = {pid: camp_id for pid, _, camp_id in prog_rows}
+    campus_map = {}
+    if Campus is not None:
+        campus_rows = db.session.query(Campus.id, Campus.name).all()
+        campus_map = {cid: cname for cid, cname in campus_rows}
+    return render_template(
+        "records/prescriptor_commissions.html",
+        rows=rows,
+        presc=presc,
+        prog_map=prog_map,
+        prog_campus=prog_campus,
+        campus_map=campus_map,
+    )

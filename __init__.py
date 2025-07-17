@@ -55,6 +55,7 @@ def create_app(config_class=Config):
     from .controllers.prescriptor_controller import prescriptors_bp
     from .controllers.dashboard_controller import dashboard_bp
     from .controllers.roles_controller import roles_bp
+    from .controllers.campus_controller import campus_bp
     from .controllers.users_controller import users_bp
     from .controllers.permissions_controller import perm_bp
     from .controllers.programs_controller import programs_bp
@@ -76,7 +77,10 @@ def create_app(config_class=Config):
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
     app.register_blueprint(dashboard_bp)
-    app.register_blueprint(roles_bp)
+    if 'roles' not in app.blueprints:
+        app.register_blueprint(roles_bp)
+    if 'campus' not in app.blueprints:
+        app.register_blueprint(campus_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(perm_bp)
     app.register_blueprint(programs_bp)

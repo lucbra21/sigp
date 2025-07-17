@@ -43,6 +43,7 @@ FIELDS = [
     "registration_value",
     "value_quotas",
     "commercial_emails",
+    "campus_id",
     "state",
 ]
 
@@ -71,7 +72,9 @@ def _program_form(program_id=None):
         flash("Programa guardado", "success")
         return redirect(url_for("programs.programs_list"))
 
-    return render_template("records/program_form.html", program=program)
+    Campus = _model("campus")
+    campuses = db.session.query(Campus).all() if Campus else []
+    return render_template("records/program_form.html", program=program, campuses=campuses)
 
 
 # ---------------------------------------------------------------------------
