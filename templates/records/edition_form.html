@@ -1,15 +1,45 @@
 {% extends 'layouts/base.html' %}
-{% block title %}Edición{% endblock %}
+{% block title %}{{ 'Editar' if row else 'Nueva' }} Edición{% endblock %}
 {% block content %}
-<div class="container py-4">
-    <h2 class="mb-3">{{ 'Editar' if row else 'Nueva' }} edición</h2>
-    <form method="post">
-        <div class="mb-3">
-            <label class="form-label">Nombre</label>
-            <input type="text" name="name" class="form-control" value="{{ row.name if row else '' }}" required maxlength="30" />
+<h2 class="fw-semibold mb-4 text-center">{{ 'Editar' if row else 'Nuevo' }} Edición</h2>
+<div class="card shadow-sm border border-secondary-subtle bg-light mx-auto" style="max-width:600px;">
+  <div class="card-body">
+    <form id="editionForm" method="post" class="row g-3 needs-validation" novalidate>
+      <div class="col-12">
+        <label for="name" class="form-label">Nombre <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-tag"></i></span>
+          <input type="text" class="form-control" id="name" name="name" value="{{ row.name if row }}" required />
+          <div class="invalid-feedback">El nombre es obligatorio.</div>
         </div>
-        <button class="btn btn-primary">Guardar</button>
-        <a class="btn btn-secondary" href="{{ url_for('edition.editions_list') }}">Cancelar</a>
+      </div>
+      <div class="col-12 text-center pt-3">
+        <button type="submit" class="btn btn-primary me-2">Guardar</button>
+        <a href="{{ url_for('edition.editions_list') }}" class="btn btn-secondary">Cancelar</a>
+      </div>
     </form>
+  </div>
 </div>
+<!-- Loading overlay -->
+<div id="editionFormLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const form=document.getElementById('editionForm');
+    const ov=document.getElementById('editionFormLoading');
+    if(form){
+      form.addEventListener('submit', e=>{
+        if(!form.checkValidity()){
+          e.preventDefault();e.stopPropagation();
+        }else{
+          ov.classList.remove('d-none');ov.classList.add('d-flex');
+        }
+        form.classList.add('was-validated');
+      });
+    }
+    const btnCancel=document.querySelector('#editionForm a.btn-secondary');
+    if(btnCancel){btnCancel.addEventListener('click', ()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});}
+  });
+</script>
 {% endblock %}
