@@ -104,9 +104,20 @@ def programs_list():
         .all()
     )
     pages = math.ceil(total / per_page)
+
+    # campus map
+    Campus = _model("campus")
+    campus_map = {}
+    if Campus is not None and programs:
+        campus_ids = {p.campus_id for p in programs if getattr(p, "campus_id", None)}
+        if campus_ids:
+            rows = db.session.query(Campus.id, Campus.name).filter(Campus.id.in_(campus_ids)).all()
+            campus_map = {cid: cname for cid, cname in rows}
+
     return render_template(
         "list/programs.html",
         programs=programs,
+        campus_map=campus_map,
         q=q,
         page=page,
         pages=pages,

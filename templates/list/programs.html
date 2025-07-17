@@ -1,31 +1,40 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Programas{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="mb-0">Gestión de programas</h2>
-  {% if can('update_program') %}
-  <form method="post" action="{{ url_for('programs.program_test_mail_fixed') }}" class="ms-2 d-inline d-flex gap-2 align-items-center">
-    <input type="email" name="to" placeholder="destino" class="form-control form-control-sm" style="width:220px" value="ing.lucasbracamonte@gmail.com" />
-    <button type="submit" class="btn btn-warning">Test correo SMTP</button>
-  </form>
-  {% endif %}
-  {% if can('create_program') %}
-  <a href="{{ url_for('programs.program_new') }}" class="btn btn-success">Agregar nuevo</a>
-  {% endif %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-semibold">Gestión de Programas</h2>
+  <div class="d-flex gap-2">
+    {% if can('update_program') %}
+    <form method="post" action="{{ url_for('programs.program_test_mail_fixed') }}" class="d-flex gap-2 align-items-center">
+      <input type="email" name="to" placeholder="destino" class="form-control form-control-sm" style="width:220px" value="ing.lucasbracamonte@gmail.com" />
+      <button type="submit" class="btn btn-warning btn-sm">Test correo SMTP</button>
+    </form>
+    {% endif %}
+    {% if can('create_program') %}
+    <a href="{{ url_for('programs.program_new') }}" class="btn btn-success btn-sm" id="newProgramBtn">Agregar nuevo</a>
+    {% endif %}
+  </div>
 </div>
-<form class="row mb-3" method="get">
+<div class="card shadow-sm mb-4 bg-light border border-secondary-subtle rounded">
+  <div class="card-body">
+    <form id="programFilterForm" class="row row-cols-lg-auto g-3 align-items-end" method="get">
   <div class="col-auto">
     <input type="text" name="q" class="form-control" placeholder="Filtrar por nombre" value="{{ q }}" />
   </div>
   <div class="col-auto">
     <button type="submit" class="btn btn-primary">Filtrar</button>
   </div>
-</form>
-<table class="table table-striped">
+    </form>
+  </div>
+</div>
+<div class="card shadow-sm mt-4">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
   <thead>
     <tr>
       <th>ID</th>
       <th>Nombre</th>
+      <th>Campus</th>
       <th>Emails comerciales</th>
       <th>Acciones</th>
     </tr>
@@ -35,33 +44,36 @@
     <tr>
       <td>{{ p.id }}</td>
       <td>{{ p.name or '-' }}</td>
+      <td>{{ campus_map.get(p.campus_id, '-') }}</td>
       <td>{{ p.commercial_emails or '-' }}</td>
       <td>
-        {% if can('update_program') %}
-        <a href="{{ url_for('programs.program_edit', program_id=p.id) }}" class="btn btn-sm btn-primary">Editar</a>
-        {% endif %}
-        {% if can('create_program') %}
-        <form method="post" action="{{ url_for('programs.program_duplicate', program_id=p.id) }}" class="d-inline">
-          <button type="submit" class="btn btn-sm btn-secondary">Duplicar</button>
-        </form>
-        {% endif %}
-        {% if can('update_program') %}
+         {% if can('update_program') %}
+         <a href="{{ url_for('programs.program_edit', program_id=p.id) }}" class="btn btn-sm btn-primary programActionBtn action-edit" title="Editar"><i class="bi bi-pencil-square" ></i><span class="visually-hidden">Editar</span></a>
+         {% endif %}
+         {% if can('create_program') %}
+         <form method="post" action="{{ url_for('programs.program_duplicate', program_id=p.id) }}" class="d-inline">
+           <button type="submit" class="btn btn-sm btn-secondary programActionBtn action-duplicate" title="Duplicar"><i class="bi bi-files"></i><span class="visually-hidden">Duplicar</span></button>
+         </form>
+         {% endif %}
+         {% if can('update_program') %}
          <form method="post" action="{{ url_for('programs.program_test_email', program_id=p.id) }}" class="d-inline">
-           <button type="submit" class="btn btn-sm btn-warning">Probar correo</button>
+           <button type="submit" class="btn btn-sm btn-warning programActionBtn action-test" title="Probar correo"><i class="bi bi-envelope-check"></i><span class="visually-hidden">Probar correo</span></button>
          </form>
          {% endif %}
          {% if can('delete_program') %}
-         <form method="post" action="{{ url_for('programs.program_toggle', program_id=p.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar programa?');">
-           <button type="submit" class="btn btn-sm btn-danger">{{ 'Desactivar' if p.state!='Desactivado' else 'Activar' }}</button>
+         <form method="post" action="{{ url_for('programs.program_toggle', program_id=p.id) }}" class="d-inline toggleProgramForm">
+           <button type="submit" class="btn btn-sm btn-danger toggleProgramBtn" title="{{ 'Desactivar' if p.state!='Desactivado' else 'Activar' }}"><i class="bi bi-power"></i><span class="visually-hidden">Toggle</span></button>
          </form>
          {% endif %}
       </td>
     </tr>
     {% endfor %}
   </tbody>
-</table>
-<nav>
-  <ul class="pagination">
+    </table>
+  </div>
+</div>
+<nav class="d-flex justify-content-center mt-4">
+  <ul class="pagination pagination-sm pagination-glass mb-0">
     {% for p in range(1, pages + 1) %}
     <li class="page-item {% if p == page %}active{% endif %}">
       <a class="page-link" href="?q={{ q }}&page={{ p }}">{{ p }}</a>
@@ -69,4 +81,25 @@
     {% endfor %}
   </ul>
 </nav>
+<!-- Loading overlay -->
+<div id="programListLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const overlay=document.getElementById('programListLoading');
+    const newBtn=document.getElementById('newProgramBtn');
+    if(newBtn){newBtn.addEventListener('click',()=>{overlay.classList.remove('d-none');overlay.classList.add('d-flex');});}
+    const filterForm=document.getElementById('programFilterForm');
+    if(filterForm){filterForm.addEventListener('submit',()=>{overlay.classList.remove('d-none');overlay.classList.add('d-flex');});}
+    document.querySelectorAll('.programActionBtn').forEach(btn=>{btn.addEventListener('click',()=>{overlay.classList.remove('d-none');overlay.classList.add('d-flex');});});
+    document.querySelectorAll('.toggleProgramBtn').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.preventDefault();
+        const form=btn.closest('form');
+        Swal.fire({title:'¿Cambiar estado?',text:'Esto alternará el estado del programa',icon:'warning',showCancelButton:true,confirmButtonText:'Sí',cancelButtonText:'Cancelar'}).then(r=>{if(r.isConfirmed){overlay.classList.remove('d-none');overlay.classList.add('d-flex');form.submit();}});
+      });
+    });
+  });
+</script>
 {% endblock %}
