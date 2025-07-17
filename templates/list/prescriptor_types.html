@@ -1,17 +1,24 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Tipos de prescriptor{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="mb-0">Gestión de tipos de prescriptor</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-semibold">Gestión de Tipos de Prescriptor</h2>
+  
   {% if can('create_prescriptor_type') %}
-  <a href="{{ url_for('prescriptor_type.new') }}" class="btn btn-success">Agregar nuevo</a>
+  <a href="{{ url_for('prescriptor_type.new') }}" id="btnNuevoType" class="btn btn-success">Agregar nuevo</a>
   {% endif %}
 </div>
-<form class="row mb-3" method="get">
+<div class="card shadow-sm mb-4 bg-light border border-secondary-subtle rounded">
+  <div class="card-body">
+    <form id="typeFilterForm" class="row row-cols-lg-auto g-3 align-items-end" method="get">
   <div class="col-auto"><input type="text" name="q" class="form-control" placeholder="Filtrar por nombre" value="{{ q }}"></div>
   <div class="col-auto"><button class="btn btn-primary" type="submit">Filtrar</button></div>
-</form>
-<table class="table table-striped">
+    </form>
+  </div>
+</div>
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
 <thead><tr><th>ID</th><th>Nombre</th><th>Acciones</th></tr></thead>
 <tbody>
 {% for r in rows %}
@@ -20,21 +27,52 @@
   <td>{{ r.name }}</td>
   <td>
     {% if can('update_prescriptor_type') %}
-    <a href="{{ url_for('prescriptor_type.edit', row_id=r.id) }}" class="btn btn-sm btn-primary">Editar</a>
+    <a href="{{ url_for('prescriptor_type.edit', row_id=r.id) }}" class="btn btn-sm btn-primary typeActionBtn" title="Editar"><i class="bi bi-pencil-square"></i><span class="visually-hidden">Editar</span></a>
     {% endif %}
     {% if can('delete_prescriptor_type') %}
-    <form method="post" action="{{ url_for('prescriptor_type.delete', row_id=r.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar tipo?');">
-      <button type="submit" class="btn btn-sm btn-danger">Borrar</button>
+    <form method="post" action="{{ url_for('prescriptor_type.delete', row_id=r.id) }}" class="d-inline" >
+      <button type="submit" class="btn btn-sm btn-danger deleteTypeBtn" title="Borrar"><i class="bi bi-trash"></i><span class="visually-hidden">Borrar</span></button>
     </form>
     {% endif %}
   </td>
 </tr>
 {% endfor %}
 </tbody>
-</table>
-<nav><ul class="pagination">
+    </table>
+  </div>
+</div>
+<nav class="d-flex justify-content-center mt-4">
+  <ul class="pagination pagination-sm pagination-glass mb-0">
   {% for p in range(1, pages+1) %}
   <li class="page-item {% if p==page %}active{% endif %}"><a class="page-link" href="?q={{ q }}&page={{ p }}">{{ p }}</a></li>
   {% endfor %}
-</ul></nav>
+  </ul>
+</nav>
+<!-- Loading overlay -->
+<div id="typeListLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const ov=document.getElementById('typeListLoading');
+    function show(){ov.classList.remove('d-none');ov.classList.add('d-flex');}
+    const f=document.getElementById('typeFilterForm');
+    if(f)f.addEventListener('submit',show);
+    const btnNuevo=document.getElementById('btnNuevoType');
+    if(btnNuevo)btnNuevo.addEventListener('click',show);
+    document.querySelectorAll('.typeActionBtn').forEach(a=>a.addEventListener('click',show));
+    document.querySelectorAll('.deleteTypeBtn').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.preventDefault();const form=btn.closest('form');
+        Swal.fire({title:'¿Eliminar tipo?',text:'Esta acción no se puede deshacer',icon:'warning',showCancelButton:true,confirmButtonText:'Sí',cancelButtonText:'Cancelar'}).then(r=>{if(r.isConfirmed){show();form.submit();}});
+      });
+    });
+  });
+</script>
+<style>
+.pagination-glass .page-link{background:rgba(255,255,255,0.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(0,0,0,.1);border-radius:30px;color:#333;box-shadow:0 2px 6px rgba(0,0,0,.08);transition:all .2s;}
+.pagination-glass .page-link:hover{background:rgba(0,86,210,0.1);color:#0056d2;}
+.pagination-glass .page-item.active .page-link{background:#0056d2;color:#fff;border-color:#0056d2;}
+.pagination-glass .page-item.disabled .page-link{opacity:.5;pointer-events:none;}
+</style>
 {% endblock %}
