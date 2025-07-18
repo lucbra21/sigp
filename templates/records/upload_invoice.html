@@ -1,8 +1,96 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Subir factura{% endblock %}
 {% block content %}
-<h2>Subir factura</h2>
-<form method="post" action="{{ url_for('prescriptors.create_invoice') }}" enctype="multipart/form-data">
+<div id="invoiceLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-semibold mb-0">Subir Factura</h2>
+</div>
+<div class="card shadow-sm border border-secondary-subtle bg-light mx-auto" style="max-width:900px;">
+  <div class="card-body">
+    <form id="invoiceForm" method="post" enctype="multipart/form-data" class="needs-validation" novalidate action="{{ url_for('prescriptors.create_invoice') }}">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Número de factura <span class="text-danger">*</span></label>
+          <div class="input-group has-validation">
+            <input type="text" name="number" id="numField" class="form-control" required>
+            <button type="button" class="btn btn-outline-secondary" id="genBtn" title="Generar número"><i class="bi bi-shuffle"></i></button>
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Fecha <span class="text-danger">*</span></label>
+          <input type="date" name="invoice_date" class="form-control" required>
+          <div class="invalid-feedback">Requerido.</div>
+        </div>
+      </div>
+      <hr class="my-4">
+      <h5 class="mb-3">Movimientos pendientes</h5>
+      <div class="table-responsive mb-3">
+        <table class="table table-hover align-middle mb-0">
+          <thead><tr><th style="width:40px;"><input type="checkbox" id="selAll"></th><th>Concepto</th><th>Monto</th><th>Periodo</th></tr></thead>
+          <tbody>
+            {% for m in rows %}
+            <tr>
+              <td><input type="checkbox" name="ledger_ids" value="{{ m.id }}" class="chk-row form-check-input"></td>
+              <td>{{ m.concept }}</td>
+              <td class="amt">{{ '%.2f'|format(m.amount) }}</td>
+              <td>{{ m.approve_due_month }}/{{ m.approve_due_year }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if rows|length == 0 %}<p>No hay movimientos pendientes de facturar.</p>{% endif %}
+      <div class="mb-3">
+        <label class="form-label">Archivo factura (PDF/JPG/PNG) <span class="text-danger">*</span></label>
+        <input type="file" name="file" accept="application/pdf,image/*" class="form-control" required>
+        <div class="invalid-feedback">Seleccione archivo.</div>
+      </div>
+      <div class="mb-3">
+        <strong>Total seleccionado: <span id="selTotal">0.00</span> €</strong>
+      </div>
+      <div class="text-center pt-2">
+        <button class="btn btn-primary btn-loading" {% if rows|length == 0 %}disabled{% endif %}>Enviar</button>
+        <a href="{{ url_for('prescriptors.my_ledger') }}" class="btn btn-secondary btn-loading">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const form=document.getElementById('invoiceForm');
+    const ov=document.getElementById('invoiceLoading');
+    const show=()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');};
+
+    // validation & overlay
+    if(form){
+      form.addEventListener('submit',e=>{
+        if(!form.checkValidity()){
+          e.preventDefault();e.stopPropagation();
+        }else{show();}
+        form.classList.add('was-validated');
+      });
+    }
+    document.querySelectorAll('.btn-loading').forEach(b=>b.addEventListener('click',show));
+
+    // calcular total
+    const selAll=document.getElementById('selAll');
+    const chkRows=[...document.querySelectorAll('.chk-row')];
+    function calc(){let t=0;chkRows.forEach(c=>{if(c.checked){t+=parseFloat(c.closest('tr').querySelector('.amt').textContent)}});document.getElementById('selTotal').textContent=t.toFixed(2)}
+    chkRows.forEach(c=>c.addEventListener('change',calc));
+    if(selAll){selAll.addEventListener('change',()=>{chkRows.forEach(c=>c.checked=selAll.checked);calc();});}
+
+    // generar número factura
+    const genBtn=document.getElementById('genBtn');
+    if(genBtn){genBtn.addEventListener('click',()=>{
+      const d=new Date();const p=n=>n.toString().padStart(2,'0');const num=`${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;document.getElementById('numField').value=num;});}
+  });
+</script>
+
+
   <div class="mb-3">
     <label class="form-label">Número de factura</label>
     <div class="input-group">
@@ -38,8 +126,8 @@
     <strong>Total seleccionado: <span id="selTotal">0.00</span> €</strong>
   </div>
   <button class="btn btn-primary" {% if rows|length == 0 %}disabled{% endif %}>Enviar</button>
-</form>
-<script>
+
+
 const selAll=document.getElementById('selAll');
 const chkRows=document.querySelectorAll('.chk-row');
 function calc(){let t=0;chkRows.forEach(c=>{if(c.checked){t+=parseFloat(c.closest('tr').querySelector('.amt').textContent)} });document.getElementById('selTotal').textContent=t.toFixed(2)}
