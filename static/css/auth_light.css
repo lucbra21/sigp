@@ -74,8 +74,8 @@
             border-radius: 50%;
             color: #898987;
             background-color: #05060a;
-            font-family: 'unicons';
-            content: '\eb4f';
+            font-family: 'FontAwesome';
+            content: '\f363'; /* https://fontawesome.com/icons?t=categories#categories */
             z-index: 20;
             top: -10px;
             left: -10px;

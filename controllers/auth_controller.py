@@ -4,15 +4,16 @@ Define un Blueprint llamado ``auth`` con rutas para login y logout.
 """
 from flask import (
     Blueprint,
-    render_template,
-    redirect,
-    url_for,
     flash,
+    redirect,
+    render_template,
     request,
+    url_for,
+    current_app,
 )
 from flask_login import login_user, logout_user, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
 from wtforms.validators import EqualTo
 from wtforms.validators import DataRequired, Email, Length
 
@@ -55,6 +56,12 @@ class LoginForm(FlaskForm):
 class ForgotForm(FlaskForm):
     email = StringField("Correo electrónico", validators=[DataRequired(), Email()], render_kw={"placeholder":"email@example.com"})
     submit = SubmitField("Enviar enlace")
+
+class ContactForm(FlaskForm):
+    name = StringField("Nombre", validators=[DataRequired(), Length(max=255)])
+    email = StringField("Email", validators=[DataRequired(), Email(), Length(max=255)])
+    message = TextAreaField("Mensaje", validators=[DataRequired(), Length(max=2000)])
+    submit = SubmitField("Enviar")
 
 class ResetForm(FlaskForm):
     password = PasswordField("Nueva contraseña", validators=[DataRequired(), Length(min=4,max=255)])
@@ -156,6 +163,21 @@ def _audit_event(user_id, success: bool, event_type: str):
     record = Audit(user_id=user_id, success=1 if success else 0, ip_addr=ip_addr, event_type=event_type)
     db.session.add(record)
     db.session.commit()
+
+
+@auth_bp.post("/contact")
+def contact_post():
+    form = ContactForm(request.form)
+    if not form.validate_on_submit():
+        flash("Completa todos los campos", "danger");return redirect(url_for('auth.login_get')+"#contact")
+    cfg=current_app.config
+    admin = cfg.get('CONTACT_EMAIL', cfg.get('MAIL_DEFAULT_SENDER'))
+    subject="Contacto SIGP"
+    body=f"Nombre: {form.name.data}\nEmail: {form.email.data}\nMensaje:\n{form.message.data}"
+    from sigp.common.email_utils import send_simple_mail
+    send_simple_mail([admin], subject, body)
+    flash("Mensaje enviado, te responderemos pronto", "success")
+    return redirect(url_for('auth.login_get'))
 
 
 @auth_bp.post("/login")

@@ -6,7 +6,7 @@
     <title>Login/SIGP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/unicons/4.0.0/css/line.css">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../static/css/auth_light.css">
     <style>
       body{
@@ -21,7 +21,9 @@
     </a>
     <div class="section">
         <div class="container">
-            <div class="row full-height justify-content-center">
+            <h1 class="fw-semibold text-center " style="font-size:2.8rem; margin-top: 10vh; margin-bottom: 1vh;">Sistema Integral de Prescriptores <br>(SIGP)</h1>
+
+            <div class="row justify-content-center">
                 <div class="col-12 text-center align-self-center py-5">
                     <div class="section pb-5 pt-5 pt-sm-2 text-center">
                         <h6 class="mb-0 pb-3"><span>Ingresar </span><span>Contactanos</span></h6>
@@ -59,19 +61,21 @@
                                     <div class="center-wrap">
                                         <div class="section text-center">
                                             <h4 class="mb-4 pb-3">Contactanos</h4>
-                                            <div class="form-group">
-                                                <input type="text" name="logname" class="form-style" placeholder="Your Full Name" id="logname" autocomplete="off">
-                                                <i class="input-icon uil uil-user"></i>
-                                            </div>	
+                                            <form id="contactForm" method="post" action="{{ url_for('auth.contact_post') }}">{{ form.csrf_token }}
+                                             <div class="form-group">
+                                                 <input type="text" name="name" class="form-style" placeholder="Nombre completo" autocomplete="off" required>
+                                                 <i class="input-icon uil uil-user"></i>
+                                             </div>
                                             <div class="form-group mt-2">
-                                                <input type="email" name="logemail" class="form-style" placeholder="Your Email" id="logemail2" autocomplete="off">
+                                                <input type="email" name="email" class="form-style" placeholder="Tu email" autocomplete="off" required>
                                                 <i class="input-icon uil uil-at"></i>
                                             </div>	
                                             <div class="form-group mt-2">
-                                                <textarea type="text" name="logtext" class="form-style" placeholder="Cuentanos..." id="logtext"></textarea>
+                                                <textarea name="message" class="form-style" placeholder="Cuéntanos..." rows="4" required></textarea>
                                                 <i class="input-icon uil uil-lock-alt"></i>
                                             </div>
-                                            <a href="#" class="btn mt-4">submit</a>
+                                            <button type="submit" class="btn mt-4">Enviar</button>
+                                             </form>
                                         </div>
                                     </div>
                                 </div>
@@ -89,14 +93,17 @@
 </div>
 <script>
   document.addEventListener('DOMContentLoaded', function(){
-    const form = document.getElementById('loginForm');
     const overlay = document.getElementById('loginLoading');
+    const form = document.getElementById('loginForm');
+    
     if(form){
       form.addEventListener('submit', function(){
         overlay.classList.remove('d-none');
         overlay.classList.add('d-flex');
       });
     }
+      const cform=document.getElementById('contactForm');
+    if(cform){cform.addEventListener('submit',()=>{overlay.classList.remove('d-none');overlay.classList.add('d-flex');});}
   });
 </script>
 </body>
