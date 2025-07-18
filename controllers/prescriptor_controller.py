@@ -63,7 +63,7 @@ def prescriptor_form_factory(is_create=True):
         # squeeze_url_tst = StringField("Squeeze URL Test", validators=[Optional(), URL(), Length(max=255)])
         # squeeze_url_prd = StringField("Squeeze URL Prod", validators=[Optional(), URL(), Length(max=255)])
 
-        photo_file = FileField("Foto", validators=[Optional(), FileAllowed(['jpg','jpeg','png','gif'], 'Imágenes')])
+        photo_file = FileField("Foto Squeeze Page", validators=[Optional(), FileAllowed(['jpg','jpeg','png','gif'], 'Imágenes')])
         squeeze_page_image_1_file = FileField("Imagen 1", validators=[Optional(), FileAllowed(['jpg','jpeg','png','gif'], 'Imágenes')])
         squeeze_page_image_2_file = FileField("Imagen 2", validators=[Optional(), FileAllowed(['jpg','jpeg','png','gif'], 'Imágenes')])
         squeeze_page_image_3_file = FileField("Imagen 3", validators=[Optional(), FileAllowed(['jpg','jpeg','png','gif'], 'Imágenes')])
@@ -76,7 +76,8 @@ def prescriptor_form_factory(is_create=True):
         cellular = StringField("Celular", validators=[DataRequired(), Length(max=50)])
         squeeze_page_name = StringField("Nombre", validators=[DataRequired(), Length(max=255)])
         squeeze_page_status = SelectField("Estado squeeze page", choices=squeeze_status_choices, validators=[Optional()])
-        observations = TextAreaField("Observaciones", validators=[Optional(), Length(max=1000)])
+        observations = TextAreaField("Detalles de pago", render_kw={"placeholder": "CBU, Alias, Banco, Titular, etc."}, validators=[Optional(), Length(max=1000)])
+        extra_observations = TextAreaField("Observaciones", validators=[Optional(), Length(max=1000)])
         contract_file = FileField("Contrato (PDF)", validators=[FileAllowed(["pdf"], "Solo PDF")])
         submit = SubmitField("Guardar")
 
@@ -519,7 +520,9 @@ def create_prescriptor():
         if hasattr(form, "squeeze_page_status"):
             obj_kwargs["squeeze_page_status"] = form.squeeze_page_status.data or "TEST"
         if hasattr(form, "observations") and form.observations.data:
-             obj_kwargs["observations"] = form.observations.data
+             obj_kwargs["payment_details"] = form.observations.data
+        if hasattr(form, "extra_observations") and form.extra_observations.data:
+             obj_kwargs["observations"] = form.extra_observations.data
         if hasattr(form, "contract_file") and form.contract_file.data:
             filename = f"{obj_kwargs['id']}.pdf"
             path = current_app.config["CONTRACT_UPLOAD_FOLDER"] / filename
@@ -606,6 +609,12 @@ def edit_prescriptor(prescriptor_id):
             if u_owner:
                 form.email.data = u_owner.email
                 form.cellular.data = getattr(u_owner, "cellular", "")
+        # precargar detalles de pago
+        if hasattr(obj, "payment_details") and hasattr(form, "observations"):
+            form.observations.data = getattr(obj, "payment_details", "")
+        # precargar observaciones
+        if hasattr(obj, "observations") and hasattr(form, "extra_observations"):
+            form.extra_observations.data = getattr(obj, "observations", "")
         # creador del registro
         creator_id = getattr(obj, "user_getter_id", None) or obj.user_id
         if creator_id:
@@ -675,6 +684,12 @@ def update_prescriptor(prescriptor_id):
         for fld in simple_fields:
             if hasattr(obj, fld) and hasattr(form, fld):
                 setattr(obj, fld, getattr(form, fld).data or None)
+        # detalles de pago
+        if hasattr(obj, "payment_details") and hasattr(form, "observations"):
+            obj.payment_details = form.observations.data or None
+        # observaciones
+        if hasattr(obj, "observations") and hasattr(form, "extra_observations"):
+            obj.observations = form.extra_observations.data or None
 
         # gestionar uploads de imágenes
         upload_dir = current_app.config.get("PRESCRIPTOR_IMG_FOLDER", os.path.join(current_app.root_path, "static", "prescriptors"))
