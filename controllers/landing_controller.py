@@ -131,5 +131,6 @@ def landing_page(prescriptor_id: str):
         "public/landing_prescriptor.html",
         prescriptor=prescriptor,
         images=images,
+         program_urls={pid: (prog.program_url if prog else None) for pid,_ in getattr(form.program_info_id,'choices',[]) for prog in [db.session.get(Program, pid)]} if Program else {},
         form=form,
     )
