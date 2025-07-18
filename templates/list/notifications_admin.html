@@ -1,34 +1,82 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Gestión de notificaciones{% endblock %}
 {% block content %}
-<h2>Gestión de notificaciones</h2>
-<form class="mb-3" method="get" action="{{ url_for('notifications.list_all') }}">
-    <select name="status" class="form-select w-auto d-inline-block">
-        <option value="all" {% if status=='all' %}selected{% endif %}>Todas</option>
-        <option value="unread" {% if status=='unread' %}selected{% endif %}>No leídas</option>
-        <option value="read" {% if status=='read' %}selected{% endif %}>Leídas</option>
-    </select>
-    <button class="btn btn-outline-primary btn-sm ms-2" type="submit">Filtrar</button>
-</form>
-<a href="{{ url_for('notifications.new_notification') }}" class="btn btn-primary mb-3">Nueva notificación</a>
-<table class="table table-bordered table-sm">
-    <thead><tr><th>Fecha</th><th>Usuario</th><th>Título</th><th>Tipo</th><th>Leída</th><th>Acción</th></tr></thead>
-    <tbody>
-    {% for n in notifs %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-semibold">Gestión de Notificaciones</h2>
+  <a href="{{ url_for('notifications.new_notification') }}" id="btnNewNotif" class="btn btn-success">Agregar nuevo</a>
+</div>
+<div class="card shadow-sm mb-4 bg-light border border-secondary-subtle rounded">
+  <div class="card-body">
+    <form id="notifFilterForm" class="row row-cols-lg-auto g-3 align-items-end" method="get" action="{{ url_for('notifications.list_all') }}">
+      <div class="col-auto">
+        <select name="status" class="form-select">
+          <option value="all" {% if status=='all' %}selected{% endif %}>Todas</option>
+          <option value="unread" {% if status=='unread' %}selected{% endif %}>No leídas</option>
+          <option value="read" {% if status=='read' %}selected{% endif %}>Leídas</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-primary" type="submit">Filtrar</button>
+    </form>
+      </div>
+  </div>
+</div>
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr><th>Fecha</th><th>Usuario</th><th>Título</th><th>Tipo</th><th>Leída</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        {% for n in notifs %}
+
+    
+    
+    
         <tr>
             <td>{{ n.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-            <td>{{ n.user_id }}</td>
+            <td>{{ user_map.get(n.user_id, n.user_id) }}</td>
             <td>{{ n.title }}</td>
             <td>{{ n.notif_type }}</td>
             <td>{% if n.is_read %}Sí{% else %}No{% endif %}</td>
             <td>
-                <form method="post" action="{{ url_for('notifications.delete_notification', notif_id=n.id) }}" onsubmit="return confirm('¿Eliminar notificación?');">
-                    
-                    <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
-                </form>
-            </td>
+                <form method="post" action="{{ url_for('notifications.delete_notification', notif_id=n.id) }}" class="d-inline">
+              <button type="submit" class="btn btn-sm btn-danger deleteNotifBtn" title="Borrar"><i class="bi bi-trash"></i><span class="visually-hidden">Borrar</span></button>
+            </form>
+          </td>
+
         </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<nav class="d-flex justify-content-center mt-4">
+  <ul class="pagination pagination-sm pagination-glass mb-0">
+    {% for p in range(1, pages+1) %}
+    <li class="page-item {% if p==page %}active{% endif %}"><a class="page-link" href="?status={{ status }}&page={{ p }}">{{ p }}</a></li>
     {% endfor %}
-    </tbody>
-</table>
+  </ul>
+</nav>
+<!-- Loading overlay -->
+<div id="notifListLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const ov=document.getElementById('notifListLoading');
+    const show=()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');};
+    const form=document.getElementById('notifFilterForm');
+    if(form)form.addEventListener('submit',show);
+    const btnNuevo=document.getElementById('btnNewNotif');
+    if(btnNuevo)btnNuevo.addEventListener('click',show);
+    document.querySelectorAll('.deleteNotifBtn').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.preventDefault();
+        const fm=btn.closest('form');
+        Swal.fire({title:'¿Eliminar notificación?',text:'Esta acción no se puede deshacer',icon:'warning',showCancelButton:true,confirmButtonText:'Sí',cancelButtonText:'Cancelar'}).then(r=>{if(r.isConfirmed){show();fm.submit();}});
+      });
+    });
+  });
+</script>
 {% endblock %}

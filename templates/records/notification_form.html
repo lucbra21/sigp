@@ -1,19 +1,53 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Nueva notificación{% endblock %}
 {% block content %}
-<h2>Nueva notificación</h2>
-<form method="post" action="{{ action }}">
-    {{ form.csrf_token }}
-    <div class="mb-3">{{ form.recipient_type.label }} {{ form.recipient_type(class="form-select", id="recipType") }}</div>
-    <div class="mb-3 d-none" id="rolesDiv">{{ form.roles.label }} {{ form.roles(class="form-select", multiple=True) }}</div>
-    <div class="mb-3 d-none" id="usersDiv">{{ form.users.label }} {{ form.users(class="form-select", multiple=True) }}</div>
-    <div class="mb-3">{{ form.notif_type.label }} {{ form.notif_type(class="form-select") }}</div>
-    <div class="mb-3">{{ form.title.label }} {{ form.title(class="form-control") }}</div>
-    <div class="mb-3">{{ form.body.label }} {{ form.body(class="form-control") }}</div>
-    <div class="mb-3">{{ form.link_url.label }} {{ form.link_url(class="form-control") }}</div>
-    {{ form.submit(class="btn btn-success") }}
-    <a href="{{ url_for('notifications.list_all') }}" class="btn btn-secondary">Cancelar</a>
-</form>
+<h2 class="fw-semibold mb-4 text-center">{{ 'Editar' if form.recipient_type.data else 'Nueva' }} Notificación</h2>
+<div class="card shadow-sm border border-secondary-subtle bg-light mx-auto" style="max-width:700px;">
+  <div class="card-body">
+    <form id="notificationForm" method="post" class="row g-3 needs-validation" novalidate action="{{ action }}">
+      {{ form.csrf_token }}
+      <div class="col-4">
+        <label class="form-label">{{ form.recipient_type.label }} <span class="text-danger">*</span></label>
+        {{ form.recipient_type(class="form-select", id="recipType", required=True) }}
+        <div class="invalid-feedback">Seleccione destinatario.</div>
+      </div>
+      <div id="rolesDiv" class="col-4 d-none">
+        <label class="form-label">{{ form.roles.label }}</label>
+        {{ form.roles(class="form-select", multiple=True) }}
+      </div>
+      <div id="usersDiv" class="col-4 d-none">
+        <label class="form-label">{{ form.users.label }}</label>
+        {{ form.users(class="form-select", multiple=True) }}
+      </div>
+      <div class="col-4 col-md-4">
+        <label class="form-label">{{ form.notif_type.label }}</label>
+        {{ form.notif_type(class="form-select") }}
+      </div>
+      <div class="col-4">
+        <label class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
+        {{ form.title(class="form-control", required=True) }}
+        <div class="invalid-feedback">Título requerido.</div>
+      </div>
+      <div class="col-12">
+        <label class="form-label">{{ form.body.label }}</label>
+        {{ form.body(class="form-control", rows=4) }}
+      </div>
+      <div class="col-12">
+        <label class="form-label">{{ form.link_url.label }}</label>
+        {{ form.link_url(class="form-control") }}
+      </div>
+      <div class="col-12 text-center pt-3">
+        <button type="submit" class="btn btn-primary me-2">Guardar</button>
+        <a href="{{ url_for('notifications.list_all') }}" id="btnCancelNotif" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Loading overlay -->
+<div id="notifFormLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+
 <script>
 const rt = document.getElementById('recipType');
 const rolesDiv = document.getElementById('rolesDiv');
@@ -24,5 +58,35 @@ function toggleTargets(){
 }
 rt.addEventListener('change', toggleTargets);
 document.addEventListener('DOMContentLoaded', toggleTargets);
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    // bootstrap validation
+    const form=document.getElementById('notificationForm');
+    const ov=document.getElementById('notifFormLoading');
+    if(form){
+      form.addEventListener('submit',e=>{
+        if(!form.checkValidity()){
+          e.preventDefault();
+          e.stopPropagation();
+        }else{
+          ov.classList.remove('d-none');ov.classList.add('d-flex');
+        }
+        form.classList.add('was-validated');
+      });
+    }
+
+    // pinta badges en opciones de color
+    document.querySelectorAll('#color option[data-color]').forEach(opt=>{
+      const clr=opt.dataset.color;
+      opt.style.background=clr;
+      opt.style.color='#fff';
+    });
+
+    // botón cancelar muestra overlay para coherencia
+    const btnCancel=document.querySelector('#notificationForm a.btn-secondary');
+    if(btnCancel){btnCancel.addEventListener('click',()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});}
+  });
 </script>
 {% endblock %}

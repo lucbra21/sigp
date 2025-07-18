@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime
+import math
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
@@ -30,6 +31,8 @@ def my_notifications():
 
     page = request.args.get("page", 1, type=int)
     status = request.args.get("status", "all")
+    page = request.args.get("page", 1, type=int)
+    per_page = 15
     per_page = 20
     q = db.session.query(Notification).filter_by(user_id=current_user.id)
     if status == "unread":
@@ -69,13 +72,38 @@ def list_all():
         flash("Tabla notifications no disponible", "danger")
         return redirect(url_for("main.index"))
     status = request.args.get("status", "all")
+    page = request.args.get("page", 1, type=int)
+    per_page = 15
     q = db.session.query(Notification)
     if status == "unread":
         q = q.filter_by(is_read=0)
     elif status == "read":
         q = q.filter_by(is_read=1)
-    notifs = q.order_by(Notification.created_at.desc()).limit(200).all()
-    return render_template("list/notifications_admin.html", notifs=notifs, status=status)
+    total = q.count()
+    notifs = (
+        q.order_by(Notification.created_at.desc())
+        .limit(per_page)
+        .offset((page - 1) * per_page)
+        .all()
+    )
+    pages = math.ceil(total / per_page)
+    # build user name map
+    user_map = {}
+    if User is not None:
+        ids = [n.user_id for n in notifs]
+        if ids:
+            q_users = db.session.query(User).filter(User.id.in_(ids))
+            for u in q_users:
+                name_attr = getattr(u, "name", None) or getattr(u, "email", None) or u.id
+                user_map[u.id] = name_attr
+    return render_template(
+        "list/notifications_admin.html",
+        notifs=notifs,
+        status=status,
+        page=page,
+        pages=pages,
+        user_map=user_map,
+    )
 
 
 @notifications_bp.route("/new", methods=["GET", "POST"])
