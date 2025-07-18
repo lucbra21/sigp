@@ -1,92 +1,114 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Aprobación de pagos{% endblock %}
 {% block content %}
-<h2>Aprobación de pagos</h2>
-<form class="row g-2 mb-3" method="get">
-  <div class="col-auto">
-    <label class="form-label">Desde</label>
-    <select class="form-select" name="from_month">
-      {% for m in range(1,13) %}
-      <option value="{{m}}" {% if m == from_month %}selected{% endif %}>{{'%02d' % m}}</option>
-      {% endfor %}
-    </select>
+<div id="paymentsLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-semibold mb-0">Aprobación de Pagos</h2>
+</div>
+
+<!-- Filtro -->
+<div class="card shadow-sm mb-4 bg-light border border-secondary-subtle rounded">
+  <div class="card-body">
+    <form id="paymentsFilterForm" class="row row-cols-lg-auto g-3 align-items-end" method="get">
+      <div class="col-md-2">
+        <label class="form-label">Desde</label>
+        <select class="form-select" name="from_month">
+          {% for m in range(1,13) %}
+          <option value="{{m}}" {% if m == from_month %}selected{% endif %}>{{'%02d' % m}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Año</label>
+        <input type="number" name="from_year" value="{{ from_year }}" class="form-control" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Hasta</label>
+        <select class="form-select" name="to_month">
+          {% for m in range(1,13) %}
+          <option value="{{m}}" {% if m == to_month %}selected{% endif %}>{{'%02d' % m}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Año</label>
+        <input type="number" name="to_year" value="{{ to_year }}" class="form-control" />
+      </div>
+      <div class="col-md-2 pt-4">
+        <button class="btn btn-primary btn-loading">Filtrar</button>
+      </div>
+    </form>
   </div>
-  <div class="col-auto">
-    <label class="form-label">Año</label>
-    <input type="number" name="from_year" value="{{ from_year }}" class="form-control" />
-  </div>
-  <div class="col-auto">
-    <label class="form-label">Hasta</label>
-    <select class="form-select" name="to_month">
-      {% for m in range(1,13) %}
-      <option value="{{m}}" {% if m == to_month %}selected{% endif %}>{{'%02d' % m}}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-auto">
-    <label class="form-label">Año</label>
-    <input type="number" name="to_year" value="{{ to_year }}" class="form-control" />
-  </div>
-  <div class="col-auto align-self-end">
-    <button class="btn btn-primary">Filtrar</button>
-  </div>
-</form>
-<form method="post" action="{{ url_for('admin.bulk_approve') }}" id="bulkForm">
+</div>
+
+<form method="post" id="bulkForm">
   <div class="mb-2">
     <button type="button" class="btn btn-sm btn-secondary" id="selAll">Seleccionar todos</button>
     <button type="button" class="btn btn-sm btn-secondary" id="deselAll">Deseleccionar todos</button>
-    <button type="submit" formaction="{{ url_for('admin.bulk_approve') }}" class="btn btn-sm btn-success" onclick="return confirm('¿Aprobar movimientos seleccionados?');">Aprobar seleccionados</button>
-    <button type="submit" formaction="{{ url_for('admin.bulk_cancel') }}" class="btn btn-sm btn-danger" onclick="return confirm('¿Anular movimientos seleccionados?');">Anular seleccionados</button>
-    <button type="submit" formaction="{{ url_for('admin.bulk_suspend') }}" class="btn btn-sm btn-warning" onclick="return confirm('¿Suspender movimientos seleccionados?');">Suspender seleccionados</button>
+    <button type="submit" formaction="{{ url_for('admin.bulk_approve') }}" class="btn btn-sm btn-success btn-loading" data-confirm="¿Aprobar movimientos seleccionados?">Aprobar seleccionados</button>
+    <button type="submit" formaction="{{ url_for('admin.bulk_cancel') }}" class="btn btn-sm btn-danger btn-loading" data-confirm="¿Anular movimientos seleccionados?">Anular seleccionados</button>
+    <button type="submit" formaction="{{ url_for('admin.bulk_suspend') }}" class="btn btn-sm btn-warning btn-loading" data-confirm="¿Suspender movimientos seleccionados?">Suspender seleccionados</button>
   </div>
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th><input type="checkbox" id="headerChk" /></th>
-      <th>Prescriptor</th>
-      <th>Lead</th>
-      <th>Concepto</th>
-      <th>Monto</th>
-      <th>Periodo</th>
-      <th>Acciones</th>
-    </tr>
-      <th>Prescriptor</th>
-  </thead>
-  <tbody>
-  {% for r in rows %}
-    <tr>
-      <td><input type="checkbox" class="rowchk" name="selected_ids" value="{{ r.id }}" /></td>
-      <td>{{ pres_map.get(r.prescriptor_id, r.prescriptor_id) }}</td>
-      <td>{{ lead_map.get(r.lead_id, '-') }}</td>
-      <td>{{ r.concept }}</td>
-      <td>{{ '%.2f'|format(r.amount) }}</td>
-      <td>{{ r.approve_due_month }}/{{ r.approve_due_year }}</td>
-      <td>
-        <form method="post" action="{{ url_for('admin.approve_payment', ledger_id=r.id) }}" class="d-inline">
-          <button class="btn btn-sm btn-success" onclick="return confirm('¿Aprobar?');">Aprobar</button>
-        </form>
-        <form method="post" action="{{ url_for('admin.reject_payment', ledger_id=r.id) }}" class="d-inline">
-          <button class="btn btn-sm btn-danger" onclick="return confirm('¿Anular?');">Anular</button>
-        </form>
-        <form method="post" action="{{ url_for('admin.suspend_payment', ledger_id=r.id) }}" class="d-inline">
-          <button class="btn btn-sm btn-warning" onclick="return confirm('¿Suspender?');">Suspender</button>
-        </form>
-      </td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="headerChk" /></th>
+            <th>Prescriptor</th>
+            <th>Lead</th>
+            <th>Concepto</th>
+            <th>Monto</th>
+            <th>Periodo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <td><input type="checkbox" class="rowchk form-check-input" name="selected_ids" value="{{ r.id }}" /></td>
+            <td>{{ pres_map.get(r.prescriptor_id, r.prescriptor_id) }}</td>
+            <td>{{ lead_map.get(r.lead_id, '-') }}</td>
+            <td>{{ r.concept }}</td>
+            <td>{{ '%.2f'|format(r.amount) }}</td>
+            <td>{{ r.approve_due_month }}/{{ r.approve_due_year }}</td>
+            <td>
+              <form method="post" action="{{ url_for('admin.approve_payment', ledger_id=r.id) }}" class="d-inline">
+                <button class="btn btn-sm btn-success btn-loading" data-confirm="¿Aprobar?" title="Aprobar"><i class="bi bi-check-circle"></i><span class="visually-hidden">Aprobar</span></button>
+              </form>
+              <form method="post" action="{{ url_for('admin.reject_payment', ledger_id=r.id) }}" class="d-inline">
+                <button class="btn btn-sm btn-danger btn-loading" data-confirm="¿Anular?" title="Anular"><i class="bi bi-x-circle"></i><span class="visually-hidden">Anular</span></button>
+              </form>
+              <form method="post" action="{{ url_for('admin.suspend_payment', ledger_id=r.id) }}" class="d-inline">
+                <button class="btn btn-sm btn-warning btn-loading" data-confirm="¿Suspender?" title="Suspender"><i class="bi bi-pause-circle"></i><span class="visually-hidden">Suspender</span></button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </form>
+{% if rows|length == 0 %}<p>No hay pagos pendientes.</p>{% endif %}
+
 <script>
-  document.getElementById('selAll').addEventListener('click', () => {
-    document.querySelectorAll('.rowchk').forEach(cb => cb.checked = true);
-  });
-  document.getElementById('deselAll').addEventListener('click', () => {
-    document.querySelectorAll('.rowchk').forEach(cb => cb.checked = false);
-  });
-  document.getElementById('headerChk').addEventListener('change', (e) => {
-    document.querySelectorAll('.rowchk').forEach(cb => cb.checked = e.target.checked);
+  document.addEventListener('DOMContentLoaded',()=>{
+    const ov=document.getElementById('paymentsLoading');
+    const show=()=>{ov && (ov.classList.remove('d-none'),ov.classList.add('d-flex'))};
+    document.querySelectorAll('.btn-loading').forEach(b=>b.addEventListener('click',show));
+    const filter=document.getElementById('paymentsFilterForm');
+    if(filter){filter.addEventListener('submit',show);}    
+
+    document.getElementById('selAll').addEventListener('click',()=>{document.querySelectorAll('.rowchk').forEach(cb=>cb.checked=true);});
+    document.getElementById('deselAll').addEventListener('click',()=>{document.querySelectorAll('.rowchk').forEach(cb=>cb.checked=false);});
+    document.getElementById('headerChk').addEventListener('change',e=>{document.querySelectorAll('.rowchk').forEach(cb=>cb.checked=e.target.checked);});
   });
 </script>
-{% if rows|length == 0 %}<p>No hay pagos pendientes.</p>{% endif %}
+
+
 {% endblock %}
