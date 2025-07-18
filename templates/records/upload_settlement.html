@@ -1,36 +1,99 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Generar rendición{% endblock %}
 {% block content %}
-<h2>Generar rendición</h2>
-<div>
-  
-  <form action="{{ url_for('settlements.settle') }}" method="post" enctype="multipart/form-data">
-  <input type="hidden" name="prescriptor_id" value="{{ prescriptor_id }}">
-  <h4>Facturas pendientes</h4>
-  <table class="table table-sm table-bordered">
-    <thead>
-      <tr><th><input type="checkbox" id="selAll"></th><th>ID</th><th>Fecha</th><th>Importe</th><th></th></tr>
-    </thead>
-    <tbody>
-      {% for inv in invoices %}
-      <tr>
-        <td><input type="checkbox" name="invoice_ids" value="{{ inv.id }}" class="chk-row"></td>
-        <td>{{ inv.id }}</td>
-        <td>{{ inv.invoice_date }}</td>
-        <td class="amt">{{ '%.2f'|format(inv.total) }}</td>
-        <td><a class="btn btn-outline-secondary btn-sm" target="_blank" href="{{ url_for('settlements.invoice_detail', invoice_id=inv.id) }}">Ver</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% if invoices|length == 0 %}<p>No hay facturas pendientes.</p>{% endif %}
-  <div class="mb-3 mt-3">
-    <label class="form-label">Comprobante (PDF/JPG/PNG)</label>
-    <input type="file" name="receipt" class="form-control" required>
+<h2 class="mb-2 text-center fw-semibold">Generar rendición de {{ presc_name }}</h2>
+{% if payment_details %}
+<p class="text-center mb-4"><span class="fw-semibold">Datos para el pago:</span><br>{{ payment_details | replace('\n','<br>') | safe }}</p>
+{% endif %}
+<div class="card shadow-sm border border-secondary-subtle mb-4">
+  <div class="card-body">
+    <form id="settleForm" action="{{ url_for('settlements.settle') }}" method="post" enctype="multipart/form-data" class="row g-3">
+      <input type="hidden" name="prescriptor_id" value="{{ prescriptor_id }}">
+
+      <div class="col-12">
+        <h5 class="fw-semibold">Facturas pendientes</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width:40px"><input type="checkbox" id="selAll"></th>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Importe</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inv in invoices %}
+              <tr>
+                <td><input type="checkbox" name="invoice_ids" value="{{ inv.id }}" class="form-check-input chk-row"></td>
+                <td>{{ inv.id }}</td>
+                <td>{{ inv.invoice_date }}</td>
+                <td>{{ '%.2f'|format(inv.total) }}</td>
+                <td><a class="btn btn-outline-secondary btn-sm" target="_blank" href="{{ url_for('settlements.invoice_detail', invoice_id=inv.id) }}"><i class="bi bi-box-arrow-up-right"></i></a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if invoices|length == 0 %}<p class="text-muted">No hay facturas pendientes.</p>{% endif %}
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Comprobante (PDF/JPG/PNG)</label>
+        <input type="file" name="receipt" class="form-control" required>
+      </div>
+
+      <div class="col-12 text-center pt-3">
+        <button id="btnSettleSave" class="btn btn-success" {% if invoices|length == 0 %}disabled{% endif %}>
+          <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+          <span class="btn-text"><i class="bi bi-upload me-1"></i>Guardar rendición</span>
+        </button>
+        <a href="{{ url_for('settlements.pending_all') }}" id="btnSettleCancel" class="btn btn-secondary ms-2">
+          <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+          <span class="btn-text">Cancelar</span>
+        </a>
+      </div>
+    </form>
   </div>
-  <button class="btn btn-success" {% if invoices|length == 0 %}disabled{% endif %}>Guardar rendición</button>
-</form>
 </div>
+
+<!-- Loading overlay -->
+<div id="settleLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const selAll=document.getElementById('selAll');
+    if(selAll){
+      const chkRows=document.querySelectorAll('.chk-row');
+      selAll.addEventListener('change',()=>chkRows.forEach(cb=>cb.checked=selAll.checked));
+    }
+    const form=document.getElementById('settleForm');
+    const overlay=document.getElementById('settleLoading');
+    if(form){
+      form.addEventListener('submit',function(){
+        if(form.checkValidity()){
+          // activar spinner en botón guardar
+          document.querySelector('#btnSettleSave .spinner-border').classList.remove('d-none');
+          document.querySelector('#btnSettleSave .btn-text').classList.add('opacity-0');
+          overlay.classList.remove('d-none');
+          overlay.classList.add('d-flex');
+        }
+      });
+    }
+    const cancelBtn=document.getElementById('btnSettleCancel');
+    if(cancelBtn){
+      cancelBtn.addEventListener('click',function(){
+        document.querySelector('#btnSettleCancel .spinner-border').classList.remove('d-none');
+        document.querySelector('#btnSettleCancel .btn-text').classList.add('opacity-0');
+        overlay.classList.remove('d-none');
+        overlay.classList.add('d-flex');
+      });
+    }
+  });
+</script>
 <script>
 const selAll=document.getElementById('selAll');
 if(selAll){

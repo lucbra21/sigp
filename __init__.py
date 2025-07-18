@@ -50,6 +50,28 @@ def create_app(config_class=Config):
         from flask_login import current_user
         return dict(can=lambda p: has_perm(current_user, p), can_mod=lambda m: has_any_prefix(current_user, m))
 
+    # prescriptor del usuario conectado (si corresponde)
+    @app.context_processor
+    def _inject_prescriptor():
+        from flask_login import current_user
+        from .models import Base
+        Prescriptor = getattr(Base.classes, "prescriptor", None) or getattr(Base.classes, "prescriptors", None)
+        if Prescriptor is None or not (current_user and current_user.is_authenticated):
+            return dict(current_prescriptor=None)
+        try:
+            presc = (
+                db.session.query(Prescriptor)
+                .filter((getattr(Prescriptor, "user_id", None) == current_user.id) | (getattr(Prescriptor, "user_getter_id", None) == current_user.id))
+                .first()
+            )
+        except Exception:
+            presc = None
+        from flask import url_for
+        from pathlib import Path
+        photo_url=getattr(presc,'photo_url',None) if presc else None
+        contract_url=getattr(presc,'contract_url',None) if presc else None
+        return dict(current_prescriptor=presc, presc_photo_url=photo_url, presc_contract_url=contract_url)
+
     # Import blueprints here to avoid circular dependencies
     from .controllers.auth_controller import auth_bp
     from .controllers.prescriptor_controller import prescriptors_bp

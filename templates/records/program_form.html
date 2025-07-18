@@ -84,9 +84,32 @@
     </div>
   </div>
   <div class="mb-3">
-    <label class="form-label" for="commercial_emails">Emails comerciales (separados por coma)</label>
-    <textarea class="form-control" id="commercial_emails" name="commercial_emails" rows="2" placeholder="email1@example.com, email2@example.com">{{ program.commercial_emails if program else '' }}</textarea>
-  </div>
+     <label class="form-label" for="commercial_emails">Emails comerciales (separados por coma)</label>
+     <textarea class="form-control" id="commercial_emails" name="commercial_emails" rows="2" placeholder="email1@example.com, email2@example.com">{{ program.commercial_emails if program else '' }}</textarea>
+   </div>
+   <div class="row">
+     <div class="col-md-6 mb-3">
+       <label class="form-label" for="program_url">URL del programa</label>
+       <input class="form-control" id="program_url" name="program_url" type="url" value="{{ program.program_url if program else '' }}" />
+     </div>
+     <div class="col-md-6 mb-3">
+       <label class="form-label" for="program_file">PDF del programa</label>
+       <input class="form-control" id="program_file" name="program_file" type="file" accept="application/pdf" />
+       {% if program and program.program_file %}<a href="{{ program.program_file }}" target="_blank" class="small">Ver actual</a>{% endif %}
+     </div>
+   </div>
+   <div class="row">
+     <div class="col-md-6 mb-3">
+       <label class="form-label" for="image_small">Imagen pequeña</label>
+       <input class="form-control" id="image_small" name="image_small" type="file" accept="image/*" />
+       {% if program and program.image_small %}<img src="{{ program.image_small }}" alt="img small" class="img-thumbnail mt-1" style="max-width:120px">{% endif %}
+     </div>
+     <div class="col-md-6 mb-3">
+       <label class="form-label" for="image_large">Imagen grande</label>
+       <input class="form-control" id="image_large" name="image_large" type="file" accept="image/*" />
+       {% if program and program.image_large %}<img src="{{ program.image_large }}" alt="img large" class="img-thumbnail mt-1" style="max-width:120px">{% endif %}
+     </div>
+   </div>
   <div class="mb-3">
     <label class="form-label" for="state">Estado</label>
     {% set st = program.state if program else 'Activo' %}

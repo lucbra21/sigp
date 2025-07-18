@@ -1,5 +1,6 @@
 """Programs controller: CRUD placeholder."""
 import math
+from pathlib import Path
 from flask import (
     Blueprint,
     render_template,
@@ -7,6 +8,7 @@ from flask import (
     redirect,
     url_for,
     flash,
+    current_app,
 )
 from flask_login import login_required
 
@@ -45,6 +47,10 @@ FIELDS = [
     "commercial_emails",
     "campus_id",
     "state",
+    "program_url",
+    "program_file",
+    "image_small",
+    "image_large",
 ]
 
 
@@ -66,8 +72,35 @@ def _program_form(program_id=None):
         if program is None:
             program = Program(id=str(uuid4()))
             db.session.add(program)
+        # first assign simple fields (excluding uploads)
+        upload_fields = {
+            "program_file_file": "program_file",
+            "image_small_file": "image_small",
+            "image_large_file": "image_large",
+        }
         for k, v in data.items():
-            setattr(program, k, v)
+            if k not in upload_fields.values():
+                setattr(program, k, v)
+        # handle uploads
+        upload_dir = current_app.config.get("PROGRAM_UPLOAD_FOLDER", Path(current_app.root_path)/"static"/"programs")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        def _save_upload(file_field, filename_prefix):
+            if file_field and file_field.filename:
+                ext = file_field.filename.rsplit('.',1)[-1]
+                fname = f"{program.id}_{filename_prefix}.{ext}"
+                dest = upload_dir / fname
+                file_field.save(dest)
+                return url_for('static', filename=f'programs/{fname}')
+            return None
+        file_map = [
+            (request.files.get('program_file'), 'program_file', 'file'),
+            (request.files.get('image_small'), 'image_small', 'small'),
+            (request.files.get('image_large'), 'image_large', 'large'),
+        ]
+        for f, attr, prefix in file_map:
+            url_saved = _save_upload(f, prefix)
+            if url_saved:
+                setattr(program, attr, url_saved)
         db.session.commit()
         flash("Programa guardado", "success")
         return redirect(url_for("programs.programs_list"))

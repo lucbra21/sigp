@@ -128,7 +128,16 @@ def pending_invoices(prescriptor_id):
         .order_by(Invoice.invoice_date.desc())
         .all()
     )
-    return render_template("records/upload_settlement.html", invoices=invoices, prescriptor_id=prescriptor_id)
+    # datos del prescriptor
+    presc_name = ""
+    payment_details = ""
+    if Prescriptor is not None:
+        presc = db.session.get(Prescriptor, prescriptor_id)
+        if presc is not None:
+            presc_name = getattr(presc, "squeeze_page_name", "") or getattr(presc, "name", "")
+            payment_details = getattr(presc, "payment_details", "")
+    return render_template("records/upload_settlement.html", invoices=invoices, prescriptor_id=prescriptor_id,
+                           presc_name=presc_name, payment_details=payment_details)
 
 
 @settlements_bp.get("/invoice/<invoice_id>")
