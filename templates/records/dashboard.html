@@ -1,8 +1,16 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+  body{
+    background:url('{{ url_for('static', filename='img/fondo8.jpg') }}') no-repeat center center fixed;
+    background-size:cover;
+  }
+</style>
+{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-center align-items-center" style="min-height:60vh;">
-    <h2 class="fw-semibold text-center" style="font-size:1.8rem;">Bienvenido al Sistema Integral de Prescriptores (SIGP) de Sports Data Campus</h2>
+    <h1 class="fw-semibold text-center" style="font-size:2.8rem;">Bienvenido al <br>Sistema Integral de Prescriptores <br>(SIGP)</h1>
         
         
 
