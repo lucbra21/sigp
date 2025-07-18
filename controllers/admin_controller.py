@@ -116,7 +116,7 @@ def pay_approval():
         if Prescriptor is not None:
             pids = {r.prescriptor_id for r in rows}
             pres_rows = db.session.query(Prescriptor).filter(Prescriptor.id.in_(pids)).all()
-            pres_map = {p.id: getattr(p, "name", p.id) for p in pres_rows}
+            pres_map = {p.id: (getattr(p, 'squeeze_page_name', None) or getattr(p, 'name', p.id)) for p in pres_rows}
         if Lead is not None:
             lids = {r.lead_id for r in rows if r.lead_id}
             lead_rows = db.session.query(Lead).filter(Lead.id.in_(lids)).all()
@@ -397,7 +397,7 @@ def list_suspended():
         if Prescriptor is not None:
             pids = {r.prescriptor_id for r in rows}
             pres_rows = db.session.query(Prescriptor).filter(Prescriptor.id.in_(pids)).all()
-            pres_map = {p.id: getattr(p, "name", p.id) for p in pres_rows}
+            pres_map = {p.id: (getattr(p, 'squeeze_page_name', None) or getattr(p, 'name', p.id)) for p in pres_rows}
         if Lead is not None:
             lids = {r.lead_id for r in rows if r.lead_id}
             lead_rows = db.session.query(Lead).filter(Lead.id.in_(lids)).all()
@@ -436,7 +436,7 @@ def list_canceled():
         if Prescriptor is not None:
             pids = {r.prescriptor_id for r in rows}
             pres_rows = db.session.query(Prescriptor).filter(Prescriptor.id.in_(pids)).all()
-            pres_map = {p.id: getattr(p, "name", p.id) for p in pres_rows}
+            pres_map = {p.id: (getattr(p, 'squeeze_page_name', None) or getattr(p, 'name', p.id)) for p in pres_rows}
         if Lead is not None:
             lids = {r.lead_id for r in rows if r.lead_id}
             lead_rows = db.session.query(Lead).filter(Lead.id.in_(lids)).all()

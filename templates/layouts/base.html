@@ -11,6 +11,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ui-elements.css') }}">
     <style>body{padding-bottom:4rem;}</style>
     {% block extra_css %}{% endblock %}
+
+    <style>
+        body{
+          background:url('{{ url_for('static', filename='img/fondo8.jpg') }}') no-repeat center center fixed;
+          background-size:cover;
+        }
+      </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
     <!-- Navbar -->

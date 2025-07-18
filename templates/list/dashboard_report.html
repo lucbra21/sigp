@@ -1,82 +1,99 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Reporte de Prescriptor{% endblock %}
 {% block content %}
-<div class="container py-4">
-  <h3>Dashboard de Prescriptor</h3>
-  <form class="row row-cols-lg-auto g-2 align-items-end mb-3" method="get" action="{{ url_for('dashboard.prescriptor_report') }}">
-    <div class="col-12">
-      <label class="form-label">Prescriptor</label>
-      <select class="form-select" name="prescriptor_id" {% if prescriptor_locked %}disabled{% endif %}>
-        <option value="">-- Todos --</option>
-        {% for p in prescriptors %}
-        <option value="{{ p.id }}" {% if p.id|string == presc_sel|string %}selected{% endif %}>{{ (p|attr(label_attr)) if label_attr else p.id }}</option>
-        {% endfor %}
-      </select>
-      {% if prescriptor_locked %}
-      <input type="hidden" name="prescriptor_id" value="{{ presc_sel }}">
-      {% endif %}
-    </div>
-    <div class="col-12">
-      <label class="form-label">Desde</label>
-      <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
-    </div>
-    <div class="col-12">
-      <label class="form-label">Hasta</label>
-      <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
-    </div>
-    <div class="col-12">
-      <button class="btn btn-outline-secondary">Filtrar</button>
-    </div>
-  </form>
+<div id="dashReportLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
 
-  <div class="row g-3">
-    <tbody>
-      <div class="col-6 col-lg-2">
-      <div class="card text-center shadow-sm h-100">
-        <div class="card-body">
-          <h6 class="text-muted">Leads</h6>
-          <h3 class="mb-0 fw-bold">{{ lead_count }}</h3>
-        </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-semibold mb-0">Dashboard de Prescriptor</h2>
+</div>
+
+<div class="card shadow-sm mb-4 bg-light border border-secondary-subtle rounded">
+  <div class="card-body">
+    <form id="dashReportForm" class="row row-cols-lg-auto g-3 align-items-end" method="get" action="{{ url_for('dashboard.prescriptor_report') }}">
+      <div class="col-md-4">
+        <label class="form-label">Prescriptor</label>
+        <select class="form-select" name="prescriptor_id" {% if prescriptor_locked %}disabled{% endif %}>
+          <option value="">Todos</option>
+          {% for p in prescriptors %}
+          <option value="{{ p.id }}" {% if p.id|string == presc_sel|string %}selected{% endif %}>{{ (p|attr(label_attr)) if label_attr else p.id }}</option>
+          {% endfor %}
+        </select>
+        {% if prescriptor_locked %}
+        <input type="hidden" name="prescriptor_id" value="{{ presc_sel }}">
+        {% endif %}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Desde</label>
+        <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Hasta</label>
+        <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+      </div>
+      <div class="col-md-2 pt-4"><button class="btn btn-primary btn-loading">Filtrar</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-2">
+    <div class="card text-center shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="text-muted">Leads</h6>
+        <h3 class="mb-0 fw-bold">{{ lead_count }}</h3>
       </div>
     </div>
-      <div class="col-6 col-lg-2">
-      <div class="card text-center shadow-sm h-100">
-        <div class="card-body">
-          <h6 class="text-muted">Matriculaciones</h6>
-          <h3 class="mb-0 fw-bold">{{ conversion_count }}</h3>
-        </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card text-center shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="text-muted">Matriculaciones</h6>
+        <h3 class="mb-0 fw-bold">{{ conversion_count }}</h3>
       </div>
     </div>
-      <div class="col-6 col-lg-2">
-      <div class="card text-center shadow-sm h-100">
-        <div class="card-body">
-          <h6 class="text-muted">Comisiones total</h6>
-          <h3 class="mb-0 fw-bold">{{ '%.2f'|format(commission_sum) }}</h3>
-        </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card text-center shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="text-muted">Comisiones total</h6>
+        <h3 class="mb-0 fw-bold">{{ '%.2f'|format(commission_sum) }}</h3>
       </div>
     </div>
-      <div class="col-6 col-lg-2">
-      <div class="card text-center shadow-sm h-100">
-        <div class="card-body">
-          <h6 class="text-muted">Pagadas</h6>
-          <h3 class="mb-0 fw-bold text-success">{{ '%.2f'|format(paid_sum) }}</h3>
-        </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card text-center shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="text-muted">Pagadas</h6>
+        <h3 class="mb-0 fw-bold text-success">{{ '%.2f'|format(paid_sum) }}</h3>
       </div>
     </div>
-      <div class="col-6 col-lg-2">
-      <div class="card text-center shadow-sm h-100">
-        <div class="card-body">
-          <h6 class="text-muted">Pendientes</h6>
-          <h3 class="mb-0 fw-bold text-warning">{{ '%.2f'|format(pending_sum) }}</h3>
-        </div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card text-center shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="text-muted">Pendientes</h6>
+        <h3 class="mb-0 fw-bold text-warning">{{ '%.2f'|format(pending_sum) }}</h3>
       </div>
     </div>
-    </tbody>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card text-center shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="text-muted">Ratio L/M</h6>
+        {% if conversion_count %}
+        <h3 class="mb-0 fw-bold">{{ '%.1f'|format(lead_count / conversion_count) }}</h3>
+        {% else %}
+        <h3 class="mb-0 fw-bold">-</h3>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- Charts -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <div class="container pb-4">
   <div class="row g-4">
@@ -108,8 +125,8 @@ const ledgerStateCounts = {{ ledger_state_counts|tojson }};
 new Chart(document.getElementById('chartMoney'), {
   type: 'line',
   data: {labels: monthLabels, datasets: [
-    {label: 'Pagado', data: paidSeries, borderColor: 'green', backgroundColor:'rgba(0,128,0,0.2)', tension:.2},
-    {label: 'Pendiente', data: pendingSeries, borderColor: 'orange', backgroundColor:'rgba(255,165,0,0.2)', tension:.2}
+    {label: 'Pagado', data: paidSeries, borderColor: 'green', backgroundColor:'rgba(0,128,0,0.2)', tension:0.2},
+    {label: 'Pendiente', data: pendingSeries, borderColor: 'orange', backgroundColor:'rgba(255,165,0,0.2)', tension:0.2}
   ]},
   options: {responsive:true, plugins:{title:{display:true, text:'Monetizado por mes'}}}
 });
@@ -117,8 +134,8 @@ new Chart(document.getElementById('chartMoney'), {
 new Chart(document.getElementById('chartLeads'), {
   type: 'line',
   data: {labels: monthLabels, datasets: [
-    {label: 'Leads', data: leadSeries, borderColor: 'blue', backgroundColor:'rgba(0,0,255,0.2)', tension:.2},
-    {label: 'Matriculados', data: matSeries, borderColor: 'purple', backgroundColor:'rgba(128,0,128,0.2)', tension:.2}
+    {label: 'Leads', data: leadSeries, borderColor: 'blue', backgroundColor:'rgba(0,0,255,0.2)', tension:0.2},
+    {label: 'Matriculados', data: matSeries, borderColor: 'purple', backgroundColor:'rgba(128,0,128,0.2)', tension:0.2}
   ]},
   options: {responsive:true, plugins:{title:{display:true, text:'Leads vs Matriculados'}}}
 });
@@ -134,5 +151,12 @@ new Chart(document.getElementById('chartLedgerStates'), {
   data: {labels: ledgerStateLabels, datasets: [{label:'Ledger por estado', data: ledgerStateCounts, backgroundColor:'teal'}]},
   options: {responsive:true, plugins:{title:{display:true, text:'Estados de Ledger'}}}
 });
+  document.addEventListener('DOMContentLoaded',()=>{
+    const ov=document.getElementById('dashReportLoading');
+    const show=()=>{ov && (ov.classList.remove('d-none'),ov.classList.add('d-flex'))};
+    document.querySelectorAll('.btn-loading').forEach(b=>b.addEventListener('click',show));
+    const f=document.getElementById('dashReportForm');
+    if(f){f.addEventListener('submit',show);}  
+  });
 </script>
 {% endblock %}
