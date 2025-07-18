@@ -9,7 +9,7 @@ from typing import Sequence
 from flask import current_app
 
 
-def send_simple_mail(to: Sequence[str], subject: str, body: str) -> None:
+def send_simple_mail(to: Sequence[str], subject: str, body: str, *, html: bool=False, text_body: str | None=None) -> None:
     if not to:
         return
     cfg = current_app.config
@@ -28,7 +28,12 @@ def send_simple_mail(to: Sequence[str], subject: str, body: str) -> None:
     msg["Subject"] = subject
     msg["From"] = sender
     msg["To"] = ", ".join(to)
-    msg.set_content(body)
+    if html:
+        # plain text fallback
+        msg.set_content(text_body or "Este email requiere un cliente compatible con HTML.")
+        msg.add_alternative(body, subtype='html')
+    else:
+        msg.set_content(body)
 
     try:
         if use_ssl:

@@ -114,9 +114,10 @@ def forgot_post():
     if user:
         token=_generate_token(user.email.strip().lower())
         reset_url=url_for('auth.reset_password', token=token, _external=True)
-        body=f"Hola,\n\nPara restablecer tu contraseña haz clic en el siguiente enlace:\n{reset_url}\n\nSi no solicitaste esto ignora el mensaje."
+        plain_body=f"Hola,\n\nPara restablecer tu contraseña haz clic en el siguiente enlace:\n{reset_url}\n\nSi no solicitaste esto ignora el mensaje."
+        html_body=render_template('emails/reset_password.html', reset_url=reset_url, user=user)
         from sigp.common.email_utils import send_simple_mail
-        send_simple_mail([user.email],"Restablecer contraseña",body)
+        send_simple_mail([user.email],"Restablecer contraseña",html_body, html=True, text_body=plain_body)
     flash("Si el email existe se envió un enlace de recuperación", "info")
     return redirect(url_for('auth.login_get'))
 
