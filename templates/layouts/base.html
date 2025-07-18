@@ -132,10 +132,10 @@
                         <i class="fs-5 notif-bell {% if unread %}bi bi-bell-fill text-danger{% else %}bi bi-bell text-secondary{% endif %}"></i>
                         {% if unread %}<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ unread }}</span>{% endif %}
                     </a>
-                    <span class="badge bg-white text-dark shadow-sm me-3 d-flex align-items-center" style="border:1px solid rgba(0,0,0,.15);padding: 10px;">
+                    <a role="button" data-bs-toggle="offcanvas" href="#userInfoOffcanvas" aria-controls="userInfoOffcanvas" class="badge bg-white text-dark shadow-sm me-3 d-flex align-items-center text-decoration-none" style="border:1px solid rgba(0,0,0,.15);padding:10px;">
                         <i class="bi bi-person-circle me-1"></i>{{ current_user.email }}
-                    </span>
-                    <a href="{{ url_for('auth.logout') }}" id="logoutBtn" class="btn btn-outline-secondary d-flex align-items-center" title="Cerrar sesión"><i class="bi bi-box-arrow-right"></i></a>
+                    </a>
+                    <!-- <a href="{{ url_for('auth.logout') }}" id="logoutBtn" class="btn btn-outline-secondary d-flex align-items-center" title="Cerrar sesión"><i class="bi bi-box-arrow-right"></i></a> -->
                 </div>
             </div>
         </div>
@@ -203,5 +203,28 @@
         });
       });
     </script>
+<!-- Offcanvas User Info -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="userInfoOffcanvas" aria-labelledby="userInfoOffcanvasLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="userInfoOffcanvasLabel">Datos de usuario</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <ul class="list-group mb-3">
+      <li class="list-group-item d-flex justify-content-between"><span>Email</span><span>{{ current_user.email }}</span></li>
+      {% if current_user.name %}
+      <li class="list-group-item d-flex justify-content-between"><span>Nombre</span><span>{{ current_user.name }}</span></li>
+      {% endif %}
+      {% if current_user.role %}
+      <li class="list-group-item d-flex justify-content-between"><span>Rol</span><span>{{ current_user.role }}</span></li>
+      {% endif %}
+      {% if current_user.created_at %}
+      <li class="list-group-item d-flex justify-content-between"><span>Creado</span><span>{{ current_user.created_at.strftime('%d/%m/%Y') }}</span></li>
+      {% endif %}
+    </ul>
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger w-100">Cerrar sesión</a>
+  </div>
+</div>
+
 </body>
 </html>
