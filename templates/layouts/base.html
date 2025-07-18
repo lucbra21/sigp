@@ -29,22 +29,24 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    {% if can_mod('users') or can_mod('permissions') or can_mod('roles') %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="seguridadDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Seguridad
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="seguridadDropdown">
                             {% if can_mod('users') %}
-                            <li><a class="dropdown-item" href="{{ url_for('users.users_list') }}">Gestión de usuarios</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('users.users_list') }}">Usuarios</a></li>
                             {% endif %}
                             {% if can_mod('permissions') or can_mod('roles') %}
-                            <li><a class="dropdown-item" href="{{ url_for('permissions.roles_select') }}">Gestión de permisos</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('permissions.roles_select') }}">Permisos</a></li>
                             {% endif %}
                             {% if can_mod('roles') %}
-                            <li><a class="dropdown-item" href="{{ url_for('roles.roles_list') }}">Gestión de roles</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('roles.roles_list') }}">Roles</a></li>
                             {% endif %}
                         </ul>
                     </li>
+                    {% endif %}
                     {% if can_mod('media') %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="mediaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Multimedia</a>
@@ -79,7 +81,7 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('leads.leads_list') }}">Gestión de leads</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('leads.leads_list') }}">Leads</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('admin.pay_approval') }}">Aprobación de pagos</a></li>
 <li><a class="dropdown-item" href="{{ url_for('settlements.pending_all') }}">Rendición facturas</a></li>
 <li><a class="dropdown-item" href="{{ url_for('adjustments.adjustments_page') }}">Ajustes</a></li>
@@ -88,6 +90,8 @@
                         </ul>
                     </li>
                     {% endif %}
+                    {% set show_gest = can_mod('programs') or can_mod('campus') or can_mod('state_lead') or can_mod('state_ledger') or can_mod('state_prescriptor') or can_mod('state_user') or can_mod('prescriptor_type') or can_mod('prescriptor') %}
+                    {% if show_gest %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="gestionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Gestiones
@@ -124,6 +128,7 @@
                             {% endif %}
                         </ul>
                     </li>
+                    {% endif %}
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard.prescriptor_report') }}">Dashboard</a></li>
                 </ul>
                 <div class="d-flex align-items-center">

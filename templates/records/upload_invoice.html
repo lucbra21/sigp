@@ -91,55 +91,5 @@
 </script>
 
 
-  <div class="mb-3">
-    <label class="form-label">Número de factura</label>
-    <div class="input-group">
-      <input type="text" name="number" id="numField" class="form-control" required>
-      <button type="button" class="btn btn-outline-secondary" id="genBtn" title="Generar número">Generar</button>
-    </div>
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Fecha</label>
-    <input type="date" name="invoice_date" class="form-control" required>
-  </div>
-  <h4>Movimientos pendientes</h4>
-  <table class="table table-sm table-bordered">
-    <thead><tr><th><input type="checkbox" id="selAll"></th><th>Concepto</th><th>Monto</th><th>Periodo</th></tr></thead>
-    <tbody>
-      {% set total = 0 %}
-      {% for m in rows %}
-      <tr>
-        <td><input type="checkbox" name="ledger_ids" value="{{ m.id }}" class="chk-row"></td>
-        <td>{{ m.concept }}</td>
-        <td class="amt">{{ '%.2f'|format(m.amount) }}</td>
-        <td>{{ m.approve_due_month }}/{{ m.approve_due_year }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% if rows|length == 0 %}<p>No hay movimientos pendientes de facturar.</p>{% endif %}
-  <div class="mb-3">
-    <label class="form-label">Archivo factura (PDF/JPG/PNG)</label>
-    <input type="file" name="file" class="form-control" required>
-  </div>
-  <div class="mb-3">
-    <strong>Total seleccionado: <span id="selTotal">0.00</span> €</strong>
-  </div>
-  <button class="btn btn-primary" {% if rows|length == 0 %}disabled{% endif %}>Enviar</button>
-
-
-const selAll=document.getElementById('selAll');
-const chkRows=document.querySelectorAll('.chk-row');
-function calc(){let t=0;chkRows.forEach(c=>{if(c.checked){t+=parseFloat(c.closest('tr').querySelector('.amt').textContent)} });document.getElementById('selTotal').textContent=t.toFixed(2)}
-chkRows.forEach(c=>c.addEventListener('change',calc));
-if(selAll){selAll.addEventListener('change',()=>{chkRows.forEach(c=>c.checked=selAll.checked);calc()});}
-// generar número
-const genBtn=document.getElementById('genBtn');
-if(genBtn){genBtn.addEventListener('click',()=>{
-  const d=new Date();
-  const p=n=>n.toString().padStart(2,'0');
-  const num=`${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
-  document.getElementById('numField').value=num;
-});}
-</script>
+ 
 {% endblock %}
