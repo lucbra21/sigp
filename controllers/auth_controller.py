@@ -13,6 +13,7 @@ from flask import (
 from flask_login import login_user, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms.validators import EqualTo
 from wtforms.validators import DataRequired, Email, Length
 
 import hashlib
@@ -48,9 +49,39 @@ class LoginForm(FlaskForm):
 
 
 # ---------------------------------------------------------------------------
+# Form Forgot / Reset
+# ---------------------------------------------------------------------------
+
+class ForgotForm(FlaskForm):
+    email = StringField("Correo electrónico", validators=[DataRequired(), Email()], render_kw={"placeholder":"email@example.com"})
+    submit = SubmitField("Enviar enlace")
+
+class ResetForm(FlaskForm):
+    password = PasswordField("Nueva contraseña", validators=[DataRequired(), Length(min=4,max=255)])
+    confirm = PasswordField("Confirmar contraseña", validators=[DataRequired(), EqualTo('password', message='Las contraseñas no coinciden')])
+    submit = SubmitField("Restablecer")
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+
+def _serializer():
+    from flask import current_app
+    return URLSafeTimedSerializer(current_app.config.get('SECRET_KEY','sigp-secret'))
+
+def _generate_token(email:str):
+    return _serializer().dumps(email, salt='pwd-reset')
+
+def _confirm_token(token, max_age=3600):
+    try:
+        email = _serializer().loads(token, salt='pwd-reset', max_age=max_age)
+        return email
+    except (BadSignature, SignatureExpired):
+        return None
 
 def _get_user_class():
     """Obtiene la clase de usuario reflejada, asumiendo tabla ``users``."""
@@ -60,6 +91,50 @@ def _get_user_class():
 # ---------------------------------------------------------------------------
 # Rutas
 # ---------------------------------------------------------------------------
+
+
+@auth_bp.get("/forgot")
+def forgot_get():
+    form = ForgotForm()
+    return render_template("layouts/forgot_password.html", form=form)
+
+@auth_bp.post("/forgot")
+def forgot_post():
+    form = ForgotForm()
+    if not form.validate_on_submit():
+        flash("Email inválido", "danger");return redirect(url_for('auth.forgot_get'))
+    User=_get_user_class();user=db.session.query(User).filter_by(email=form.email.data.lower().strip()).first() if User else None
+    if user:
+        token=_generate_token(user.email.strip().lower())
+        reset_url=url_for('auth.reset_password', token=token, _external=True)
+        body=f"Hola,\n\nPara restablecer tu contraseña haz clic en el siguiente enlace:\n{reset_url}\n\nSi no solicitaste esto ignora el mensaje."
+        from sigp.common.email_utils import send_simple_mail
+        send_simple_mail([user.email],"Restablecer contraseña",body)
+    flash("Si el email existe se envió un enlace de recuperación", "info")
+    return redirect(url_for('auth.login_get'))
+
+@auth_bp.get("/reset/<token>")
+def reset_password(token):
+    email=_confirm_token(token)
+    if not email:
+        flash("Enlace inválido o expirado", "danger");return redirect(url_for('auth.login_get'))
+    form=ResetForm()
+    return render_template('layouts/reset_password.html', form=form)
+
+@auth_bp.post("/reset/<token>")
+def reset_password_post(token):
+    email=_confirm_token(token)
+    if not email:
+        flash("Enlace inválido o expirado", "danger");return redirect(url_for('auth.login_get'))
+    form=ResetForm()
+    if not form.validate_on_submit():
+        flash("Revisa el formulario", "danger");return render_template('layouts/reset_password.html', form=form)
+    User=_get_user_class();user=db.session.query(User).filter_by(email=email).first() if User else None
+    if not user:
+        flash("Usuario no encontrado", "danger");return redirect(url_for('auth.login_get'))
+    import hashlib;user.password_hash=hashlib.sha256(form.password.data.encode()).hexdigest();db.session.commit()
+    flash("Contraseña actualizada, inicia sesión", "success")
+    return redirect(url_for('auth.login_get'))
 
 
 @auth_bp.get("/login")

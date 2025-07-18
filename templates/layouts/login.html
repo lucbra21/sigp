@@ -49,7 +49,7 @@
                                                         {{ form.remember.label(class="form-check-label") }}
                                                     </div>
                                                     {{ form.submit(class="btn mt-4") }}
-                                                    <p class="mb-0 mt-4 text-center"><a href="#0" class="link">Olvidaste tu contraseña?</a></p>
+                                                    <p class="mb-0 mt-4 text-center"><a href="{{ url_for('auth.forgot_get') }}" class="link" style="color: #a2a1a6 !important;">¿Olvidaste tu contraseña?</a></p>
                                                 </form>
                                             </div>
                                        

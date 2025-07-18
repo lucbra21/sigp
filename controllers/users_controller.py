@@ -128,7 +128,17 @@ def _user_form(user_id=None):
         state_id = int(request.form.get("state_id", 2))
         password = request.form.get("password", "").strip()
 
+        # Validations
         if not email or not name:
+            flash("Email y nombre son obligatorios", "danger")
+            return redirect(request.url)
+        # Verificar duplicado de email
+        existing = db.session.query(User).filter(User.email == email).first()
+        if existing and (user is None or existing.id != user.id):
+            flash("El email ya está registrado en otro usuario", "danger")
+            return redirect(request.url)
+
+        
             flash("Email y nombre son obligatorios", "danger")
             return redirect(request.url)
 
@@ -136,7 +146,7 @@ def _user_form(user_id=None):
             user = User(id=str(uuid.uuid4()))
             db.session.add(user)
 
-        user.email = email
+        user.email = email.strip().lower()
         user.name = name
         user.lastname = lastname
         user.cellular = cellular
