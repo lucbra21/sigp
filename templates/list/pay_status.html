@@ -1,70 +1,91 @@
 {% extends 'layouts/base.html' %}
 {% block title %}{{ page_title }}{% endblock %}
 {% block content %}
-<h2>{{ page_title }}</h2>
-<form class="row g-2 mb-3" method="get">
-  <div class="col-auto">
-    <label class="form-label">Desde</label>
-    <select class="form-select" name="from_month">
-      {% for m in range(1,13) %}
-      <option value="{{m}}" {% if m == from_month %}selected{% endif %}>{{'%02d' % m}}</option>
+<div id="payStatusLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-semibold mb-0">{{ page_title }}</h2>
+</div>
+
+<div class="card shadow-sm mb-4 bg-light border border-secondary-subtle rounded">
+  <div class="card-body">
+    <form id="payStatusFilterForm" class="row row-cols-lg-auto g-3 align-items-end" method="get">
+      <div class="col-md-2">
+        <label class="form-label">Desde</label>
+        <select class="form-select" name="from_month">
+          {% for m in range(1,13) %}
+          <option value="{{m}}" {% if m == from_month %}selected{% endif %}>{{'%02d' % m}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Año</label>
+        <input type="number" class="form-control" name="from_year" value="{{ from_year }}" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Hasta</label>
+        <select class="form-select" name="to_month">
+          {% for m in range(1,13) %}
+          <option value="{{m}}" {% if m == to_month %}selected{% endif %}>{{'%02d' % m}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Año</label>
+        <input type="number" class="form-control" name="to_year" value="{{ to_year }}" />
+      </div>
+      <div class="col-md-2 pt-4"><button class="btn btn-primary btn-loading">Filtrar</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Prescriptor</th><th>Lead</th><th>Concepto</th><th>Monto</th><th>Periodo</th><th>Acciones</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr>
+          <td>{{ pres_map.get(r.prescriptor_id, r.prescriptor_id) }}</td>
+          <td>{{ lead_map.get(r.lead_id, '-') }}</td>
+          <td>{{ r.concept }}</td>
+          <td>{{ '%.2f'|format(r.amount) }}</td>
+          <td>{{ r.approve_due_month }}/{{ r.approve_due_year }}</td>
+          <td>
+            {% if state_id == SUSPENDIDO_ID %}
+              <form method="post" action="{{ url_for('admin.approve_payment', ledger_id=r.id) }}" class="d-inline">
+                <button class="btn btn-sm btn-success btn-loading" data-confirm="¿Aprobar?" title="Aprobar"><i class="bi bi-check-circle"></i></button>
+              </form>
+              <form method="post" action="{{ url_for('admin.reject_payment', ledger_id=r.id) }}" class="d-inline">
+                <button class="btn btn-sm btn-danger btn-loading" data-confirm="¿Anular?" title="Anular"><i class="bi bi-x-circle"></i></button>
+              </form>
+            {% elif state_id == ANULADO_ID %}
+              <form method="post" action="{{ url_for('admin.invoice_payment', ledger_id=r.id) }}" class="d-inline">
+                <button class="btn btn-sm btn-warning btn-loading" data-confirm="¿Enviar a facturar?" title="Facturar"><i class="bi bi-receipt"></i></button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
       {% endfor %}
-    </select>
+      {% if rows|length == 0 %}
+        <tr><td colspan="6" class="text-center">No hay registros.</td></tr>
+      {% endif %}
+      </tbody>
+    </table>
   </div>
-  <div class="col-auto">
-    <label class="form-label">Año</label>
-    <input type="number" class="form-control" name="from_year" value="{{ from_year }}" />
-  </div>
-  <div class="col-auto">
-    <label class="form-label">Hasta</label>
-    <select class="form-select" name="to_month">
-      {% for m in range(1,13) %}
-      <option value="{{m}}" {% if m == to_month %}selected{% endif %}>{{'%02d' % m}}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-auto">
-    <label class="form-label">Año</label>
-    <input type="number" class="form-control" name="to_year" value="{{ to_year }}" />
-  </div>
-  <div class="col-auto align-self-end"><button class="btn btn-primary">Filtrar</button></div>
-</form>
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th>Prescriptor</th>
-      <th>Lead</th>
-      <th>Concepto</th>
-      <th>Monto</th>
-      <th>Periodo</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for r in rows %}
-    <tr>
-      <td>{{ pres_map.get(r.prescriptor_id, r.prescriptor_id) }}</td>
-      <td>{{ lead_map.get(r.lead_id, '-') }}</td>
-      <td>{{ r.concept }}</td>
-      <td>{{ '%.2f'|format(r.amount) }}</td>
-      <td>{{ r.approve_due_month }}/{{ r.approve_due_year }}</td>
-      <td>
-        {% if state_id == SUSPENDIDO_ID %}
-        <form method="post" action="{{ url_for('admin.approve_payment', ledger_id=r.id) }}" class="d-inline">
-          <button class="btn btn-sm btn-success" onclick="return confirm('¿Aprobar?');">Aprobar</button>
-        </form>
-        <form method="post" action="{{ url_for('admin.reject_payment', ledger_id=r.id) }}" class="d-inline">
-          <button class="btn btn-sm btn-danger" onclick="return confirm('¿Anular?');">Anular</button>
-        </form>
-        {% elif state_id == ANULADO_ID %}
-        <form method="post" action="{{ url_for('admin.invoice_payment', ledger_id=r.id) }}" class="d-inline">
-          <button class="btn btn-sm btn-warning" onclick="return confirm('¿Enviar a facturar?');">Facturar</button>
-        </form>
-        {% endif %}
-      </td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% if rows|length == 0 %}<p>No hay registros.</p>{% endif %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const ov=document.getElementById('payStatusLoading');
+    const show=()=>{ov && (ov.classList.remove('d-none'),ov.classList.add('d-flex'))};
+    document.querySelectorAll('.btn-loading').forEach(b=>b.addEventListener('click',show));
+    const f=document.getElementById('payStatusFilterForm');
+    if(f){f.addEventListener('submit',show);}  
+  });
+</script>
+
+
 {% endblock %}

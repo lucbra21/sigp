@@ -1,36 +1,52 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Notas de Crédito/Débito{% endblock %}
 {% block content %}
-<h2>Notas de Crédito y Débito</h2>
-<a class="btn btn-success me-2 mb-3" href="{{ url_for('adjustments.new_note_page', note_type='C') }}">Nueva nota de crédito</a>
-<a class="btn btn-danger mb-3" href="{{ url_for('adjustments.new_note_page', note_type='D') }}">Nueva nota de débito</a>
-<table class="table table-bordered table-sm">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Tipo</th>
-      <th>Prescriptor</th>
-      <th>Monto</th>
-      <th>Fecha nota</th>
-      <th>Concepto</th>
-      <th>Creada</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for n in notes %}
-    <tr>
-      <td>{{ n.id }}</td>
-      <td>
-          {% if n.type=='Crédito' %}<span class="badge bg-success">Crédito{% else %}<span class="badge bg-danger">Débito{% endif %}</span>
-        </td>
-      <td>{{ n.prescriptor }}</td>
-      <td>{% set sign = '+' if n.type=='Crédito' else '-' %}{{ sign }} {{ '%.2f'|format(n.amount) }}</td>
-      <td>{{ n.note_date.strftime('%d/%m/%Y') if n.note_date }}</td>
-      <td>{{ n.concept }}</td>
-      <td>{{ n.created_at.strftime('%d/%m/%Y %H:%M') if n.created_at }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% if not notes %}<p>No hay notas.</p>{% endif %}
+<div id="adjLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-semibold mb-0">Notas de Crédito y Débito</h2>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-success btn-loading" href="{{ url_for('adjustments.new_note_page', note_type='C') }}"><i class="bi bi-plus-circle"></i> Nota de crédito</a>
+    <a class="btn btn-danger btn-loading" href="{{ url_for('adjustments.new_note_page', note_type='D') }}"><i class="bi bi-plus-circle"></i> Nota de débito</a>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr><th>ID</th><th>Tipo</th><th>Prescriptor</th><th>Monto</th><th>Fecha nota</th><th>Concepto</th><th>Creada</th></tr>
+      </thead>
+      <tbody>
+        {% for n in notes %}
+        <tr>
+          <td>{{ n.id }}</td>
+          <td>{% if n.type=='Crédito' %}<span class="badge bg-success">Crédito{% else %}<span class="badge bg-danger">Débito{% endif %}</span></td>
+          <td>{{ n.prescriptor }}</td>
+          <td>{% set sign = '+' if n.type=='Crédito' else '-' %}{{ sign }} {{ '%.2f'|format(n.amount) }}</td>
+          <td>{{ n.note_date.strftime('%d/%m/%Y') if n.note_date }}</td>
+          <td>{{ n.concept }}</td>
+          <td>{{ n.created_at.strftime('%d/%m/%Y %H:%M') if n.created_at }}</td>
+        </tr>
+        {% endfor %}
+        {% if notes|length == 0 %}
+        <tr><td colspan="7" class="text-center">No hay notas.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const ov=document.getElementById('adjLoading');
+    const show=()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');};
+    document.querySelectorAll('.btn-loading').forEach(b=>b.addEventListener('click',show));
+  });
+</script>
+
+
+
 {% endblock %}
