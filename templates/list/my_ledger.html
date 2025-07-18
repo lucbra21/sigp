@@ -1,42 +1,79 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Mi libro mayor{% endblock %}
 {% block content %}
-<h2>Mi libro mayor</h2>
-<form class="row mb-3" method="get">
-  {% if can_select %}
-  <div class="col-auto">
-    <select name="prescriptor" class="form-select" onchange="this.form.submit()">
-      <option value="">-- Prescriptor --</option>
-      {% for pid, pname in presc_choices %}
-      <option value="{{ pid }}" {% if pid==prescriptor_id %}selected{% endif %}>{{ pname }}</option>
-      {% endfor %}
-    </select>
+<div id="ledgerLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-semibold mb-0">Mi Libro Mayor</h2>
+</div>
+
+<div class="card shadow-sm mb-4 bg-light border border-secondary-subtle rounded">
+  <div class="card-body">
+    <form id="ledgerFilterForm" method="get" class="row row-cols-lg-auto g-3 align-items-end">
+      {% if can_select %}
+      <div class="col-md-3">
+        <label class="form-label">Prescriptor</label>
+        <select name="prescriptor" class="form-select">
+          <option value="">Todos</option>
+          {% for pid, pname in presc_choices %}
+          <option value="{{ pid }}" {% if pid==prescriptor_id %}selected{% endif %}>{{ pname }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <div class="col-md-3">
+        <label class="form-label">Estado</label>
+        <select name="state" class="form-select">
+          <option value="">Todos</option>
+          {% for st in states %}
+          <option value="{{ st.id }}" {% if st.id|string == state_f %}selected{% endif %}>{{ st.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary btn-loading">Filtrar</button>
+      </div>
+    </form>
   </div>
-  {% endif %}
-  <div class="col-auto">
-    <select name="state" class="form-select">
-      <option value="">-- Estado --</option>
-      {% for st in states %}
-      <option value="{{ st.id }}" {% if st.id|string == state_f %}selected{% endif %}>{{ st.name }}</option>
-      {% endfor %}
-    </select>
+</div>
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Fecha</th><th>Concepto</th><th>Monto</th><th>Estado</th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.created_at.strftime('%d/%m/%Y') if row.created_at else '-' }}</td>
+          <td>{{ row.concept }}</td>
+          <td>{{ '%.2f'|format(row.amount) }}</td>
+          <td>{{ row.state_name }}</td>
+        </tr>
+        {% endfor %}
+        
+      </tbody>
+      
+    </table>
+    {% if rows|length == 0 %}<p>No hay movimientos.</p>{% endif %}
   </div>
-  <div class="col-auto">
-    <button class="btn btn-sm btn-primary">Filtrar</button>
-  </div>
-</form>
-<table class="table table-sm table-bordered">
-  <thead><tr><th>Fecha</th><th>Concepto</th><th>Monto</th><th>Estado</th></tr></thead>
-  <tbody>
-    {% for row in rows %}
-    <tr>
-      <td>{{ row.created_at.strftime('%d/%m/%Y') if row.created_at else '-' }}</td>
-      <td>{{ row.concept }}</td>
-      <td>{{ '%.2f'|format(row.amount) }}</td>
-      <td>{{ row.state_name }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% if rows|length == 0 %}<p>No hay movimientos.</p>{% endif %}
+</div>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const ov=document.getElementById('ledgerLoading');
+    const show=()=>{ov && (ov.classList.remove('d-none'),ov.classList.add('d-flex'))};
+    const filter=document.getElementById('ledgerFilterForm');
+    if(filter){filter.addEventListener('submit',show);}    
+    document.body.addEventListener('click',e=>{
+      const trg=e.target.closest('.btn-loading');
+      if(!trg) return;
+      show();
+    });
+  });
+</script>
+
+
+
 {% endblock %}
