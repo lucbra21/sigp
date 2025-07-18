@@ -10,6 +10,11 @@
   <div class="hero-content col-md-2">
       <div class="w-100" style="max-width: 600px;">
         <div class="text-center">
+          <div class="d-flex justify-content-center mb-3">
+            <button class="btn p-0 fs-2 me-1" onclick="setLang('es')" title="Español">&#x1F1EA;&#x1F1F8;</button>
+            <button class="btn p-0 fs-2 me-1" onclick="setLang('en')" title="English">&#x1F1EC;&#x1F1E7;</button>
+            <button class="btn p-0 fs-2" onclick="setLang('pt')" title="Português">&#x1F1F5;&#x1F1F9;</button>
+          </div>
           <h1 class="display-5 mb-2" style="color: #ffffff;">{{ prescriptor.squeeze_page_name }}</h1>
           
           {% if prescriptor.photo_url %}
@@ -57,7 +62,7 @@
     line-height: 0.9em;
     padding-right: 0px !important;
     padding-left: 0px !important;"
-    ><p style="text-align: center; color: #FFFFFF !important;">PON TU PASIÓN AL SERVICIO DEL FUTURO</p></div>
+    ><p style="text-align: center; color: #FFFFFF !important;" id="headlineText">PON TU PASIÓN AL SERVICIO DEL FUTURO</p></div>
 			
       <h2 class="h6" style="text-align: center; color: #FFFFFF !important;"><a href="https://sportsdatacampus.com/" target="_blank" class="link-light text-decoration-none">sportsdatacampus.com</a></h2>
     </div>
@@ -65,32 +70,34 @@
 
       <div class="card" style="margin-top: 40px;background-color: rgba(255, 255, 255, 0.25);color: white;">
         <div class="card-body">
-          <h2 class="h4 mb-3">Déjanos tus datos</h2>
+          <!-- Language Switcher -->
+          
+          <h2 id="leadTitle" class="h4 mb-3">Déjanos tus datos</h2>
           <form id="leadForm" method="post">
             {{ form.hidden_tag() }}
             <div class="col-md-12">
-              {{ form.name.label(class="form-label") }}
+              <label id="labelName" class="form-label">{{ form.name.label.text }}</label>
               {{ form.name(class="form-control", placeholder="Tu nombre") }}
               {% for error in form.name.errors %}
               <div class="text-danger small">{{ error }}</div>
               {% endfor %}
             </div>
             <div class="row g-3"><div class="col-md-6">
-              {{ form.email.label(class="form-label") }}
+              <label id="labelEmail" class="form-label">{{ form.email.label.text }}</label>
               {{ form.email(class="form-control", placeholder="Tu email") }}
               {% for error in form.email.errors %}
               <div class="text-danger small">{{ error }}</div>
               {% endfor %}
             </div>
             <div class="col-md-6">
-              {{ form.cellular.label(class="form-label") }}
+              <label id="labelCell" class="form-label">{{ form.cellular.label.text }}</label>
               {{ form.cellular(class="form-control", placeholder="Teléfono") }}
               {% for error in form.cellular.errors %}
               <div class="text-danger small">{{ error }}</div>
               {% endfor %}
             </div>
             <div class="col-md-12">
-              {{ form.program_info_id.label(class="form-label") }}
+              <label id="labelProgram" class="form-label">{{ form.program_info_id.label.text }}</label>
               {{ form.program_info_id(class="form-select") }}
               <div class="d-grid mt-2">
                 <a id="programLinkBtn" href="#" target="_blank" class="btn btn-outline-light d-none" rel="noopener">Ver programa</a>
@@ -100,7 +107,7 @@
               {% endfor %}
             </div>
             <div class="d-grid">
-              {{ form.submit(class="btn btn-primary btn-lg") }}
+              <button id="btnSubmit" type="submit" class="btn btn-primary btn-lg">{{ form.submit.label.text }}</button>
             </div>
           </div>
           </form>
@@ -116,6 +123,27 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function(){
+    // i18n translations
+    const translations = {
+      es:{headline:'PON TU PASIÓN AL SERVICIO DEL FUTURO',lead:'Déjanos tus datos',name:'Tu nombre',email:'Tu email',cell:'Teléfono',program:'Programa',submit:'Enviar',btnVer:'Ver programa'},
+      en:{headline:'PUT YOUR PASSION AT THE SERVICE OF THE FUTURE',lead:'Leave us your data',name:'Your name',email:'Your email',cell:'Phone',program:'Program',submit:'Send',btnVer:'See program'},
+      pt:{headline:'COLOQUE A SUA PAIXÃO A SERVIÇO DO FUTURO',lead:'Deixe-nos os seus dados',name:'Seu nome',email:'Seu email',cell:'Telefone',program:'Programa',submit:'Enviar',btnVer:'Ver programa'}
+    };
+    const applyLang=(l)=>{
+      const setText=(id,text)=>{const el=document.getElementById(id);if(el) el.innerText=text;};
+      const t=translations[l]||translations.es;
+      setText('headlineText',t.headline);
+      setText('leadTitle',t.lead);
+      setText('labelName',t.name);
+      setText('labelEmail',t.email);
+      setText('labelCell',t.cell);
+      setText('labelProgram',t.program);
+      setText('btnSubmit',t.submit);
+      setText('programLinkBtn',t.btnVer);
+    };
+    window.setLang=(l)=>{localStorage.setItem('lang',l);applyLang(l);} ;
+    applyLang(localStorage.getItem('lang')||'es');
+
     const programUrls = {{ program_urls|tojson }};
     const sel = document.getElementById('program_info_id');
     const btn = document.getElementById('programLinkBtn');
