@@ -32,8 +32,8 @@ def my_notifications():
     page = request.args.get("page", 1, type=int)
     status = request.args.get("status", "all")
     page = request.args.get("page", 1, type=int)
-    per_page = 15
-    per_page = 20
+    per_page = 10
+    
     q = db.session.query(Notification).filter_by(user_id=current_user.id)
     if status == "unread":
         q = q.filter_by(is_read=0)
@@ -42,6 +42,7 @@ def my_notifications():
     q = q.order_by(Notification.created_at.desc())
     total = q.count()
     notifications = q.offset((page - 1) * per_page).limit(per_page).all()
+    pages = math.ceil(total / per_page)
 
     return render_template(
         "list/my_notifications.html",
@@ -49,6 +50,7 @@ def my_notifications():
         total=total,
         page=page,
         per_page=per_page,
+        pages=pages,
         status=status,
     )
 
@@ -64,6 +66,19 @@ class NotificationForm(FlaskForm):
     submit = SubmitField("Guardar")
 
 
+@notifications_bp.get("/mark_all_read")
+@login_required
+def mark_all_read():
+    if Notification is None:
+        flash("Tabla notifications no disponible", "danger")
+        return redirect(url_for("notifications.my_notifications"))
+    # marcar todas no leídas del usuario
+    db.session.query(Notification).filter_by(user_id=current_user.id, is_read=0).update({Notification.is_read: 1})
+    db.session.commit()
+    flash("Todas las notificaciones han sido marcadas como leídas", "success")
+    return redirect(url_for("notifications.my_notifications"))
+
+
 @notifications_bp.route("/", methods=["GET"])
 @login_required
 @require_perm("read_notifications")
@@ -73,7 +88,7 @@ def list_all():
         return redirect(url_for("main.index"))
     status = request.args.get("status", "all")
     page = request.args.get("page", 1, type=int)
-    per_page = 15
+    per_page = 10
     q = db.session.query(Notification)
     if status == "unread":
         q = q.filter_by(is_read=0)
