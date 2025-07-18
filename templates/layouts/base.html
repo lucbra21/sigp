@@ -128,7 +128,7 @@
                     <span class="badge bg-white text-dark shadow-sm me-3 d-flex align-items-center" style="border:1px solid rgba(0,0,0,.15);padding: 10px;">
                         <i class="bi bi-person-circle me-1"></i>{{ current_user.email }}
                     </span>
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary d-flex align-items-center" title="Cerrar sesión"><i class="bi bi-box-arrow-right"></i></a>
+                    <a href="{{ url_for('auth.logout') }}" id="logoutBtn" class="btn btn-outline-secondary d-flex align-items-center" title="Cerrar sesión"><i class="bi bi-box-arrow-right"></i></a>
                 </div>
             </div>
         </div>
@@ -156,7 +156,11 @@
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Footer -->
+    <!-- Global Loading overlay -->
+<div id="globalLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<!-- Footer -->
     <footer class="footer fixed-bottom py-3 bg-light border-top">
         <div class="container text-center">
             <span class="text-muted">SIGP © 2025</span>
@@ -166,7 +170,14 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
       // Intercept links or buttons with data-confirm attribute
-      document.addEventListener('click', function(e){
+      // Logout loading overlay
+  document.addEventListener('DOMContentLoaded', function(){
+    const logout=document.getElementById('logoutBtn');
+    const overlay=document.getElementById('globalLoading');
+    if(logout){logout.addEventListener('click',()=>{overlay.classList.remove('d-none');overlay.classList.add('d-flex');});}
+  });
+
+  document.addEventListener('click', function(e){
         const target = e.target.closest('[data-confirm]');
         if(!target) return;
         e.preventDefault();
