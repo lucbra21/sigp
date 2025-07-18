@@ -174,9 +174,10 @@ def contact_post():
     cfg=current_app.config
     admin = cfg.get('CONTACT_EMAIL', cfg.get('MAIL_DEFAULT_SENDER'))
     subject="Contacto SIGP"
-    body=f"Nombre: {form.name.data}\nEmail: {form.email.data}\nMensaje:\n{form.message.data}"
+    plain_body=f"Nombre: {form.name.data}\nEmail: {form.email.data}\nMensaje:\n{form.message.data}"
+    html_body=render_template('emails/contact_message.html', name=form.name.data, email=form.email.data, message=form.message.data)
     from sigp.common.email_utils import send_simple_mail
-    send_simple_mail([admin], subject, body)
+    send_simple_mail([admin], subject, html_body, html=True, text_body=plain_body)
     flash("Mensaje enviado, te responderemos pronto", "success")
     return redirect(url_for('auth.login_get'))
 
