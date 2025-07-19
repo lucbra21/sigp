@@ -350,8 +350,15 @@ def notify_settlement(inv_rows):
         if not presc:
             continue
         # user email
-        user = db.session.get(User, getattr(presc, "user_id", None)) if User else None
-        email_to = getattr(user, "email", None)
+        user = None
+        if User is not None:
+            uid = getattr(presc, "user_id", None) or getattr(presc, "user_getter_id", None)
+            if uid:
+                user = db.session.get(User, uid)
+        email_to = getattr(user, "email", None) if user else None
+        if not email_to:
+            # fallback al correo del prescriptor
+            email_to = getattr(presc, "email", None)
         # Notificación
         notif = Notification(
             user_id=getattr(user, "id", None),
@@ -363,7 +370,14 @@ def notify_settlement(inv_rows):
         # Email
         if email_to:
             try:
-                html_body = render_template('emails/commission_settlement.html', invoice_number=inv.number, total=inv.total)
+                detail_url = (current_app.config.get('BASE_URL') or request.host_url.rstrip('/')) + url_for('settlements.invoice_detail', invoice_id=inv.id)
+                movements = db.session.query(Ledger).filter(Ledger.invoice_id == inv.id).count() if Ledger is not None else 0
+                html_body = render_template('emails/commission_settlement.html',
+                    invoice_number=inv.number,
+                    invoice_date=inv.invoice_date.strftime('%d/%m/%Y') if getattr(inv,'invoice_date',None) else '-',
+                    total=inv.total,
+                    movements=movements,
+                    detail_url=detail_url)
                 send_simple_mail([email_to], "Pago de comisión rendido", html_body, html=True, text_body=notif.message)
             except Exception as exc:  # pylint: disable=broad-except
                 app.logger.error("Mail rendición: %s", exc)

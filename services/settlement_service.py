@@ -18,6 +18,7 @@ Ledger = getattr(Base.classes, "ledger", None)
 LeadHistory = getattr(Base.classes, "lead_history", None)
 Notification = getattr(Base.classes, "notifications", None)
 Prescriptor = getattr(Base.classes, "prescriptor", None) or getattr(Base.classes, "prescriptors", None)
+User = getattr(Base.classes, "users", None)
 
 
 class SettlementError(RuntimeError):
@@ -140,16 +141,30 @@ def settle_invoices(invoice_ids: Sequence[int], paid_amounts: Sequence[str | flo
         if first_invoice and hasattr(first_invoice, "prescriptor_id"):
             prescriptor_id = first_invoice.prescriptor_id
             prescriptor = db.session.get(Prescriptor, prescriptor_id) if Prescriptor else None
-            email = getattr(prescriptor, "email", None) if prescriptor else None
+            email = None
+            if prescriptor and User is not None:
+                uid = getattr(prescriptor, "user_id", None) or getattr(prescriptor, "user_getter_id", None)
+                if uid:
+                    usr = db.session.get(Base.classes.users, uid)
+                    email = getattr(usr, "email", None)
+            if not email and prescriptor:
+                email = getattr(prescriptor, "email", None)
 
             _notify_prescriptor(prescriptor_id, "Tus facturas han sido rendidas.")
             if email:
-                _send_mail(
-                    email,
-                    "Rendición de facturas",
-                    f"Se han rendido las facturas: {', '.join(map(str, invoice_ids))}.",
-                    Path(receipt_path) if receipt_path else None,
-                )
+                from sigp.common.email_utils import send_simple_mail
+                from flask import render_template, url_for, request
+                # Usar datos de la primera factura para la plantilla
+                movements = db.session.query(Ledger).filter(Ledger.invoice_id == first_invoice.id).count() if Ledger else 0
+                detail_url = (app.config.get('BASE_URL') or request.host_url.rstrip('/')) + url_for('settlements.invoice_detail', invoice_id=first_invoice.id)
+                html_body = render_template('emails/commission_settlement.html',
+                    invoice_number=first_invoice.number,
+                    invoice_date=first_invoice.invoice_date.strftime('%d/%m/%Y') if getattr(first_invoice,'invoice_date',None) else '-',
+                    total=first_invoice.total,
+                    movements=movements,
+                    detail_url=detail_url)
+                send_simple_mail([email], "Pago de comisión rendido", html_body, html=True,
+                                text_body=f"Se han rendido las facturas: {', '.join(map(str, invoice_ids))}.")
         db.session.commit()
     except SQLAlchemyError as e:
         db.session.rollback()
