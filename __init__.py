@@ -136,6 +136,15 @@ def create_app(config_class=Config):
                 return 0
         return dict(unread_count=_unread_count)
 
+    # ---- manejador 403 ----
+    from flask import render_template, request
+    @app.errorhandler(403)
+    def _forbidden(err):
+        from flask_login import current_user
+        if not current_user.is_authenticated:
+            return redirect(url_for('auth.login_get', next=request.path))
+        return render_template('errors/403.html'), 403
+
     @app.route("/")
     def index():
         from flask_login import current_user
