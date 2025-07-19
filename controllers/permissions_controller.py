@@ -7,6 +7,33 @@ from sigp.models import Base
 
 perm_bp = Blueprint("permissions", __name__, url_prefix="/permissions")
 
+# Mapeo de módulos a nombres visibles (usados también en el menú)
+MODULE_LABELS = {
+    'programs': 'Programas',
+    'campus': 'Campus',
+    'users': 'Usuarios',
+    'roles': 'Roles',
+    'permissions': 'Permisos',
+    'prescriptor': 'Prescriptores',
+    'prescriptors': 'Prescriptores',
+    'notifications': 'Notificaciones',
+    'state_ledger': 'Estados de ledger',
+    'state_prescriptor': 'Estados de prescriptor',
+    'state_user': 'Estados de usuario',
+    'prescriptor_type': 'Tipos de Prescriptor',
+    'confidence_level': 'Niveles de confianza',
+    'edition': 'Ediciones',
+    'approve': 'Aprobaciones',
+    'confidence': 'Confianza',
+    'program': 'Programas',
+    'role': 'Roles',
+    'state_lead': 'Estados de Lead',
+    'user': 'Usuarios',
+    'payments': 'Pagos',
+    'own': 'Propios',
+    'own_leads': 'Leads Propios',
+}
+
 
 def _model(name):
     return getattr(Base.classes, name, None)
@@ -132,7 +159,8 @@ def assign_permissions(role_id):
         for act in actions:
             if mapping[act] is None:
                 mapping[act] = f"new|{module}_{act}"
-        table_data[module] = mapping
+        display_label = MODULE_LABELS.get(module, module.replace('_', ' ').title())
+        table_data[display_label] = mapping
 
     return render_template(
         "records/assign_permissions.html",

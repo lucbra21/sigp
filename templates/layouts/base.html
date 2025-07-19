@@ -98,7 +98,7 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="gestionesDropdown">
                             {% if can_mod('programs') %}
-                            <li><a class="dropdown-item" href="{{ url_for('programs.programs_list') }}">Gestión de programas</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('programs.programs_list') }}">Programas</a></li>
                             {% if can_mod('campus') %}
                             <li><a class="dropdown-item" href="{{ url_for('campus.campus_list') }}">Campus</a></li>
                             {% endif %}
