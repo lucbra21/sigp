@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Nota de débito emitida</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f4f4f4;margin:0;padding:0}
+    .container{max-width:600px;margin:20px auto;background:#ffffff;border:1px solid #dedede;border-radius:8px;padding:24px}
+    h2{color:#333;margin-top:0}
+    p{color:#555;line-height:1.5;margin:4px 0}
+    .label{font-weight:bold}
+    .btn{display:inline-block;padding:10px 18px;background:#dc3545;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Nota de débito emitida</h2>
+    <p>Se ha emitido una nota de débito en tu cuenta.</p>
+    <p><span class="label">Monto:</span> {{ amount }} €</p>
+    <p><span class="label">Fecha:</span> {{ note_date }}</p>
+    <p><span class="label">Concepto:</span> {{ concept or '-' }}</p>
+    {% if detail_url %}
+    <p style="margin-top:16px;"><a class="btn" href="{{ detail_url }}">Ver detalle</a></p>
+    {% endif %}
+  </div>
+</body>
+</html>
