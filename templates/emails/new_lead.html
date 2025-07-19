@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Nuevo lead</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f4f4f4;margin:0;padding:0}
+    .container{max-width:600px;margin:20px auto;background:#ffffff;border-radius:8px;border:1px solid #dedede;padding:24px}
+    h2{color:#333333;margin-top:0}
+    p{color:#555555;line-height:1.5;margin:4px 0}
+    .label{font-weight:bold;color:#333333}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Nuevo lead generado</h2>
+    <p><span class="label">Origen:</span> {{ origin }}</p>
+    <p><span class="label">Prescriptor:</span> {{ prescriptor }}</p>
+    <p><span class="label">Programa:</span> {{ program }}</p>
+    <p><span class="label">Nombre candidato:</span> {{ candidate_name }}</p>
+    <p><span class="label">Email:</span> {{ candidate_email or '-' }}</p>
+    <p><span class="label">Celular:</span> {{ candidate_cellular or '-' }}</p>
+    <p><span class="label">Observaciones:</span> {{ observations or '-' }}</p>
+  </div>
+</body>
+</html>

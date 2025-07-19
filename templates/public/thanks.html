@@ -11,8 +11,23 @@
 {% block content %}
 <div class="d-flex justify-content-center align-items-center min-vh-100">
   <div class="col-md-6 text-center">
-    <h1 class="display-4 mb-4">¡Gracias por tu interés!</h1>
-    <p class="lead">En breve nos pondremos en contacto para brindarte más información.</p>
-    <a href="{{ url_for('landing.landing_page', prescriptor_id=prescriptor.id) }}" class="btn btn-primary mt-3">Volver a la página anterior</a>
+    <h1 id="thanksTitle" class="display-4 mb-4">¡Gracias por tu interés!</h1>
+    <p id="thanksLead" class="lead">En breve nos pondremos en contacto para brindarte más información.</p>
+    <a id="btnBack" href="{{ url_for('landing.landing_page', prescriptor_id=prescriptor.id) }}" class="btn btn-primary mt-3">Volver a la página anterior</a>
+    <script>
+      document.addEventListener('DOMContentLoaded',function(){
+        const translations={
+          es:{title:'¡Gracias por tu interés!',lead:'En breve nos pondremos en contacto para brindarte más información.',back:'Volver a la página anterior'},
+          en:{title:'Thank you for your interest!',lead:'We will contact you shortly with more information.',back:'Back to previous page'},
+          pt:{title:'Obrigado pelo seu interesse!',lead:'Entraremos em contacto em breve para lhe fornecer mais informações.',back:'Voltar à página anterior'}
+        };
+        const l=localStorage.getItem('lang')||'es';
+        const t=translations[l]||translations.es;
+        const set=(id,txt)=>{const el=document.getElementById(id);if(el)el.innerText=txt;};
+        set('thanksTitle',t.title);
+        set('thanksLead',t.lead);
+        set('btnBack',t.back);
+      });
+    </script>
   </div>
 {% endblock %}

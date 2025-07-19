@@ -9,7 +9,7 @@ from __future__ import annotations
 import uuid
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, SubmitField
+from wtforms import StringField, SelectField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Email, Length, Optional
 
 from sigp import db
@@ -34,6 +34,7 @@ class PublicLeadForm(FlaskForm):
     email = StringField("Email", validators=[Optional(), Email(), Length(max=255)])
     cellular = StringField("Celular", validators=[Optional(), Length(max=50)])
     program_info_id = SelectField("Programa", coerce=str, validators=[DataRequired(message="Seleccione un programa")])
+    observations = TextAreaField("Observaciones", validators=[Optional(), Length(max=500)])
     submit = SubmitField("Me interesa")
 
     class Meta:
@@ -94,6 +95,7 @@ def landing_page(prescriptor_id: str):
             candidate_email=form.email.data or None,
             candidate_cellular=form.cellular.data or None,
             program_info_id=form.program_info_id.data or None,
+             observations=form.observations.data or None,
             state_id=state_id,
         )
         db.session.add(new_lead)
@@ -107,16 +109,26 @@ def landing_page(prescriptor_id: str):
                 from sigp.common.email_utils import send_simple_mail  # import aquí para evitar ciclos
                 emails = [e.strip() for e in program.commercial_emails.split(",") if e.strip()]
                 if emails:
-                    subject = "Nuevo lead para programa {}".format(getattr(program, "name", program.id))
-                    body = (
-                        f"Se ha generado un nuevo lead desde squeeze page.\n\n"
-                        f"Prescriptor: {getattr(prescriptor, 'squeeze_page_name', prescriptor.id)}\n"
-                        f"Programa: {getattr(program, 'name', program.id)}\n"
+                    subject = f"Nuevo lead para programa {getattr(program,'name',program.id)}"
+                    plain_body=(
+                        "Se ha generado un nuevo lead desde squeeze page.\n\n"
+                        f"Prescriptor: {getattr(prescriptor,'squeeze_page_name', prescriptor.id)}\n"
+                        f"Programa: {getattr(program,'name', program.id)}\n"
                         f"Nombre candidato: {form.name.data}\n"
                         f"Email: {form.email.data or '-'}\n"
                         f"Celular: {form.cellular.data or '-'}\n"
-                    )
-                    send_simple_mail(emails, subject, body)
+                        f"Observaciones: {form.observations.data or '-'}\n"
+                     )
+                    html_body = render_template('emails/new_lead.html',
+                        origin='Squeeze page',
+                        prescriptor=getattr(prescriptor,'squeeze_page_name', prescriptor.id),
+                        program=getattr(program,'name', program.id),
+                        candidate_name=form.name.data,
+                        candidate_email=form.email.data,
+                        candidate_cellular=form.cellular.data,
+                        observations=form.observations.data)
+                    
+                    send_simple_mail(emails, subject, html_body, html=True, text_body=plain_body)
 
         return render_template("public/thanks.html", prescriptor=prescriptor)
 

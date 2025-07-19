@@ -272,17 +272,27 @@ def new_lead():
                 from sigp.common.email_utils import send_simple_mail
                 emails = [e.strip() for e in program.commercial_emails.split(',') if e.strip()]
                 if emails:
-                    subject = f"Nuevo lead para programa {getattr(program, 'name', program.id)}"
-                    body = (
+                    subject = f"Nuevo lead para programa {getattr(program,'name',program.id)}"
+                    plain_body=(
                         "Se ha generado un nuevo lead desde la gestión interna.\n\n"
                         f"Prescriptor ID: {form.prescriptor_id.data}\n"
-                        f"Programa: {getattr(program, 'name', program.id)}\n"
+                        f"Programa: {getattr(program,'name', program.id)}\n"
                         f"Nombre candidato: {form.candidate_name.data}\n"
                         f"Email: {form.candidate_email.data or '-'}\n"
                         f"Celular: {form.candidate_cellular.data or '-'}\n"
+                        f"Observaciones: {form.observations.data or '-'}\n"
                     )
+                    html_body = render_template('emails/new_lead.html',
+                        origin='Gestión interna',
+                        prescriptor=form.prescriptor_id.data,
+                        program=getattr(program,'name', program.id),
+                        candidate_name=form.candidate_name.data,
+                        candidate_email=form.candidate_email.data,
+                        candidate_cellular=form.candidate_cellular.data,
+                        observations=form.observations.data)
+                    
                     try:
-                        send_simple_mail(emails, subject, body)
+                        send_simple_mail(emails, subject, html_body, html=True, text_body=plain_body)
                     except Exception as exc:
                         current_app.logger.exception("Error enviando mail a comerciales: %s", exc)
                         flash("Lead creado pero no se pudo enviar correo a comerciales", "warning")
