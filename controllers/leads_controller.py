@@ -578,10 +578,14 @@ def update_status(lead_id):
                         if st:
                             state_name = getattr(st, 'name', state_name)
                     subject = f"Tu lead ha cambiado de estado a {state_name}"
-                    body = f"El lead {lead.candidate_name or lead.id} ahora está en estado {state_name}. Observaciones: {obs}"
+                    plain_body = f"El lead {lead.candidate_name or lead.id} ahora está en estado {state_name}. Observaciones: {obs}"
+                    html_body = render_template('emails/lead_state_change.html',
+                         candidate_name=lead.candidate_name or lead.id,
+                         state_name=state_name,
+                         observations=obs) 
                     try:
                         from sigp.common.email_utils import send_simple_mail
-                        send_simple_mail([presc_email], subject, body)
+                        send_simple_mail([presc_email], subject, html_body, html=True, text_body=plain_body)
                     except Exception as exc:
                         current_app.logger.exception('Error enviando mail a prescriptor: %s', exc)
                     # notificación interna
