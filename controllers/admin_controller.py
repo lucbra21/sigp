@@ -17,6 +17,7 @@ Ledger = getattr(Base.classes, "ledger", None)
 StateLedger = getattr(Base.classes, "state_ledger", None)
 Prescriptor = getattr(Base.classes, "prescriptors", None)
 Lead = getattr(Base.classes, "leads", None)
+Program = getattr(Base.classes, "programs", None)
 LeadHistory = getattr(Base.classes, "lead_history", None)
 Invoice = getattr(Base.classes, "invoice", None)
 User = getattr(Base.classes, "users", None)
@@ -55,12 +56,38 @@ def _notify_and_log(ledger_rows, new_state_id):
         if r.lead_id:
             log_lead_change(r.lead_id, new_state_id, f"Pago comisión - nuevo estado {new_state_id}")
     db.session.commit()
-    state_name = _state_name(new_state_id)
+    # obtener info adicional de leads
+    lead_ids={r.lead_id for r in ledger_rows if r.lead_id}
+    lead_map={}
+    if Lead is not None and lead_ids:
+        leads=db.session.query(Lead).filter(Lead.id.in_(lead_ids)).all()
+        lead_map={l.id:l for l in leads}
+
+    state_name=_state_name(new_state_id)
     for email, items in mail_data.items():
-        lines = [f"Lead {it.lead_id} concepto {it.concept} monto {it.amount}" for it in items]
-        plain_body = "Se actualizó el estado de los siguientes pagos a '{}':\n\n".format(state_name) + "\n".join(lines)
-        html_body = render_template('emails/payment_state_update.html', state_name=state_name, items=items)
-        send_simple_mail([email], "Actualización de pagos de comisión", html_body, html=True, text_body=plain_body)
+        enriched=[]
+        for it in items:
+            lead_obj=lead_map.get(it.lead_id)
+            lead_name=""
+            if lead_obj is not None:
+                lead_name = (
+                getattr(lead_obj, 'candidate_name', None)
+                or getattr(lead_obj,'full_name', None)
+                or getattr(lead_obj,'name', None)
+                or getattr(lead_obj,'nombre', '')
+            )
+            enriched.append({
+                'lead_id': it.lead_id,
+                'lead_name': lead_name,
+                'enroll_date': getattr(lead_obj,'matriculation_date', getattr(lead_obj,'enroll_date', getattr(lead_obj,'created_at', None))),
+                'program_name': (lambda pid: db.session.get(Program, pid).name if Program and pid else "") (getattr(lead_obj,'program_info_id', getattr(lead_obj,'program_id', None))),
+                'concept': it.concept,
+                'amount': it.amount,
+            })
+        lines=[f"{e['lead_name']} ({e['program_name']}) concepto {e['concept']} monto {e['amount']}" for e in enriched]
+        plain_body="Se actualizó el estado de los siguientes pagos a '{}':\n\n".format(state_name)+"\n".join(lines)
+        html_body=render_template('emails/payment_state_update.html', state_name=state_name, items=enriched)
+        send_simple_mail([email],"Actualización de pagos de comisión",html_body,html=True,text_body=plain_body)
 
 
 def _state_name(state_id: int) -> str:

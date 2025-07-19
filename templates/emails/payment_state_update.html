@@ -16,11 +16,21 @@
   <div class="container">
     <h2>Actualización de pagos de comisión</h2>
     <p>Se actualizó el estado de los siguientes pagos a <span class="label">{{ state_name }}</span>:</p>
-    <ul>
-      {% for item in items %}
-      <li>Lead {{ item.lead_id }} – concepto {{ item.concept }} – monto {{ item.amount }} €</li>
-      {% endfor %}
-    </ul>
+    <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr><th align="left">Lead</th><th align="left">Programa</th><th align="left">Concepto</th><th align="right">Monto (€)</th></tr>
+        </thead>
+        <tbody>
+        {% for item in items %}
+          <tr>
+            <td>{{ item.lead_name }}</td>
+            <td>{{ item.program_name }}</td>
+            <td>{{ item.concept }}</td>
+            <td style="text-align:right;">{{ '%.2f'|format(item.amount) }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+     </table>
   </div>
 </body>
 </html>
