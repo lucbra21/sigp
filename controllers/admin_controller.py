@@ -199,7 +199,7 @@ def approve_payment(ledger_id):
     db.session.flush()
     _notify_and_log([row], PEND_FACT_ID)
     flash("Pago aprobado", "success")
-    return redirect(url_for("admin.pay_approval"))
+    return redirect(request.referrer or url_for("admin.pay_approval"))
 
 
 @admin_bp.route("/payments/approval/<ledger_id>/reject", methods=["POST","GET"])
@@ -220,7 +220,7 @@ def reject_payment(ledger_id):
     db.session.flush()
     _notify_and_log([row], ANULADO_ID)
     flash("Movimiento anulado", "info")
-    return redirect(url_for("admin.pay_approval"))
+    return redirect(request.referrer or url_for("admin.pay_approval"))
 
 
 @admin_bp.route("/payments/approval/<ledger_id>/suspend", methods=["POST","GET"])
