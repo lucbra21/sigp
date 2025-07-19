@@ -202,8 +202,10 @@
             if(target.tagName==='A'){
               window.location.href = target.href;
             } else if(target.tagName==='BUTTON' && target.form){
-              target.form.submit();
-            }
+               const fa = target.getAttribute('formaction');
+               if(fa){ target.form.action = fa; }
+               target.form.submit();
+             }
           }
         });
       });

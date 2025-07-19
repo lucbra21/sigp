@@ -53,7 +53,7 @@
         <strong>Total seleccionado: <span id="selTotal">0.00</span> €</strong>
       </div>
       <div class="text-center pt-2">
-        <button class="btn btn-primary btn-loading" {% if rows|length == 0 %}disabled{% endif %}>Enviar</button>
+        <button class="btn btn-primary" {% if rows|length == 0 %}disabled{% endif %}>Enviar</button>
         <a href="{{ url_for('prescriptors.my_ledger') }}" class="btn btn-secondary btn-loading">Cancelar</a>
       </div>
     </form>
@@ -74,7 +74,7 @@
         form.classList.add('was-validated');
       });
     }
-    document.querySelectorAll('.btn-loading').forEach(b=>b.addEventListener('click',show));
+    document.querySelectorAll('a.btn-loading').forEach(b=>b.addEventListener('click',show));
 
     // calcular total
     const selAll=document.getElementById('selAll');

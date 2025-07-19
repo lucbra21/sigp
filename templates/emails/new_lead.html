@@ -21,6 +21,11 @@
     <p><span class="label">Email:</span> {{ candidate_email or '-' }}</p>
     <p><span class="label">Celular:</span> {{ candidate_cellular or '-' }}</p>
     <p><span class="label">Observaciones:</span> {{ observations or '-' }}</p>
+      {% if lead_url %}
+    <p style="margin-top:16px;">
+      <a href="{{ lead_url }}" class="btn" style="display:inline-block;padding:10px 18px;background:#0d6efd;color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold;">Ver lead</a>
+    </p>
+    {% endif %}
   </div>
 </body>
 </html>

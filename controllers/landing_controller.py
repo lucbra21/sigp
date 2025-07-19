@@ -126,7 +126,8 @@ def landing_page(prescriptor_id: str):
                         candidate_name=form.name.data,
                         candidate_email=form.email.data,
                         candidate_cellular=form.cellular.data,
-                        observations=form.observations.data)
+                        observations=form.observations.data,
+                        lead_url=(current_app.config.get('BASE_URL') or request.host_url.rstrip('/')) + url_for('leads.edit_lead', lead_id=new_lead.id))
                     
                     send_simple_mail(emails, subject, html_body, html=True, text_body=plain_body)
 

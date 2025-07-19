@@ -77,15 +77,12 @@
             <td>{{ '%.2f'|format(r.amount) }}</td>
             <td>{{ r.approve_due_month }}/{{ r.approve_due_year }}</td>
             <td>
-              <form method="post" action="{{ url_for('admin.approve_payment', ledger_id=r.id) }}" class="d-inline">
-                <button class="btn btn-sm btn-success btn-loading" data-confirm="¿Aprobar?" title="Aprobar"><i class="bi bi-check-circle"></i><span class="visually-hidden">Aprobar</span></button>
-              </form>
-              <form method="post" action="{{ url_for('admin.reject_payment', ledger_id=r.id) }}" class="d-inline">
-                <button class="btn btn-sm btn-danger btn-loading" data-confirm="¿Anular?" title="Anular"><i class="bi bi-x-circle"></i><span class="visually-hidden">Anular</span></button>
-              </form>
-              <form method="post" action="{{ url_for('admin.suspend_payment', ledger_id=r.id) }}" class="d-inline">
-                <button class="btn btn-sm btn-warning btn-loading" data-confirm="¿Suspender?" title="Suspender"><i class="bi bi-pause-circle"></i><span class="visually-hidden">Suspender</span></button>
-              </form>
+              <button type="submit" class="btn btn-sm btn-success btn-loading" data-confirm="¿Aprobar?" title="Aprobar"
+                      formaction="{{ url_for('admin.approve_payment', ledger_id=r.id) }}" formmethod="post"><i class="bi bi-check-circle"></i><span class="visually-hidden">Aprobar</span></button>
+              <button type="submit" class="btn btn-sm btn-danger btn-loading" data-confirm="¿Anular?" title="Anular"
+                      formaction="{{ url_for('admin.reject_payment', ledger_id=r.id) }}" formmethod="post"><i class="bi bi-x-circle"></i><span class="visually-hidden">Anular</span></button>
+              <button type="submit" class="btn btn-sm btn-warning btn-loading" data-confirm="¿Suspender?" title="Suspender"
+                      formaction="{{ url_for('admin.suspend_payment', ledger_id=r.id) }}" formmethod="post"><i class="bi bi-pause-circle"></i><span class="visually-hidden">Suspender</span></button>
             </td>
           </tr>
         {% endfor %}

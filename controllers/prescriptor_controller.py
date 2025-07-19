@@ -245,25 +245,78 @@ def create_invoice():
 
     db.session.commit()
 
-    # enviar email a administración
+    # enviar email a administración y usuarios de Finanzas
     try:
         from sigp.common.email_utils import send_simple_mail
-        # lista de mails admin desde config o fallback
+        
+        # Correos definidos en configuración
         admin_emails = current_app.config.get("ADMIN_EMAILS") or []
         if isinstance(admin_emails, str):
             admin_emails = [e.strip() for e in admin_emails.split(",") if e.strip()]
-        if admin_emails:
-            subj = f"Nueva factura #{number} subida por prescriptor {prescriptor_id}"
-            body = (
-                f"Se ha subido una nueva factura.\n\n"
-                f"Número: {number}\n"
-                f"Fecha: {invoice_date}\n"
-                f"Total: {total:.2f} €\n"
-                f"Movimientos: {len(rows)}\n"
+
+        # ---- Obtener usuarios con rol Finanzas ----
+        Role = getattr(Base.classes, "roles", None)
+        User = getattr(Base.classes, "users", None)
+        Notification = getattr(Base.classes, "notifications", None)
+        # tabla asociación user-role (puede ser roles_users, user_roles, etc.)
+        UserRole = None
+        for cls in Base.classes.values():
+            cols = set(getattr(cls.__table__, "columns").keys())
+            if {"user_id", "role_id"}.issubset(cols):
+                UserRole = cls
+                break
+        finance_emails = []
+        finance_user_ids = []
+        if Role is not None and User is not None:
+            # roles cuyo nombre o código contiene 'FINAN'
+            role_q = db.session.query(Role.id)
+            for col in (getattr(Role, "code", None), getattr(Role, "name", None)):
+                if col is not None:
+                    role_q = role_q.filter(col.ilike("%FINAN%"))
+                    break
+            fin_role_ids = [r.id for r in role_q.all()]
+            if fin_role_ids:
+                if UserRole is not None:
+                    uids = [r.user_id for r in db.session.query(UserRole.user_id).filter(UserRole.role_id.in_(fin_role_ids))]
+                    finance_user_ids = uids
+                elif hasattr(User, "role_id"):
+                    uids = [u.id for u in db.session.query(User.id).filter(User.role_id.in_(fin_role_ids))]
+                    finance_user_ids = uids
+                if finance_user_ids:
+                    u_rows = db.session.query(User).filter(User.id.in_(finance_user_ids)).all()
+                    finance_emails = [getattr(u, "email", None) for u in u_rows if getattr(u, "email", None)]
+        # Combinar correos, eliminar duplicados
+        recipients = list({*admin_emails, *finance_emails})
+
+        subj = f"Nueva factura #{number} subida por prescriptor {prescriptor_id}"
+        if recipients:
+            html_body = render_template('emails/new_invoice_uploaded.html',
+                                        number=number,
+                                        date=invoice_date,
+                                        total=total,
+                                        rows_count=len(rows),
+                                        base_url=current_app.config.get('BASE_URL') or request.host_url.rstrip('/') )
+            text_body = (
+                f"Nueva factura subida.\n\n"
+                f"Número: {number}\nFecha: {invoice_date}\nTotal: {total:.2f} €\nMovimientos: {len(rows)}\n\n"
+                f"Revisar: {current_app.config.get('BASE_URL') or request.host_url.rstrip('/')}/settlements/"
             )
-            send_simple_mail(admin_emails, subj, body)
+            send_simple_mail(recipients, subj, html_body, html=True, text_body=text_body)
+
+        # ---- Notificaciones in-app ----
+        if Notification is not None and finance_user_ids:
+            from datetime import datetime as _dt
+            for uid in finance_user_ids:
+                notif = Notification(
+                    user_id=uid,
+                    title="Nueva factura subida",
+                    message=f"El prescriptor {prescriptor_id} subió la factura #{number} por {total:.2f} €.",
+                    created_at=_dt.utcnow(),
+                )
+                db.session.add(notif)
+            db.session.commit()
     except Exception as exc:  # pylint: disable=broad-except
-        current_app.logger.error("Error enviando mail de factura: %s", exc)
+        current_app.logger.error("Error enviando mail/notification de factura: %s", exc)
 
     flash("Factura subida correctamente", "success")
     return redirect(url_for("prescriptors.new_invoice"))

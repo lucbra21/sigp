@@ -8,6 +8,7 @@ from flask_login import login_required
 from sigp import db
 from sigp.models import Base
 from sigp.security import require_perm
+from sigp.common.lead_utils import log_lead_change
 from sigp.common.email_utils import send_simple_mail
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -18,6 +19,7 @@ Prescriptor = getattr(Base.classes, "prescriptors", None)
 Lead = getattr(Base.classes, "leads", None)
 LeadHistory = getattr(Base.classes, "lead_history", None)
 Invoice = getattr(Base.classes, "invoice", None)
+User = getattr(Base.classes, "users", None)
 
 PEND_APROB_ID = 1  # PEND_APROB_ADMIN
 PEND_FACT_ID = 2  # PEND_FACTURAR
@@ -40,20 +42,25 @@ def _notify_and_log(ledger_rows, new_state_id):
     mail_data = {}
     for r in ledger_rows:
         p = presc_map.get(r.prescriptor_id)
-        if not p or not getattr(p, "email", None):
+        if not p:
             continue
-        mail_data.setdefault(p.email, []).append(r)
+        email_to = getattr(p, "email", None)
+        if not email_to and User is not None and getattr(p, "user_id", None):
+            usr = db.session.get(User, p.user_id)
+            email_to = getattr(usr, "email", None)
+        if not email_to:
+            continue
+        mail_data.setdefault(email_to, []).append(r)
         # history
-        if LeadHistory is not None and r.lead_id:
-            hist = LeadHistory(lead_id=r.lead_id, ts=_dt.datetime.utcnow(), action="STATE_CHANGE",
-                               notes=f"Pago comisión - nuevo estado {new_state_id}")
-            db.session.add(hist)
+        if r.lead_id:
+            log_lead_change(r.lead_id, new_state_id, f"Pago comisión - nuevo estado {new_state_id}")
     db.session.commit()
     state_name = _state_name(new_state_id)
     for email, items in mail_data.items():
         lines = [f"Lead {it.lead_id} concepto {it.concept} monto {it.amount}" for it in items]
-        body = "Se actualizó el estado de los siguientes pagos a '{}':\n\n".format(state_name) + "\n".join(lines)
-        send_simple_mail([email], "Actualización de pagos de comisión", body)
+        plain_body = "Se actualizó el estado de los siguientes pagos a '{}':\n\n".format(state_name) + "\n".join(lines)
+        html_body = render_template('emails/payment_state_update.html', state_name=state_name, items=items)
+        send_simple_mail([email], "Actualización de pagos de comisión", html_body, html=True, text_body=plain_body)
 
 
 def _state_name(state_id: int) -> str:
@@ -147,7 +154,7 @@ def bulk_approve(): # approve selected
     return redirect(url_for("admin.pay_approval"))
 
 
-@admin_bp.post("/payments/approval/<ledger_id>/approve")
+@admin_bp.route("/payments/approval/<ledger_id>/approve", methods=["POST","GET"])
 @login_required
 @require_perm("manage_payments")
 
@@ -164,11 +171,11 @@ def approve_payment(ledger_id):
     db.session.commit()
     db.session.flush()
     _notify_and_log([row], PEND_FACT_ID)
-    flash("Movimiento aprobado", "success")
+    flash("Pago aprobado", "success")
     return redirect(url_for("admin.pay_approval"))
 
 
-@admin_bp.post("/payments/approval/<ledger_id>/reject")
+@admin_bp.route("/payments/approval/<ledger_id>/reject", methods=["POST","GET"])
 @login_required
 @require_perm("manage_payments")
 
@@ -189,7 +196,7 @@ def reject_payment(ledger_id):
     return redirect(url_for("admin.pay_approval"))
 
 
-@admin_bp.post("/payments/approval/<ledger_id>/suspend")
+@admin_bp.route("/payments/approval/<ledger_id>/suspend", methods=["POST","GET"])
 @login_required
 @require_perm("manage_payments")
 def suspend_payment(ledger_id):
@@ -356,7 +363,8 @@ def notify_settlement(inv_rows):
         # Email
         if email_to:
             try:
-                send_simple_mail([email_to], "Pago de comisión rendido", notif.message)
+                html_body = render_template('emails/commission_settlement.html', invoice_number=inv.number, total=inv.total)
+                send_simple_mail([email_to], "Pago de comisión rendido", html_body, html=True, text_body=notif.message)
             except Exception as exc:  # pylint: disable=broad-except
                 app.logger.error("Mail rendición: %s", exc)
         # Historico lead
