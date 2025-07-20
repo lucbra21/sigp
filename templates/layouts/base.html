@@ -202,6 +202,12 @@
         overlay.classList.add('d-flex');
       });
     });
+    // Sort dropdown items alphabetically (once on load)
+    document.querySelectorAll('.dropdown-menu').forEach(menu=>{
+      const lis=Array.from(menu.querySelectorAll('li')).filter(li=>!li.classList.contains('dropdown-divider'));
+      lis.sort((a,b)=>a.textContent.trim().localeCompare(b.textContent.trim(),'es',{sensitivity:'base'}));
+      lis.forEach(li=>menu.appendChild(li));
+    });
   });
 
   document.addEventListener('click', function(e){
