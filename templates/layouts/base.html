@@ -195,6 +195,13 @@
     const logout=document.getElementById('logoutBtn');
     const overlay=document.getElementById('globalLoading');
     if(logout){logout.addEventListener('click',()=>{overlay.classList.remove('d-none');overlay.classList.add('d-flex');});}
+    // Show loading on any navbar link click
+    document.querySelectorAll('.navbar a.nav-link:not(.dropdown-toggle), .navbar .dropdown-menu .dropdown-item').forEach(a=>{
+      a.addEventListener('click',()=>{
+        overlay.classList.remove('d-none');
+        overlay.classList.add('d-flex');
+      });
+    });
   });
 
   document.addEventListener('click', function(e){
