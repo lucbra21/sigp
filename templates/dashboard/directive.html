@@ -1,0 +1,73 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Dashboard Dirección{% endblock %}
+{% block content %}
+<h2 class="mb-4">Dashboard Comité de Dirección</h2>
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card shadow-sm text-center">
+      <div class="card-body">
+        <h5 class="card-title">Prescriptores</h5>
+        <h2>{{ pres_total }}</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm text-center">
+      <div class="card-body">
+        <h5 class="card-title">Leads generados</h5>
+        <h2>{{ leads_total }}</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm text-center">
+      <div class="card-body">
+        <h5 class="card-title">Leads matriculados</h5>
+        <h2>{{ leads_matric }}</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-header">Prescriptores por estado</div>
+      <div class="card-body"><canvas id="chartPresState"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-header">Rentabilidad por programa (€)</div>
+      <div class="card-body"><canvas id="chartRentab"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-header">Top Prescriptores (comisiones)</div>
+      <div class="card-body"><canvas id="chartRanking"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    // Datos del servidor
+    const presStateLabels={{ pres_by_state|map(attribute=0)|list|tojson }};
+    const presStateData={{ pres_by_state|map(attribute=1)|list|tojson }};
+    const rentabLabels={{ rentab_program|map(attribute=0)|list|tojson }};
+    const rentabData={{ rentab_program|map(attribute=1)|list|tojson }};
+    const rankLabels={{ ranking|map(attribute=0)|list|tojson }};
+    const rankData={{ ranking|map(attribute=1)|list|tojson }};
+
+    const pieCtx=document.getElementById('chartPresState');
+    if(pieCtx){new Chart(pieCtx,{type:'pie',data:{labels:presStateLabels,datasets:[{data:presStateData,backgroundColor:Chart.helpers.colorSchemes.tableau.Tableau20.slice(0,presStateData.length)}]},options:{plugins:{legend:{position:'bottom'}}}});}    
+    const barCtx=document.getElementById('chartRentab');
+    if(barCtx){new Chart(barCtx,{type:'bar',data:{labels:rentabLabels,datasets:[{data:rentabData,backgroundColor:'#0d6efd'}]},options:{scales:{y:{beginAtZero:true}}}});}    
+    const hbarCtx=document.getElementById('chartRanking');
+    if(hbarCtx){new Chart(hbarCtx,{type:'bar',data:{labels:rankLabels,datasets:[{data:rankData,backgroundColor:'#198754'}]},options:{indexAxis:'y',scales:{x:{beginAtZero:true}}}});}    
+  });
+</script>
+{% endblock %}

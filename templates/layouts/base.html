@@ -129,7 +129,15 @@
                         </ul>
                     </li>
                     {% endif %}
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard.prescriptor_report') }}">Dashboard</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="dashboardDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Dashboards</a>
+                        <ul class="dropdown-menu" aria-labelledby="dashboardDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('dashboard.prescriptor_report') }}">Prescriptores</a></li>
+                            {% if can('view_dashboard_directive') %}
+                            <li><a class="dropdown-item" href="{{ url_for('dashboard_directive.dashboard') }}">Dirección</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
                 </ul>
                 <div class="d-flex align-items-center">
                     {% set unread = unread_count() %}

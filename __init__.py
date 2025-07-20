@@ -95,6 +95,7 @@ def create_app(config_class=Config):
     from .controllers.landing_controller import landing_bp
     from sigp.controllers.settlements_controller import settlements_bp
     from sigp.controllers.adjustments_controller import adjustments_bp
+    from sigp.controllers.dashboard_directive_controller import bp as dashboard_directive_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
@@ -120,6 +121,7 @@ def create_app(config_class=Config):
     app.register_blueprint(landing_bp)
     app.register_blueprint(settlements_bp)
     app.register_blueprint(adjustments_bp)
+    app.register_blueprint(dashboard_directive_bp)
 
     # ---- context processors ----
     @app.context_processor
