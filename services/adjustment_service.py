@@ -7,6 +7,7 @@ from sigp import db
 from flask import current_app
 from sigp.models import Base
 from sqlalchemy.exc import SQLAlchemyError
+from typing import Optional
 
 CreditNote = getattr(Base.classes, "credit_notes", None)
 DebitNote = getattr(Base.classes, "debit_notes", None)
@@ -15,7 +16,7 @@ Prescriptor = getattr(Base.classes, "prescriptor", None) or getattr(Base.classes
 class AdjustmentError(RuntimeError):
     pass
 
-def _insert_note(table_cls, prescriptor_id: str, amount: float, note_date: date, concept: str | None):
+def insert_note(table_cls, prescriptor_id: str, amount: float, note_date: date, concept: str = None):
     if table_cls is None:
         raise AdjustmentError("Tabla no disponible")
     note = table_cls(
@@ -35,7 +36,7 @@ def _insert_note(table_cls, prescriptor_id: str, amount: float, note_date: date,
         raise AdjustmentError("No se pudo guardar la nota") from e
     return note
 
-def create_credit_note(prescriptor_id: str, amount: float, note_date: date, concept: str | None = None):
+def create_credit_note(prescriptor_id: str, amount: float, note_date: date, concept: Optional[str] = None):
     note=_insert_note(CreditNote, prescriptor_id, amount, note_date, concept)
     # enviar mail al prescriptor
     if Prescriptor is None:
@@ -59,7 +60,7 @@ def create_credit_note(prescriptor_id: str, amount: float, note_date: date, conc
         send_simple_mail([email], 'Nota de crédito emitida', html_body, html=True, text_body=f'Se ha emitido una nota de crédito de {amount}€ el {note_date}.')
     return note
 
-def create_debit_note(prescriptor_id: str, amount: float, note_date: date, concept: str | None = None):
+def create_debit_note(prescriptor_id: str, amount: float, note_date: date, concept: Optional[str] = None):
     note=_insert_note(DebitNote, prescriptor_id, amount, note_date, concept)
     if Prescriptor is None:
         return note
