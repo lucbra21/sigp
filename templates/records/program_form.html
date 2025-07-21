@@ -42,25 +42,25 @@
       <input class="form-control" id="price_total" name="price_total" type="number" step="0.01" value="{{ program.price_total if program else '' }}" />
     </div>
     <div class="col-md-4 mb-3">
-      <label class="form-label" for="price_scholarship">Precio beca</label>
+      <label class="form-label" for="price_scholarship">Precio becado (lo que el alumno paga)</label>
       <input class="form-control" id="price_scholarship" name="price_scholarship" type="number" step="0.01" value="{{ program.price_scholarship if program else '' }}" />
     </div>
     <div class="col-md-4 mb-3">
-      <label class="form-label" for="commission_value">Comisión</label>
+      <label class="form-label" for="commission_value">Comisión total</label>
       <input class="form-control" id="commission_value" name="commission_value" type="number" step="0.01" value="{{ program.commission_value if program else '' }}" />
     </div>
   </div>
   <div class="row">
     <div class="col-md-4 mb-3">
-      <label class="form-label" for="first_installment_pct">% 1ª cuota</label>
+      <label class="form-label" for="first_installment_pct">Comisión - Porcentaje 1ª cuota</label>
       <input class="form-control" id="first_installment_pct" name="first_installment_pct" type="number" step="0.01" value="{{ program.first_installment_pct if program else '' }}" />
     </div>
     <div class="col-md-4 mb-3">
-      <label class="form-label" for="pvp">PVP</label>
+      <label class="form-label" for="pvp">PVP (Universidad)</label>
       <input class="form-control" id="pvp" name="pvp" type="number" step="0.01" value="{{ program.pvp if program else '' }}" />
     </div>
     <div class="col-md-4 mb-3">
-      <label class="form-label" for="value_quotas">Monto cuotas</label>
+      <label class="form-label" for="value_quotas">Comisión - Saldo en cuotas</label>
       <input class="form-control" id="value_quotas" name="value_quotas" type="number" step="0.01" value="{{ program.value_quotas if program else '' }}" />
     </div>
   </div>
@@ -70,7 +70,7 @@
       <input class="form-control" id="scholarship_value" name="scholarship_value" type="number" step="0.01" value="{{ program.scholarship_value if program else '' }}" />
     </div>
     <div class="col-md-4 mb-3">
-      <label class="form-label" for="registration_value">Matrícula</label>
+      <label class="form-label" for="registration_value">Pre-Matrícula</label>
       <input class="form-control" id="registration_value" name="registration_value" type="number" step="0.01" value="{{ program.registration_value if program else '' }}" />
     </div>
     <div class="col-md-4 mb-3">

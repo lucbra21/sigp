@@ -656,7 +656,7 @@ def edit_prescriptor(prescriptor_id):
     # precargar datos de usuario (dueño) y nombre creador
     UserModel = getattr(Base.classes, "users", None)
     if UserModel:
-        # dueño (login del prescriptor)
+        # usuario asociado (captador). Solo precargar si existe, no usar creador como fallback
         if obj.user_id:
             u_owner = db.session.get(UserModel, obj.user_id)
             if u_owner:
