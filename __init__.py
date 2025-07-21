@@ -61,7 +61,7 @@ def create_app(config_class=Config):
         try:
             presc = (
                 db.session.query(Prescriptor)
-                .filter((getattr(Prescriptor, "user_id", None) == current_user.id) | (getattr(Prescriptor, "user_getter_id", None) == current_user.id))
+                .filter(getattr(Prescriptor, "user_id", None) == current_user.id)
                 .first()
             )
         except Exception:
