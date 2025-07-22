@@ -56,6 +56,7 @@ def create_app(config_class=Config):
         from flask_login import current_user
         from .models import Base
         Prescriptor = getattr(Base.classes, "prescriptor", None) or getattr(Base.classes, "prescriptors", None)
+        print("_inject_prescriptor1",current_user.is_authenticated, current_user)
         if Prescriptor is None or not (current_user and current_user.is_authenticated):
             return dict(current_prescriptor=None)
         try:
