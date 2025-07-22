@@ -59,11 +59,12 @@ def create_app(config_class=Config):
         if Prescriptor is None or not (current_user and current_user.is_authenticated):
             return dict(current_prescriptor=None)
         try:
-            presc = (
-                db.session.query(Prescriptor)
-                .filter(getattr(Prescriptor, "user_id", None) == current_user.id)
-                .first()
-            )
+            # presc = (
+            #     db.session.query(Prescriptor)
+            #     .filter(getattr(Prescriptor, "user_id", None) == current_user.id)
+            #     .first()
+            # )
+            presc = None
         except Exception:
             presc = None
         from flask import url_for
