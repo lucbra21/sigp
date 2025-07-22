@@ -55,18 +55,15 @@ def create_app(config_class=Config):
     def _inject_prescriptor():
         from flask_login import current_user
         from .models import Base
-        Prescriptor = None
-        # Prescriptor = getattr(Base.classes, "prescriptor", None) or getattr(Base.classes, "prescriptors", None)
+        Prescriptor = getattr(Base.classes, "prescriptor", None) or getattr(Base.classes, "prescriptors", None)
         if Prescriptor is None or not (current_user and current_user.is_authenticated):
             return dict(current_prescriptor=None)
-        
         try:
-            # presc = (
-            #     db.session.query(Prescriptor)
-            #     .filter(getattr(Prescriptor, "user_id", None) == current_user.id)
-            #     .first()
-            # )
-            presc = None
+            presc = (
+                db.session.query(Prescriptor)
+                .filter(getattr(Prescriptor, "user_id", None) == current_user.id)
+                .first()
+            )
         except Exception:
             presc = None
         from flask import url_for
