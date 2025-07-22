@@ -7,11 +7,11 @@
     
   <form id="programForm" method="post" enctype="multipart/form-data" class="row g-3">
   <div class="row">
-    <div class="col-md-4 mb-3">
+    <div class="col-md-6 mb-3">
       <label class="form-label" for="name">Nombre</label>
       <input class="form-control" id="name" name="name" required value="{{ program.name if program else '' }}" />
     </div>
-    <div class="col-md-4 mb-3">
+    <div class="col-md-6 mb-3">
       <label class="form-label" for="campus_id">Campus</label>
       <select class="form-select" id="campus_id" name="campus_id">
         <option value="">-- Seleccione --</option>
@@ -21,8 +21,12 @@
         {% endfor %}
       </select>
     </div>
+    <div class="col-md-6 mb-3">
+      <label class="form-label" for="abbreviation">Abreviatura</label>
+      <input class="form-control" id="abbreviation" name="abbreviation" value="{{ program.abbreviation if program else '' }}" />
+    </div>
   
-    <div class="col-md-4 mb-3">
+    <div class="col-md-6 mb-3">
       <label class="form-label" for="language">Idioma</label>
       <select class="form-select" id="language" name="language">
         {% set lang = program.language if program else '' %}
@@ -36,6 +40,7 @@
     <label class="form-label" for="description">Descripción</label>
     <textarea class="form-control" id="description" name="description">{{ program.description if program else '' }}</textarea>
   </div>
+  
   <div class="row">
     <div class="col-md-4 mb-3">
       <label class="form-label" for="price_total">Precio total</label>

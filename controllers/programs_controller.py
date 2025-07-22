@@ -32,6 +32,7 @@ from sigp.common.email_utils import send_simple_mail
 # ---------------------------------------------------------------------------
 
 FIELDS = [
+    "abbreviation",
     "name",
     "description",
     "price_total",
