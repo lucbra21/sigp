@@ -69,6 +69,9 @@ def _program_form(program_id=None):
                 val = data[f]
                 if val is not None:
                     data[f] = float(val.replace(",", "."))
+        # asegurar precio_total no sea nulo
+        if data.get("price_total") is None:
+            data["price_total"] = 0.0
         if program is None:
             program = Program(id=str(uuid4()))
             db.session.add(program)
@@ -101,9 +104,14 @@ def _program_form(program_id=None):
             url_saved = _save_upload(f, prefix)
             if url_saved:
                 setattr(program, attr, url_saved)
-        db.session.commit()
-        flash("Programa guardado", "success")
-        return redirect(url_for("programs.programs_list"))
+        try:
+            db.session.commit()
+            flash("Programa guardado", "success")
+            return redirect(url_for("programs.programs_list"))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.exception("Error guardando programa: %s", e)
+            flash("Error al guardar programa. Verifique los campos obligatorios.", "danger")
 
     Campus = _model("campus")
     campuses = db.session.query(Campus).all() if Campus else []

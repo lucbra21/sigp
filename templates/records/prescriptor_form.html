@@ -140,6 +140,10 @@
         {{ form.observations.label(class="form-label") }}
         {{ form.observations(class="form-control", rows="3") }}
         {% endif %}
+        {% if form.billing_data is defined %}
+        {{ form.billing_data.label(class="form-label mt-3") }}
+        {{ form.billing_data(class="form-control", rows="3") }}
+        {% endif %}
     </div>
 {% endif %} 
 {% endif %}

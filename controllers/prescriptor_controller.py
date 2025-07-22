@@ -78,6 +78,7 @@ def prescriptor_form_factory(is_create=True):
         squeeze_page_status = SelectField("Estado squeeze page", choices=squeeze_status_choices, validators=[Optional()])
         observations = TextAreaField("Detalles de pago", render_kw={"placeholder": "CBU, Alias, Banco, Titular, etc."}, validators=[Optional(), Length(max=1000)])
         extra_observations = TextAreaField("Observaciones", validators=[Optional(), Length(max=1000)])
+        billing_data = TextAreaField("Datos de facturación", validators=[Optional(), Length(max=1000)])
         contract_file = FileField("Contrato (PDF)", validators=[FileAllowed(["pdf"], "Solo PDF")])
         submit = SubmitField("Guardar")
 
@@ -523,6 +524,16 @@ def new_prescriptor():
     form = FormClass()
     current_app.logger.info(">>> creando prescriptor con data %s", form.data)
     form.user_id.data = current_user.name
+    # valores por defecto para datos de facturación
+    default_billing = (
+        "Concepto: Tutorización\n"
+        "INNOVA TRAINING CYF S.L\n"
+        "CUIT País: 51600004100 (España - Otro tipo de Entidad)\n"
+        "ID Impositivo B19456128\n"
+        "Domicilio: C/Campo de Gomara Bajo 4 47008 Valladolid"
+    )
+    if hasattr(form, "billing_data"):
+        form.billing_data.data = default_billing
     return render_template(
         "records/prescriptor_form.html",
         form=form,
@@ -576,6 +587,8 @@ def create_prescriptor():
              obj_kwargs["payment_details"] = form.observations.data
         if hasattr(form, "extra_observations") and form.extra_observations.data:
              obj_kwargs["observations"] = form.extra_observations.data
+        if hasattr(form, "billing_data") and form.billing_data.data:
+             obj_kwargs["billing_data"] = form.billing_data.data
         if hasattr(form, "contract_file") and form.contract_file.data:
             filename = f"{obj_kwargs['id']}.pdf"
             path = current_app.config["CONTRACT_UPLOAD_FOLDER"] / filename
@@ -668,6 +681,9 @@ def edit_prescriptor(prescriptor_id):
         # precargar observaciones
         if hasattr(obj, "observations") and hasattr(form, "extra_observations"):
             form.extra_observations.data = getattr(obj, "observations", "")
+        # precargar datos de facturación
+        if hasattr(obj, "billing_data") and hasattr(form, "billing_data"):
+            form.billing_data.data = getattr(obj, "billing_data", "")
         # creador del registro
         creator_id = getattr(obj, "user_getter_id", None) or obj.user_id
         if creator_id:
@@ -743,6 +759,9 @@ def update_prescriptor(prescriptor_id):
         # observaciones
         if hasattr(obj, "observations") and hasattr(form, "extra_observations"):
             obj.observations = form.extra_observations.data or None
+        # datos de facturación
+        if hasattr(obj, "billing_data") and hasattr(form, "billing_data"):
+            obj.billing_data = form.billing_data.data or None
 
         # gestionar uploads de imágenes
         upload_dir = current_app.config.get("PRESCRIPTOR_IMG_FOLDER", os.path.join(current_app.root_path, "static", "prescriptors"))
