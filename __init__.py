@@ -55,9 +55,11 @@ def create_app(config_class=Config):
     def _inject_prescriptor():
         from flask_login import current_user
         from .models import Base
-        Prescriptor = getattr(Base.classes, "prescriptor", None) or getattr(Base.classes, "prescriptors", None)
+        Prescriptor = None
+        # Prescriptor = getattr(Base.classes, "prescriptor", None) or getattr(Base.classes, "prescriptors", None)
         if Prescriptor is None or not (current_user and current_user.is_authenticated):
             return dict(current_prescriptor=None)
+        
         try:
             # presc = (
             #     db.session.query(Prescriptor)
