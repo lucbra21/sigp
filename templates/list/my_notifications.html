@@ -8,7 +8,7 @@
 
 <div class="card shadow-sm mb-4 bg-light border border-secondary-subtle rounded">
   <div class="card-body">
-    <form class="row row-cols-lg-auto g-3 align-items-end" method="get" action="{{ url_for('notifications.my_notifications') }}">
+    <form id="notifFilterForm" class="row row-cols-lg-auto g-3 align-items-end" method="get" action="{{ url_for('notifications.my_notifications') }}">
       <select name="status" class="form-select w-auto d-inline-block">
           <option value="all" {% if status=='all' %}selected{% endif %}>Todas</option>
           <option value="unread" {% if status=='unread' %}selected{% endif %}>No leídas</option>
@@ -67,4 +67,24 @@
     </li>
   </ul>
 </nav>
+<!-- Loading overlay -->
+<div id="myNotifLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    const ov=document.getElementById('myNotifLoading');
+    const show=()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');};
+    // botones marcar leída / no leída
+    document.querySelectorAll('a[href*="/notifications/mark-read"], a[href*="/notifications/mark-unread"]').forEach(el=>{
+      el.addEventListener('click',show);
+    });
+    // formulario filtrar
+    const filt=document.getElementById('notifFilterForm');
+    if(filt){filt.addEventListener('submit',show);}  
+    // formulario marcar todas como leídas
+    const markAll=document.getElementById('markAllForm');
+    if(markAll){markAll.addEventListener('submit',show);}  
+  });
+</script>
 {% endblock %}

@@ -8,7 +8,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, SelectMultipleField, TextAreaField, URLField, SubmitField
-from wtforms.validators import DataRequired, Length, URL
+from wtforms.validators import DataRequired, Length, URL, Optional
 import uuid
 
 from sigp import db
@@ -62,7 +62,7 @@ class NotificationForm(FlaskForm):
     notif_type = SelectField("Tipo", choices=[("INFO", "Info"), ("ACTION", "Acción"), ("WARNING", "Advertencia"), ("ERROR", "Error")])
     title = StringField("Título", validators=[DataRequired(), Length(max=150)])
     body = TextAreaField("Cuerpo", validators=[Length(max=2000)])
-    link_url = URLField("URL", validators=[URL(require_tld=False), Length(max=255)], default="")
+    link_url = URLField("URL", validators=[Optional(), URL(require_tld=False), Length(max=255)], default="")
     submit = SubmitField("Guardar")
 
 
