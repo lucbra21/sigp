@@ -142,13 +142,21 @@ def pending_invoices(prescriptor_id):
 
 @settlements_bp.get("/invoice/<invoice_id>")
 @login_required
-@require_perm("manage_payments")
 def invoice_detail(invoice_id):
     if Invoice is None:
         abort(404)
+    from sigp.common.security import has_perm
     inv = db.session.get(Invoice, invoice_id)
     if inv is None:
         abort(404)
+    # Permiso: usuario con manage_payments O prescriptor dueño
+    allowed = has_perm(current_user, "manage_payments")
+    if not allowed and Prescriptor is not None:
+        presc = db.session.query(Prescriptor).filter_by(user_id=current_user.id).first()
+        if presc and presc.id == inv.prescriptor_id:
+            allowed = True
+    if not allowed:
+        abort(403)
     ledgers = []
     if Ledger is not None:
         ledgers = db.session.query(Ledger).filter(Ledger.invoice_id == inv.id).all()
