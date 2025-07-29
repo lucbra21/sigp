@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, flash, request
 from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -30,6 +30,10 @@ def create_app(config_class=Config):
     app.config.from_object(Config)
     db.init_app(app)
     login_manager.init_app(app)
+    # Config login redirect
+    login_manager.login_view = "auth.login_get"
+    login_manager.login_message = "Sesión expirada. Por favor inicia sesión nuevamente."
+    login_manager.login_message_category = "warning"
     bcrypt.init_app(app)
 
     # asegurar carpeta de contratos
@@ -56,15 +60,19 @@ def create_app(config_class=Config):
         from flask_login import current_user
         from .models import Base
         Prescriptor = getattr(Base.classes, "prescriptor", None) or getattr(Base.classes, "prescriptors", None)
-        print("_inject_prescriptor1",current_user.is_authenticated, current_user)
+        
         if Prescriptor is None or not (current_user and current_user.is_authenticated):
             return dict(current_prescriptor=None)
         try:
-            presc = (
-                db.session.query(Prescriptor)
-                .filter(getattr(Prescriptor, "user_id", None) == current_user.id)
-                .first()
-            )
+            # intentar por columna user_id si existe, sino por PK
+            if hasattr(Prescriptor, "user_id"):
+                presc = db.session.query(Prescriptor).filter_by(user_id=current_user.id).first()
+            else:
+                # fallback: asumir pk = user.id
+                try:
+                    presc = db.session.get(Prescriptor, current_user.id)
+                except Exception:
+                    presc = None
         except Exception:
             presc = None
         from flask import url_for
@@ -123,6 +131,17 @@ def create_app(config_class=Config):
     app.register_blueprint(settlements_bp)
     app.register_blueprint(adjustments_bp)
     app.register_blueprint(dashboard_directive_bp)
+
+    # ---- error handlers ----
+    @app.errorhandler(403)
+    def _forbidden(_):
+        flash("URL inexistente o sesión expirada", "warning")
+        return redirect(url_for("auth.login_get", next=request.full_path))
+
+    @app.errorhandler(404)
+    def _not_found(_):
+        flash("URL inexistente o sesión expirada", "warning")
+        return redirect(url_for("auth.login_get"))
 
     # ---- context processors ----
     @app.context_processor
