@@ -655,8 +655,17 @@ def edit_lead(lead_id):
     if StateLead:
         form.state_id.choices = [(s.id, s.name) for s in db.session.query(StateLead).order_by(StateLead.id)]
 
-    # Disable state field in form rendering
-    form.state_id.render_kw = {"disabled": True}
+    # Deshabilitar el campo estado para todos excepto rol "Comercial"
+    from flask_login import current_user
+    role_obj = getattr(current_user, "role", None)
+    if role_obj is None or not getattr(role_obj, "name", None):
+        # fallback lookup by role_id
+        RoleTbl = getattr(Base.classes, "roles", None)
+        if RoleTbl is not None and getattr(current_user, "role_id", None):
+            role_obj = db.session.get(RoleTbl, current_user.role_id)
+    role_name = getattr(role_obj, "name", "").lower() if role_obj else ""
+    if role_name != "comercial":
+        form.state_id.render_kw = {"disabled": True}
 
     if form.validate_on_submit():
         lead.prescriptor_id = form.prescriptor_id.data
@@ -664,6 +673,9 @@ def edit_lead(lead_id):
         lead.candidate_email = form.candidate_email.data
         lead.program_info_id = form.program_info_id.data or None
         lead.candidate_cellular = form.candidate_cellular.data
+        # Si el campo estado está habilitado y vino un valor, actualizar
+        if form.state_id.data:
+            lead.state_id = form.state_id.data
         db.session.commit()
         flash("Lead actualizado", "success")
         return redirect(url_for("leads.leads_list"))

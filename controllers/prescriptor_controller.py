@@ -732,6 +732,12 @@ def update_prescriptor(prescriptor_id):
     if form.validate_on_submit():
         # precargar y actualizar email/cellular
         obj.state_id = int(form.state_id.data)
+        # actualizar subestado si existe
+        if hasattr(obj, "sub_state_id") and hasattr(form, "sub_state"):
+            obj.sub_state_id = int(form.sub_state.data) if form.sub_state.data else None
+        if hasattr(obj, "sub_state") and hasattr(form, "sub_state") and not hasattr(obj, "sub_state_id"):
+            # fallback a campo de texto
+            obj.sub_state = form.sub_state.data or None
         # actualizar campos simples
         # actualizar nombre
         if hasattr(obj, "squeeze_page_name") and hasattr(form, "squeeze_page_name"):
@@ -749,6 +755,7 @@ def update_prescriptor(prescriptor_id):
             "linkedin_url",
             "instagram_url",
             "x_url",
+            "squeeze_page_status",
         ]
         for fld in simple_fields:
             if hasattr(obj, fld) and hasattr(form, fld):

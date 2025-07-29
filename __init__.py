@@ -52,6 +52,8 @@ def create_app(config_class=Config):
     @app.context_processor
     def _inject_can():
         from flask_login import current_user
+        from sigp.common.security import _perm_set
+        print(">>> PERMISOS DEL USUARIO", getattr(current_user, 'email', None) or getattr(current_user, 'id', 'anon'), _perm_set(current_user))
         return dict(can=lambda p: has_perm(current_user, p), can_mod=lambda m: has_any_prefix(current_user, m))
 
     # prescriptor del usuario conectado (si corresponde)
