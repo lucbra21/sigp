@@ -54,11 +54,14 @@ def prescriptor_form_factory(is_create=True):
     conf_choices = [("", "-")] + _get_select_choices("confidence_level")
     squeeze_status_choices = [("TEST", "TEST"), ("PRODUCCION", "PRODUCCION"), ("DESACTIVADA", "DESACTIVADA")]
 
+    # Helper to safely convert blank values to None
+    int_or_none = lambda v: int(v) if v not in (None, "", "None") else None
+
     class _PrescriptorForm(FlaskForm):
         user_id = StringField("Usuario", render_kw={"readonly": True})
-        type_id = SelectField("Tipo", choices=type_choices, validators=[DataRequired()])
-        proposed_type_id = SelectField("Tipo propuesto", choices=[("", "-")] + type_choices, validators=[Optional()])
-        state_id = SelectField("Estado", choices=state_choices, validators=[DataRequired()])
+        type_id = SelectField("Tipo", choices=type_choices, coerce=int, validators=[DataRequired()])
+        proposed_type_id = SelectField("Tipo propuesto", choices=[("", "-")] + type_choices, coerce=int_or_none, validators=[Optional()])
+        state_id = SelectField("Estado", choices=state_choices, coerce=int, validators=[DataRequired()])
         sub_state = SelectField("Subestado", choices=substate_choices, validators=[Optional()])
         # squeeze_url_tst = StringField("Squeeze URL Test", validators=[Optional(), URL(), Length(max=255)])
         # squeeze_url_prd = StringField("Squeeze URL Prod", validators=[Optional(), URL(), Length(max=255)])
@@ -71,7 +74,7 @@ def prescriptor_form_factory(is_create=True):
         linkedin_url = StringField("LinkedIn URL", validators=[Optional(), Length(max=255)])
         instagram_url = StringField("Instagram URL", validators=[Optional(), Length(max=255)])
         x_url = StringField("X/Twitter URL", validators=[Optional(), Length(max=255)])
-        confidence_level_id = SelectField("Nivel de confianza", choices=conf_choices, validators=[Optional()])
+        confidence_level_id = SelectField("Nivel de confianza", choices=conf_choices, coerce=int_or_none, validators=[Optional()])
         email = StringField("Email", validators=[DataRequired(), Length(max=255)])
         cellular = StringField("Celular", validators=[DataRequired(), Length(max=50)])
         squeeze_page_name = StringField("Nombre", validators=[DataRequired(), Length(max=255)])
