@@ -52,11 +52,12 @@
                         <a class="nav-link dropdown-toggle" href="#" id="mediaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Multimedia</a>
                         <ul class="dropdown-menu" aria-labelledby="mediaDropdown">
                             {% if can('read_media') %}
-                            <li><a class="dropdown-item" href="{{ url_for('multimedia.list_media') }}">Archivos</a></li>
-                            {% endif %}
-                            {% if can('create_media') %}
-                            <li><a class="dropdown-item" href="{{ url_for('multimedia.upload_media') }}">Subir</a></li>
-                            {% endif %}
+                            {% if can('media_view') %}
+<li><a class="dropdown-item" href="{{ url_for('multimedia.my_media') }}">Mis archivos</a></li>
+{% endif %}
+<li><a class="dropdown-item" href="{{ url_for('multimedia.list_media') }}">Archivos</a></li>
+{% endif %}
+                            
                         </ul>
                     </li>
                     {% endif %}

@@ -12,6 +12,9 @@ class Config:
     # Clave de sesión (cambiar en producción)
     SECRET_KEY = os.getenv("SECRET_KEY", "change-this-secret")
 
+    # # Evitar que SQLAlchemy imprima todas las consultas en consola
+    # SQLALCHEMY_ECHO = False
+
     # Cadena de conexión a RDS
     SQLALCHEMY_DATABASE_URI = (
         os.getenv("SQLALCHEMY_DATABASE_URI")
@@ -48,5 +51,5 @@ class Config:
     RECEIPT_UPLOAD_FOLDER = "static/receipts"
 
     # config.py  (modo desarrollo)
-    SQLALCHEMY_ECHO = True
+    SQLALCHEMY_ECHO = False
 

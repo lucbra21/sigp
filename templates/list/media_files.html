@@ -3,7 +3,9 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2 class="mb-0">Archivos multimedia</h2>
+  {% if can('create_media') %}
   <a href="{{ url_for('multimedia.upload_media') }}" id="uploadBtn" class="btn btn-primary">Subir nuevo</a>
+{% endif %}
 </div>
 <div class="card filter-card mb-4 shadow-sm">
   <div class="card-body">
@@ -25,29 +27,64 @@
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
     <thead>
-        <tr><th>Título</th><th>Categoría</th><th>Tipo</th><th>Tamaño</th><th>Subido</th><th>Descargar</th></tr>
+        <tr><th>Vista</th><th>Título</th><th>Categoría</th><th>Rol</th><th>Tipo</th><th>Tamaño</th><th>Subido</th><th>Acciones</th></tr>
     </thead>
     <tbody>
         {% for f in files %}
         <tr>
+            <td>
+            {% if can('media_view') %}
+              {% if f.source_type == 'LINK' and ('youtube.com' in f.storage_key or 'youtu.be' in f.storage_key or 'vimeo.com' in f.storage_key) %}
+              <button class="btn btn-sm btn-outline-secondary preview-btn" data-url="{{ f.storage_key }}" title="Previsualizar"><i class="bi bi-play-circle"></i></button>
+              {% else %}
+              <i class="bi bi-folder-fill" style="font-size:1.2rem;"></i>
+              {% endif %}
+            {% endif %}
+            </td>
             <td>{{ f.title or f.original_name }}</td>
             <td>{{ f.category_name }}</td>
+            <td>{{ f.role_name }}</td>
             <td>{{ f.mime_type }}</td>
             <td>{% if f.size_bytes %}{{ (f.size_bytes / 1024)|round(1) }} KB{% else %}-{% endif %}</td>
             <td>{{ f.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-            <td>
+            <td class="text-nowrap">
             {% if f.source_type == 'LINK' %}
                 <a href="{{ f.storage_key }}" target="_blank" class="btn btn-sm btn-outline-primary">Abrir</a>
             {% else %}
                 <a href="{{ url_for('static', filename=f.storage_key) }}" download class="btn btn-sm btn-outline-primary">Descargar</a>
             {% endif %}
-        </td>
+            {% if can('update_media') %}
+            <a href="{{ url_for('multimedia.edit_media', media_id=f.id) }}" class="btn btn-sm btn-primary ms-1">Editar</a>
+            {% endif %}
+            {% if can('delete_media') %}
+            <form method="post" action="{{ url_for('multimedia.delete_media', media_id=f.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar archivo?');">
+                <button type="submit" class="btn btn-sm btn-danger ms-1">Eliminar</button>
+            </form>
+            {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>
     </table>
   </div>
 </div>
+
+<!-- Preview Modal (solo para media_view) -->
+{% if can('media_view') %}
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="previewModalLabel">Vista previa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0" style="min-height:400px;">
+        <iframe id="previewFrame" src="" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <!-- Loading overlay -->
 <div id="mediaFilterLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
@@ -60,6 +97,28 @@
     if(f){f.addEventListener('submit',()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});}
     const up=document.getElementById('uploadBtn');
     if(up){up.addEventListener('click',()=>{ov.classList.remove('d-none');ov.classList.add('d-flex');});}
+
+    // Preview video handler
+    document.querySelectorAll('.preview-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const rawUrl = btn.getAttribute('data-url');
+        let embedUrl = rawUrl;
+        if(rawUrl.includes('youtube.com/watch')){
+          const id = new URL(rawUrl).searchParams.get('v');
+          embedUrl = `https://www.youtube.com/embed/${id}`;
+        }else if(rawUrl.includes('youtu.be/')){
+          const id = rawUrl.split('youtu.be/')[1].split('?')[0];
+          embedUrl = `https://www.youtube.com/embed/${id}`;
+        }else if(rawUrl.includes('vimeo.com/')){
+          const id = rawUrl.split('vimeo.com/')[1].split(/[?#]/)[0];
+          embedUrl = `https://player.vimeo.com/video/${id}`;
+        }
+        const iframe = document.getElementById('previewFrame');
+        iframe.src = embedUrl;
+        const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+        modal.show();
+      });
+    });
   });
 </script>
 {% endblock %}

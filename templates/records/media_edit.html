@@ -1,0 +1,19 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Editar archivo{% endblock %}
+{% block content %}
+<h2 class="fw-semibold mb-4 text-center">Editar archivo multimedia</h2>
+<div class="card form-card mx-auto" style="max-width:700px;">
+  <form method="post" action="{{ action }}" id="editForm" class="row g-3">
+    {{ form.csrf_token }}
+    <div class="mb-3">{{ form.category.label }} {{ form.category(class="form-select") }}</div>
+    <div class="mb-3">{{ form.role_id.label }} {{ form.role_id(class="form-select") }}</div>
+    <div class="mb-3">{{ form.visibility.label }} {{ form.visibility(class="form-select") }}</div>
+    <div class="mb-3">{{ form.title.label }} {{ form.title(class="form-control") }}</div>
+    <div class="mb-3">{{ form.description.label }} {{ form.description(class="form-control") }}</div>
+    <div class="col-12 d-flex justify-content-center gap-2 mt-2">
+      {{ form.submit(class="btn btn-primary", value='Guardar') }}
+      <a href="{{ url_for('multimedia.list_media') }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

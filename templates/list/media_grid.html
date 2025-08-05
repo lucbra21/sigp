@@ -1,0 +1,72 @@
+{% extends 'layouts/base.html' %}
+{% block content %}
+<h2 class="mb-4">Mis archivos</h2>
+<div class="row row-cols-2 row-cols-md-4 g-3">
+  {% for f in files %}
+  <div class="col">
+    <div class="card h-100 text-center p-3 border-0 shadow-sm">
+      {% if f.source_type == 'LINK' and ('youtube.com' in f.storage_key or 'youtu.be' in f.storage_key or 'vimeo.com' in f.storage_key) %}
+        <button type="button" class="btn btn-link preview-btn p-0" data-url="{{ f.storage_key }}" title="Ver video">
+          <i class="bi bi-play-circle" style="font-size:3rem;"></i>
+        </button>
+      {% else %}
+        {% if f.source_type == 'LINK' %}
+          <a href="{{ f.storage_key }}" target="_blank" class="text-decoration-none">
+            <i class="bi bi-globe" style="font-size:3rem;"></i>
+          </a>
+        {% else %}
+          <a href="{{ url_for('static', filename=f.storage_key) }}" download class="text-decoration-none">
+            <i class="bi bi-file-earmark-fill" style="font-size:3rem;"></i>
+          </a>
+        {% endif %}
+      {% endif %}
+      <div class="mt-2 small text-truncate" title="{{ f.title or f.original_name }}">{{ f.title or f.original_name }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="previewModalLabel">Vista previa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0" style="height:70vh;">
+        <div class="ratio ratio-16x9 w-100 h-100">
+        <iframe id="previewFrame" src="" allowfullscreen></iframe>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .modal-backdrop.show{position:fixed !important;inset:0;opacity:.5;width: 100%;
+    height: 100%;}
+</style>
+<script>
+ document.addEventListener('DOMContentLoaded',()=>{
+   document.querySelectorAll('.preview-btn').forEach(btn=>{
+     btn.addEventListener('click',()=>{
+       const rawUrl = btn.dataset.url;
+       let embedUrl = rawUrl;
+       if(rawUrl.includes('youtube.com/watch')){
+         const id = new URL(rawUrl).searchParams.get('v');
+         embedUrl = `https://www.youtube.com/embed/${id}`;
+       }else if(rawUrl.includes('youtu.be/')){
+         const id = rawUrl.split('youtu.be/')[1].split('?')[0];
+         embedUrl = `https://www.youtube.com/embed/${id}`;
+       }else if(rawUrl.includes('vimeo.com/')){
+         const id = rawUrl.split('vimeo.com/')[1].split(/[?#]/)[0];
+         embedUrl = `https://player.vimeo.com/video/${id}`;
+       }
+       document.getElementById('previewFrame').src = embedUrl;
+       new bootstrap.Modal(document.getElementById('previewModal')).show();
+     })
+   });
+ });
+</script>
+{% endblock %}
