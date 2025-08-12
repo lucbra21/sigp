@@ -53,8 +53,8 @@
             {% else %}
                 <a href="{{ url_for('static', filename=f.storage_key) }}" download class="btn btn-sm btn-outline-primary">Descargar</a>
             {% endif %}
-            {% if can('update_media') %}
-            <a href="{{ url_for('multimedia.edit_media', media_id=f.id) }}" class="btn btn-sm btn-primary ms-1">Editar</a>
+            {% if can('update_media') and f.id %}
+            <a href="{{ url_for('multimedia.edit_media', media_id=f.id|string) }}" class="btn btn-sm btn-primary ms-1">Editar</a>
             {% endif %}
             {% if can('delete_media') %}
             <form method="post" action="{{ url_for('multimedia.delete_media', media_id=f.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar archivo?');">
