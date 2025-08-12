@@ -271,7 +271,26 @@ def my_media():
         media_obj.category_name = cat_lookup.get(getattr(media_obj, "category_id", None), "-") if Category else "-"
         role_val = getattr(media_obj, "role_id", None)
         media_obj.role_name = "Todos" if not role_val else role_lookup.get(str(role_val), "-")
-    return render_template("list/media_grid.html", files=files)
+        # compute embed url for video links
+        if media_obj.source_type == "VIDEO":
+            url = media_obj.storage_key
+            embed = url
+            if "youtube.com/watch" in url:
+                vid = url.split("v=")[1].split("&")[0]
+                embed = f"https://www.youtube.com/embed/{vid}"
+            elif "youtu.be/" in url:
+                vid = url.split("youtu.be/")[1].split("?")[0]
+                embed = f"https://www.youtube.com/embed/{vid}"
+            elif "vimeo.com/" in url:
+                vid = url.split("vimeo.com/")[1].split("/")[0]
+                embed = f"https://player.vimeo.com/video/{vid}"
+            media_obj.embed_url = embed
+    files_by_type = {"FILE": [], "LINK": [], "VIDEO": []}
+    for f in files:
+        if f.source_type not in files_by_type:
+            files_by_type[f.source_type] = []
+        files_by_type[f.source_type].append(f)
+    return render_template("list/media_tabs.html", files_by_type=files_by_type)
 
 # Editar / eliminar archivos
 # ────────────────────────────────────────────────────────────────────────────
