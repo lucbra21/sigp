@@ -53,7 +53,7 @@
                         <ul class="dropdown-menu" aria-labelledby="mediaDropdown">
                             {% if can('read_media') %}
                             {% if can('media_view') %}
-<li><a class="dropdown-item" href="{{ url_for('multimedia.list_media') }}">Mis archivos</a></li>
+<li><a class="dropdown-item" href="{{ url_for('multimedia.my_media') }}">Mis archivos</a></li>
 {% endif %}
 <li><a class="dropdown-item" href="{{ url_for('multimedia.list_media') }}">Archivos</a></li>
 {% endif %}
