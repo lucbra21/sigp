@@ -27,6 +27,9 @@ DEFAULT_LEAD_STATE_ID = 1
 landing_bp = Blueprint("landing", __name__, url_prefix="/p")
 
 
+from wtforms.validators import ValidationError
+from sqlalchemy import func
+
 class PublicLeadForm(FlaskForm):
     """Formulario de captación visible en la landing."""
 
@@ -35,6 +38,17 @@ class PublicLeadForm(FlaskForm):
     cellular = StringField("Celular", validators=[Optional(), Length(max=50)])
     program_info_id = SelectField("Programa", coerce=str, validators=[DataRequired(message="Seleccione un programa")])
     observations = TextAreaField("Observaciones", validators=[Optional(), Length(max=500)])
+
+    def validate_email(self, field):
+        email = (field.data or "").strip().lower()
+        if not email:
+            return
+        LeadTbl = getattr(Base.classes, "leads", None)
+        if LeadTbl is None:
+            return
+        exists = db.session.query(LeadTbl).filter(func.lower(LeadTbl.candidate_email) == email).first()
+        if exists:
+            raise ValidationError("Este correo ya está registrado.")
     submit = SubmitField("Me interesa")
 
     class Meta:
