@@ -90,7 +90,25 @@ def role_delete(role_id):
         return "Modelo de roles no disponible", 500
     role = db.session.get(Role, role_id)
     if role:
-        db.session.delete(role)
-        db.session.commit()
-        flash("Rol eliminado", "info")
+        # Verificar si algún usuario tiene asignado este rol
+        User = getattr(Base.classes, "users", None)
+        if User is not None:
+            assigned = db.session.query(User).filter(User.role_id == str(role_id)).count()
+            if assigned > 0:
+                flash(f"No se puede eliminar: el rol está asignado a {assigned} usuario(s)", "danger")
+                return redirect(url_for("roles.roles_list"))
+        # Eliminar permisos asociados en role_permissions/roles_permissions antes de borrar el rol
+        RolePerm = getattr(Base.classes, "role_permissions", None)
+        if RolePerm is None:
+            RolePerm = getattr(Base.classes, "roles_permissions", None)
+        if RolePerm is not None:
+            db.session.query(RolePerm).filter(RolePerm.role_id == str(role_id)).delete()
+            db.session.flush()
+        try:
+            db.session.delete(role)
+            db.session.commit()
+            flash("Rol eliminado", "info")
+        except Exception as e:
+            db.session.rollback()
+            flash("No se puede eliminar el rol: " + str(e.__class__.__name__), "danger")
     return redirect(url_for("roles.roles_list"))

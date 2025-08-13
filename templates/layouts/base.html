@@ -229,10 +229,12 @@
             if(target.tagName==='A'){
               window.location.href = target.href;
             } else if(target.tagName==='BUTTON' && target.form){
-               const fa = target.getAttribute('formaction');
-               if(fa){ target.form.action = fa; }
-               target.form.submit();
-             }
+                const fa = target.getAttribute('formaction');
+                if(fa){ target.form.action = fa; }
+                target.form.submit();
+              } else if(target.tagName==='FORM'){
+                target.submit();
+              }
           }
         });
       });
