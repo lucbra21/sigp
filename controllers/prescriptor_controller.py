@@ -834,15 +834,19 @@ def update_prescriptor(prescriptor_id):
                     presc_email = form.email.data.strip().lower()
                     from sigp.controllers.auth_controller import _generate_token
                     token = _generate_token(presc_email)
-                    reset_url = url_for("auth.reset_password", token=token, _external=True)
                     platform_url = "https://sigp.eniit.es/"
-                    contract_url = url_for("static", filename=f"contracts/{obj.id}.pdf", _external=True) if getattr(obj, "contract_url", None) else None
+                    reset_path = url_for("auth.reset_password", token=token)
+                    reset_url = platform_url.rstrip("/") + reset_path
+                    contract_url = None
+                    if getattr(obj, "contract_url", None):
+                        contract_path = url_for("static", filename=f"contracts/{obj.id}.pdf")
+                        contract_url = platform_url.rstrip("/") + contract_path
                     html_body = render_template(
                         "emails/prescriptor_training.html",
                         platform_url=platform_url,
                         email=presc_email,
                         reset_url=reset_url,
-                            contract_url=contract_url,
+                        contract_url=contract_url,
                     )
                     plain_body = (
                         "Hola!\n\n"

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import uuid
 from pathlib import Path
+import re
 
 from flask import (
     Blueprint,
@@ -39,6 +40,24 @@ from sigp.models import Base
 
 multimedia_bp = Blueprint("multimedia", __name__, url_prefix="/media")
 
+# Helper ---------------------------------------------------------------
+
+def _to_embed(url: str) -> str:
+    """Convierte enlaces de YouTube/Vimeo a formato embebido."""
+    if not url:
+        return url
+    if "youtube.com/watch" in url:
+        vid = re.search(r"v=([^&]+)", url)
+        if vid:
+            return f"https://www.youtube.com/embed/{vid.group(1)}"
+    if "youtu.be/" in url:
+        vid = url.split("youtu.be/")[1].split("?")[0]
+        return f"https://www.youtube.com/embed/{vid}"
+    if "vimeo.com/" in url:
+        vid = url.split("vimeo.com/")[1].split("/")[0]
+        return f"https://player.vimeo.com/video/{vid}"
+    return url
+
 # ────────────────────────────────────────────────────────────────────────────
 # Formularios
 # ────────────────────────────────────────────────────────────────────────────
@@ -49,7 +68,7 @@ class CategoryForm(FlaskForm):
 
 
 class UploadForm(FlaskForm):
-    source_type = SelectField("Tipo", choices=[("FILE", "Archivo"), ("LINK", "Enlace")], validators=[DataRequired()])
+    source_type = SelectField("Tipo", choices=[("FILE", "Archivo"), ("LINK", "Enlace"), ("VIDEO", "Video")], validators=[DataRequired()])
     category = SelectField("Categoría", coerce=int, validators=[DataRequired()])
     # Usamos str para permitir UUID u otros tipos de clave primaria
     role_id = SelectField("Rol", coerce=str)
@@ -153,7 +172,10 @@ def upload_media():
             mime = f.mimetype
             size_b = storage_path.stat().st_size
         else:
-            storage_key = form.url.data
+            storage_key = _to_embed(form.url.data)
+            # Si el link es de video y el usuario dejó TYPE=LINK, forzamos VIDEO
+            if form.source_type.data == "LINK" and storage_key != form.url.data:
+                form.source_type.data = "VIDEO"
             mime = "url/external"
             size_b = None
             orig_name = form.url.data
@@ -271,9 +293,11 @@ def my_media():
         media_obj.category_name = cat_lookup.get(getattr(media_obj, "category_id", None), "-") if Category else "-"
         role_val = getattr(media_obj, "role_id", None)
         media_obj.role_name = "Todos" if not role_val else role_lookup.get(str(role_val), "-")
-        # compute embed url for video links
-        if media_obj.source_type == "VIDEO":
-            url = media_obj.storage_key
+        # Detect and prepare embed for YouTube/Vimeo links
+        url = media_obj.storage_key or ""
+        is_video_link = bool(re.search(r"(youtu\.be/|youtube\.com/(watch|embed)|vimeo\.com/)", url))
+        if media_obj.source_type == "VIDEO" or is_video_link:
+            # normalizar ID
             embed = url
             if "youtube.com/watch" in url:
                 vid = url.split("v=")[1].split("&")[0]
@@ -285,6 +309,8 @@ def my_media():
                 vid = url.split("vimeo.com/")[1].split("/")[0]
                 embed = f"https://player.vimeo.com/video/{vid}"
             media_obj.embed_url = embed
+            # Reetiquetar para UI
+            media_obj.source_type = "VIDEO"
     files_by_type = {"FILE": [], "LINK": [], "VIDEO": []}
     for f in files:
         if f.source_type not in files_by_type:
@@ -344,15 +370,19 @@ def edit_media(media_id):
     else:
         form.role_id.choices = [("0", "Todos")]
 
-    # ocultamos campos de archivo/url para edición
+    # ocultamos campo de archivo para edición pero mantenemos URL
     del form.file
-    del form.url
-    del form.source_type
 
     if form.validate_on_submit():
         obj.title = form.title.data
         obj.description = form.description.data
+        obj.source_type = form.source_type.data
         obj.visibility = form.visibility.data
+        if obj.source_type != "FILE" and form.url.data:
+            obj.storage_key = _to_embed(form.url.data)
+            if form.source_type.data == "LINK" and obj.storage_key != form.url.data:
+                obj.source_type = "VIDEO"
+            obj.original_name = form.url.data
         if hasattr(obj, "role_id"):
             obj.role_id = None if form.role_id.data == "0" else form.role_id.data
         # actualizar categoría
@@ -385,6 +415,10 @@ def edit_media(media_id):
             cat_rel = db.session.query(AssocCat).filter_by(media_id=media_id).first()
             if cat_rel:
                 form.category.data = cat_rel.category_id
+        if obj.source_type != "FILE":
+            form.url.data = obj.storage_key
+        else:
+            form.url.data = None
         # rol actual
         if hasattr(obj, "role_id") and obj.role_id:
             form.role_id.data = str(obj.role_id)

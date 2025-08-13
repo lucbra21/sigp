@@ -27,7 +27,7 @@
         <div class="card h-100 text-center p-3 border-0 bg-transparent">
           {% if f.source_type == 'VIDEO' %}
             <div class="ratio ratio-16x9">
-              <iframe src="{{ f.embed_url }}" allowfullscreen class="rounded"></iframe>
+              <iframe src="{{ f.embed_url }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="rounded border"></iframe>
             </div>
           {% else %}
             {% if f.source_type == 'LINK' %}

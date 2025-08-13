@@ -5,15 +5,31 @@
 <div class="card form-card mx-auto" style="max-width:700px;">
   <form method="post" action="{{ action }}" id="editForm" class="row g-3">
     {{ form.csrf_token }}
+    <div class="mb-3">{{ form.source_type.label }} {{ form.source_type(class="form-select") }}</div>
     <div class="mb-3">{{ form.category.label }} {{ form.category(class="form-select") }}</div>
     <div class="mb-3">{{ form.role_id.label }} {{ form.role_id(class="form-select") }}</div>
     <div class="mb-3">{{ form.visibility.label }} {{ form.visibility(class="form-select") }}</div>
     <div class="mb-3">{{ form.title.label }} {{ form.title(class="form-control") }}</div>
     <div class="mb-3">{{ form.description.label }} {{ form.description(class="form-control") }}</div>
+    <div class="mb-3" id="urlField">{{ form.url.label }} {{ form.url(class="form-control") }}</div>
     <div class="col-12 d-flex justify-content-center gap-2 mt-2">
       {{ form.submit(class="btn btn-primary", value='Guardar') }}
       <a href="{{ url_for('multimedia.list_media') }}" class="btn btn-secondary">Cancelar</a>
     </div>
   </form>
+</div>
+<script>
+  const sourceSel = document.querySelector('select[name="source_type"]');
+  const urlDiv = document.getElementById('urlField');
+  function toggleUrl(){ if(urlDiv && sourceSel){ urlDiv.classList.toggle('d-none', sourceSel.value==='FILE');}}
+  document.addEventListener('DOMContentLoaded', toggleUrl);
+  if(sourceSel) sourceSel.addEventListener('change', toggleUrl);
+  const form=document.getElementById('editForm');
+  const overlay=document.getElementById('editLoading');
+  if(form){form.addEventListener('submit',()=>{if(form.checkValidity()){overlay.classList.remove('d-none');overlay.classList.add('d-flex');}})}
+</script>
+<!-- Loading overlay -->
+<div id="editLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
+  <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
 </div>
 {% endblock %}
