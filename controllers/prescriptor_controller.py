@@ -319,6 +319,7 @@ def create_invoice():
                 )
                 db.session.add(notif)
             db.session.commit()
+
     except Exception as exc:  # pylint: disable=broad-except
         current_app.logger.error("Error enviando mail/notification de factura: %s", exc)
 
@@ -734,6 +735,8 @@ def update_prescriptor(prescriptor_id):
 
     if form.validate_on_submit():
         # precargar y actualizar email/cellular
+        old_state_id = getattr(obj, "state_id", None)
+        old_sub_id = getattr(obj, "sub_state_id", None)
         obj.state_id = int(form.state_id.data)
         # actualizar subestado si existe
         if hasattr(obj, "sub_state_id") and hasattr(form, "sub_state"):
@@ -798,10 +801,14 @@ def update_prescriptor(prescriptor_id):
 
         # manejar contrato
         if form.contract_file.data:
+            had_contract = bool(getattr(obj, "contract_url", None))
             filename = f"{obj.id}.pdf"
             path = current_app.config["CONTRACT_UPLOAD_FOLDER"] / filename
             form.contract_file.data.save(path)
             obj.contract_url = url_for("static", filename=f"contracts/{filename}")
+            # si antes no tenía contrato y ahora sí, pasar a EN CAPACITACION (sub_state_id = 4)
+            if not had_contract and hasattr(obj, "sub_state_id") and getattr(obj, "sub_state_id", None) != 4:
+                obj.sub_state_id = 4
 
         # actualizar usuario asociado
         if UserModel and obj.user_id:
@@ -813,6 +820,44 @@ def update_prescriptor(prescriptor_id):
         try:
             db.session.commit()
             flash("Prescriptor actualizado", "success")
+            # ---- Enviar correo si el estado cambió a EN CAPACITACION ----
+            try:
+                StateModel = getattr(Base.classes, "state_prescriptor", None)
+                trigger_mail = False
+                if getattr(obj, "sub_state_id", None) == 4 and old_sub_id != 4:
+                    trigger_mail = True
+                if StateModel and old_state_id != obj.state_id:
+                    new_state = db.session.get(StateModel, obj.state_id)
+                    if new_state and str(getattr(new_state, "name", "")).strip().lower().startswith("en capacit"):
+                            trigger_mail = True
+                if trigger_mail:
+                    presc_email = form.email.data.strip().lower()
+                    from sigp.controllers.auth_controller import _generate_token
+                    token = _generate_token(presc_email)
+                    reset_url = url_for("auth.reset_password", token=token, _external=True)
+                    platform_url = "https://sigp.eniit.es/"
+                    contract_url = url_for("static", filename=f"contracts/{obj.id}.pdf", _external=True) if getattr(obj, "contract_url", None) else None
+                    html_body = render_template(
+                        "emails/prescriptor_training.html",
+                        platform_url=platform_url,
+                        email=presc_email,
+                        reset_url=reset_url,
+                            contract_url=contract_url,
+                    )
+                    plain_body = (
+                        "Hola!\n\n"
+                        "Tu cuenta ya está habilitada para la fase de capacitación.\n\n"
+                        f"Plataforma: {platform_url}\nUsuario: {presc_email}\nRestablecer contraseña: {reset_url}\n\n"+
+                        (f"Descargar contrato firmado: {contract_url}\n\n" if contract_url else "")+
+                        "En el menú verás el módulo Multimedia > Mis archivos con los recursos de capacitación (videos, links y archivos).\n\n"
+                        "¡Éxitos en tu formación!"
+                    )
+                    from sigp.common.email_utils import send_simple_mail
+                    send_simple_mail([presc_email], "Acceso a plataforma de capacitación", html_body, html=True, text_body=plain_body)
+    
+
+            except Exception as exc:
+                current_app.logger.error("Error enviando mail de capacitación: %s", exc)
         except Exception as e:
             db.session.rollback()
             current_app.logger.exception("Error al actualizar prescriptor: %s", e)

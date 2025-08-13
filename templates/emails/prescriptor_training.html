@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Acceso a capacitación SIGP</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;color:#333;margin:0;padding:0}
+    .container{max-width:600px;margin:0 auto;padding:20px}
+    .btn{display:inline-block;background:#0d6efd;color:#fff;text-decoration:none;padding:12px 22px;border-radius:4px;margin-top:15px}
+    .small{font-size:13px;color:#666}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>¡Bienvenido a la fase de capacitación!</h2>
+    <p>Tu cuenta en la plataforma SIGP ya está activa.</p>
+    <p>
+      <strong>Plataforma:</strong> <a href="{{ platform_url }}">{{ platform_url }}</a><br>
+      <strong>Usuario:</strong> {{ email }}
+    </p>
+    <p>Antes de ingresar, por favor establece tu contraseña haciendo clic en el siguiente botón:</p>
+    <p><a href="{{ reset_url }}" class="btn">Restablecer contraseña</a></p>
+    {% if contract_url %}
+    <p>Ya hemos firmado tu contrato. Descárgalo aquí:</p>
+    <p><a href="{{ contract_url }}" class="btn">Descargar contrato firmado</a></p>
+    <p class="small">Firmado por nuestro presidente.</p>
+    {% endif %}
+    <p>Una vez dentro verás en el menú el módulo <strong>Multimedia &gt; Mis archivos</strong> con videos, enlaces y archivos de capacitación.</p>
+    <p>¡Éxitos en tu formación!</p>
+    <p class="small">Si no solicitaste este correo, simplemente ignóralo.</p>
+  </div>
+</body>
+</html>
