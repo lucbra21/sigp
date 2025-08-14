@@ -799,15 +799,13 @@ def update_prescriptor(prescriptor_id):
                 if saved_url:
                     setattr(obj, model_attr, saved_url)
 
-        # manejar contrato
+        # manejar contrato: si se carga (o reemplaza) un PDF, guardar y pasar a EN CAPACITACIÓN (sub_state_id=4)
         if form.contract_file.data:
-            had_contract = bool(getattr(obj, "contract_url", None))
             filename = f"{obj.id}.pdf"
             path = current_app.config["CONTRACT_UPLOAD_FOLDER"] / filename
             form.contract_file.data.save(path)
             obj.contract_url = url_for("static", filename=f"contracts/{filename}")
-            # si antes no tenía contrato y ahora sí, pasar a EN CAPACITACION (sub_state_id = 4)
-            if not had_contract and hasattr(obj, "sub_state_id") and getattr(obj, "sub_state_id", None) != 4:
+            if hasattr(obj, "sub_state_id") and getattr(obj, "sub_state_id", None) != 4:
                 obj.sub_state_id = 4
 
         # actualizar usuario asociado
