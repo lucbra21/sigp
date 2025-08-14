@@ -599,24 +599,31 @@ def create_prescriptor():
             form.contract_file.data.save(path)
             obj_kwargs["contract_url"] = url_for("static", filename=f"contracts/{filename}")
 
-        # Crear usuario asociado
+        # Crear o reutilizar usuario asociado según el email
         UserModel = getattr(Base.classes, "users", None)
         if not UserModel:
             flash("Modelo users no disponible", "danger")
+            return render_template("records/prescriptor_form.html", form=form, action=url_for("prescriptors.create_prescriptor"))
 
-        new_user = UserModel(id=str(uuid.uuid4()))
-        new_user.name = form.squeeze_page_name.data
-        new_user.email = form.email.data
-        new_user.cellular = form.cellular.data
-        new_user.role_id = "5e6e517e-584b-42be-a7a3-564ee14e8723"
-        new_user.state_id = 1  # INACTIVO
-        # asignar password aleatorio
-        temp_pass = str(uuid.uuid4())
-        new_user.password_hash = hashlib.sha256(temp_pass.encode()).hexdigest()
-        db.session.add(new_user)
-        db.session.flush()  # obtener id
-
-        obj_kwargs["user_id"] = new_user.id
+        existing_user = db.session.query(UserModel).filter(UserModel.email == form.email.data).first()
+        if existing_user:
+            # reutilizar y actualizar datos básicos
+            existing_user.name = form.squeeze_page_name.data
+            existing_user.cellular = form.cellular.data
+            obj_kwargs["user_id"] = existing_user.id
+        else:
+            # crear nuevo usuario
+            new_user = UserModel(id=str(uuid.uuid4()))
+            new_user.name = form.squeeze_page_name.data
+            new_user.email = form.email.data
+            new_user.cellular = form.cellular.data
+            new_user.role_id = "5e6e517e-584b-42be-a7a3-564ee14e8723"
+            new_user.state_id = 1  # INACTIVO
+            temp_pass = str(uuid.uuid4())
+            new_user.password_hash = hashlib.sha256(temp_pass.encode()).hexdigest()
+            db.session.add(new_user)
+            db.session.flush()  # obtener id
+            obj_kwargs["user_id"] = new_user.id
 
         new_obj = Model(**obj_kwargs)
         # Establecer valores por defecto de negocio
@@ -812,6 +819,10 @@ def update_prescriptor(prescriptor_id):
         if UserModel and obj.user_id:
             u = db.session.get(UserModel, obj.user_id)
             if u:
+                # Validar email duplicado antes de asignar
+                if db.session.query(UserModel).filter(UserModel.email == form.email.data, UserModel.id != u.id).first():
+                    flash("Ese email ya está registrado en otro usuario", "warning")
+                    return render_template("records/prescriptor_form.html", form=form, action=url_for("prescriptors.edit_prescriptor", prescriptor_id=prescriptor_id))
                 u.email = form.email.data
                 u.cellular = form.cellular.data
 
