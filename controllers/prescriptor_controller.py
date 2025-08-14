@@ -725,7 +725,7 @@ def edit_my_prescriptor():
             current_app.logger.exception("Error actualizando datos de prescriptor: %s", exc)
             flash("Error al guardar cambios", "danger")
 
-    return render_template("records/prescriptor_self_edit.html", form=form)
+    return render_template("records/prescriptor_self_edit.html", form=form, photo_url=prescriptor.photo_url)
 
 
 @prescriptors_bp.get("/<prescriptor_id>/edit")

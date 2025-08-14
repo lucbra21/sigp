@@ -10,6 +10,9 @@
   {% if form.squeeze_page_image_1_file is defined %}
   <div class="col-md-12">
     <label for="squeezeImg" class="form-label">Foto Squeeze Page</label>
+    <div class="text-center mb-2">
+      <img src="{{ photo_url }}" id="previewImg" class="img-thumbnail" style="max-width:120px" {% if not photo_url %}class="d-none"{% endif %}>
+    </div>
     {{ form.squeeze_page_image_1_file(id='squeezeImg', class='form-control') }}
   </div>
   {% endif %}
@@ -48,7 +51,18 @@
         });
       }
     });
-  </script>
+        const input=document.getElementById('squeezeImg');
+      const preview=document.getElementById('previewImg');
+      if(input && preview){
+        input.addEventListener('change',e=>{
+          const file=e.target.files[0];
+          if(file){
+            preview.src=URL.createObjectURL(file);
+            preview.classList.remove('d-none');
+          }
+        });
+      }
+    </script>
   </div>
 </div>
 {% endblock %}
