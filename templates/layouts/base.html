@@ -261,7 +261,7 @@
     </ul>
 
      {% if current_prescriptor %}
-     <h6 class="mt-3">Datos de prescriptor</h6>
+         <h6 class="mt-3">Datos de prescriptor</h6>
       <div class="text-center mb-2">
         {% if presc_photo_url %}<img src="{{ presc_photo_url }}" class="img-thumbnail mb-2" style="max-width:120px">{% endif %}
       </div>
@@ -277,10 +277,11 @@
        <li class="list-group-item d-flex justify-content-between"><span>Squeeze Page</span><a href="/p/{{ current_prescriptor.id }}" target="_blank"><i class="bi bi-link-45deg"></i></a></li>
        {% if current_prescriptor.payment_details %}<li class="list-group-item"><span class="fw-semibold d-block">Datos de pago</span><span class="d-block small">{{ current_prescriptor.payment_details | replace('\n','<br>') | safe }}</span></li>{% endif %}
        {% if presc_contract_url %}<li class="list-group-item text-center"><a href="{{ presc_contract_url }}" class="btn btn-outline-primary btn-sm" target="_blank"><i class="bi bi-file-earmark-pdf"></i> Descargar contrato</a></li>{% endif %}
-     </ul>
-     {% endif %}
-
-     <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger w-100">Cerrar sesión</a>
+      </ul>
+      {% if current_prescriptor %}<a href="{{ url_for('prescriptors.edit_my_prescriptor') }}" class="btn btn-outline-primary w-100 mb-2">Actualizar mis datos</a>{% endif %}
+      {% endif %}
+ 
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger w-100">Cerrar sesión</a>
   </div>
 </div>
 

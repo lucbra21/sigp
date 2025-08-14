@@ -1,0 +1,54 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Actualizar mis datos{% endblock %}
+{% block content %}
+<h2 class="fw-semibold mb-4 text-center">Actualizar mis datos</h2>
+<div class="card shadow-sm border border-secondary-subtle bg-light mx-auto" style="max-width:800px;">
+  <div class="card-body">
+<form id="selfEditForm" method="POST" enctype="multipart/form-data" action="{{ url_for('prescriptors.edit_my_prescriptor') }}" class="row g-3">
+  {{ form.csrf_token }}
+  {{ form.hidden_tag() }}
+  {% if form.squeeze_page_image_1_file is defined %}
+  <div class="col-md-12">
+    <label for="squeezeImg" class="form-label">Foto Squeeze Page</label>
+    {{ form.squeeze_page_image_1_file(id='squeezeImg', class='form-control') }}
+  </div>
+  {% endif %}
+  <div class="col-md-6">
+    {{ form.face_url.label(class='form-label') }}
+    {{ form.face_url(class='form-control') }}
+  </div>
+  <div class="col-md-6">
+    {{ form.linkedin_url.label(class='form-label') }}
+    {{ form.linkedin_url(class='form-control') }}
+  </div>
+  <div class="col-md-6">
+    {{ form.instagram_url.label(class='form-label') }}
+    {{ form.instagram_url(class='form-control') }}
+  </div>
+  <div class="col-md-6">
+    {{ form.x_url.label(class='form-label') }}
+    {{ form.x_url(class='form-control') }}
+  </div>
+  <div class="col-md-12">
+    {{ form.observations.label(class='form-label') }}
+    {{ form.observations(class='form-control', rows=3) }}
+  </div>
+  <div class="col-12 text-end">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar cambios</button>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded',()=>{
+      const f=document.getElementById('selfEditForm');
+      const overlay=document.getElementById('globalLoading');
+      if(f&&overlay){
+        f.addEventListener('submit',()=>{
+          overlay.classList.remove('d-none');
+          overlay.classList.add('d-flex');
+        });
+      }
+    });
+  </script>
+  </div>
+</div>
+{% endblock %}

@@ -25,6 +25,7 @@ from werkzeug.utils import secure_filename
 import hashlib
 import uuid
 from sigp.models import Base
+import time
 
 # ---------------------------------------------------------------------------
 # Blueprint
@@ -557,7 +558,7 @@ def create_prescriptor():
     form = FormClass()
     current_app.logger.info(">>> creando prescriptor con data %s", form.data)
 
-    if form.validate_on_submit():
+    if request.method == "POST":  # self-edit proceeds even if not all fields present
         # Construir objeto con todos los campos disponibles
         # Construir dinámicamente los campos disponibles en el formulario
         obj_kwargs = {
@@ -662,6 +663,71 @@ def create_prescriptor():
     return render_template("records/prescriptor_form.html", form=form, action=url_for("prescriptors.create_prescriptor"))
 
 
+@prescriptors_bp.route("/my/edit", methods=["GET","POST"])
+@login_required
+def edit_my_prescriptor():
+    """Permite al prescriptor autenticado editar algunos de sus datos."""
+    Base = db.Model
+    PrescriptorModel = _get_model()
+    if not PrescriptorModel:
+        flash("Modelo no disponible", "danger")
+        return redirect(url_for("index"))
+
+    # buscar prescriptor por user_id
+    prescriptor = db.session.query(PrescriptorModel).filter_by(user_id=current_user.id).first()
+    if not prescriptor:
+        flash("No se encontró prescriptor asociado", "warning")
+        return redirect(url_for("index"))
+
+    FormClass = prescriptor_form_factory(is_create=False)
+    form = FormClass(obj=prescriptor)
+
+    # limitar solo a campos permitidos (se renderizan en template)
+    for fld in [
+        "state_id","sub_state","type_id","proposed_type_id","confidence_level_id","squeeze_page_status","squeeze_page_name",
+        "squeeze_url_tst","squeeze_url_prd","billing_data","contract_file","contract_url","user_id"]:
+        if hasattr(form, fld):
+            getattr(form, fld).render_kw = {"disabled": True}
+
+    if request.method == "POST":  # self-edit proceeds even if not all fields present
+        # solo campos permitidos
+        allowed_simple = [
+            "face_url","linkedin_url","instagram_url","x_url","observations"
+        ]
+        for fld in allowed_simple:
+            if hasattr(form, fld) and hasattr(prescriptor, fld):
+                setattr(prescriptor, fld, getattr(form, fld).data or None)
+        # preparar directorio de imágenes
+        upload_dir = current_app.config.get("PRESCRIPTOR_IMG_FOLDER", current_app.root_path + "/static/prescriptors")
+        os.makedirs(upload_dir, exist_ok=True)
+        # foto
+        if hasattr(form, "photo_file") and form.photo_file.data:
+            upload_dir = current_app.config.get("PRESCRIPTOR_IMG_FOLDER", current_app.root_path+"/static/prescriptors")
+            os.makedirs(upload_dir, exist_ok=True)
+            ext = form.photo_file.data.filename.rsplit('.',1)[-1]
+            filename = secure_filename(f"{prescriptor.id}_photo_{int(time.time())}.{ext}")
+            path = os.path.join(upload_dir, filename)
+            form.photo_file.data.save(path)
+            prescriptor.photo_url = url_for("static", filename=f"prescriptors/{filename}")
+        # guardar foto squeeze page si se sube
+        if hasattr(form, "squeeze_page_image_1_file") and form.squeeze_page_image_1_file.data:
+            ext_sp = form.squeeze_page_image_1_file.data.filename.rsplit('.',1)[-1]
+            filename_sp = secure_filename(f"{prescriptor.id}_sp_{int(time.time())}.{ext_sp}")
+            path_sp = os.path.join(upload_dir, filename_sp)
+            form.squeeze_page_image_1_file.data.save(path_sp)
+            prescriptor.photo_url = url_for("static", filename=f"prescriptors/{filename_sp}")
+        try:
+            db.session.commit()
+            flash("Datos actualizados", "success")
+            return redirect(url_for("index"))
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.exception("Error actualizando datos de prescriptor: %s", exc)
+            flash("Error al guardar cambios", "danger")
+
+    return render_template("records/prescriptor_self_edit.html", form=form)
+
+
 @prescriptors_bp.get("/<prescriptor_id>/edit")
 @login_required
 def edit_prescriptor(prescriptor_id):
@@ -740,7 +806,7 @@ def update_prescriptor(prescriptor_id):
     UserModel = getattr(Base.classes, "users", None)
     current_app.logger.info(">>> creando prescriptor con data %s", form.data)
 
-    if form.validate_on_submit():
+    if request.method == "POST":  # self-edit proceeds even if not all fields present
         # precargar y actualizar email/cellular
         old_state_id = getattr(obj, "state_id", None)
         old_sub_id = getattr(obj, "sub_state_id", None)
