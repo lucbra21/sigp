@@ -42,6 +42,24 @@ class Config:
     CONTRACT_UPLOAD_FOLDER = "static/contracts"
     CONTRACT_ALLOWED_EXT = {"pdf"}
 
+    # Firma de contratos
+    # SIGN_MODE: DIY (firma electrónica + PAdES local) | SAAS (proveedor externo)
+    SIGN_MODE = os.getenv("SIGN_MODE", "DIY").upper()
+
+    # Email del presidente (contra-firmante)
+    PRESIDENT_EMAIL = os.getenv("PRESIDENT_EMAIL", "presidente@example.com")
+
+    # Enlaces de firma (tokens firmados y expirables)
+    SIGN_TOKEN_SECRET = os.getenv("SIGN_TOKEN_SECRET", "change-this-token-secret")
+    SIGN_LINK_EXP_MINUTES = int(os.getenv("SIGN_LINK_EXP_MINUTES", 60))
+
+    # Certificado del presidente para PAdES (modo DIY)
+    # Ruta a .p12/.pfx y password; alternativamente, configuración PKCS#11
+    PRESIDENT_CERT_PATH = os.getenv("PRESIDENT_CERT_PATH", "")
+    PRESIDENT_CERT_PASS = os.getenv("PRESIDENT_CERT_PASS", "")
+    PRESIDENT_PKCS11_URI = os.getenv("PRESIDENT_PKCS11_URI", "")
+    PRESIDENT_PKCS11_PIN = os.getenv("PRESIDENT_PKCS11_PIN", "")
+
     # Facturas prescriptores
     INVOICE_UPLOAD_FOLDER = "static/invoices"
     INVOICE_ALLOWED_EXT = {"pdf", "jpg", "jpeg", "png"}

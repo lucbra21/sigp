@@ -1,0 +1,15 @@
+{% extends 'layouts/base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="card mx-auto" style="max-width:720px;">
+    <div class="card-body">
+      <h5 class="mb-3">Contrato generado</h5>
+      <p><strong>Descarga:</strong> <a href="{{ contract_url }}" target="_blank">{{ contract_url }}</a></p>
+      <p><strong>SHA-256:</strong> <code>{{ sha256 }}</code></p>
+      <hr>
+      <p>Link de firma del prescriptor (pruebas):</p>
+      <a class="btn btn-primary" href="{{ sign_link }}">Abrir página de firma del prescriptor</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

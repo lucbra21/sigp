@@ -8,3 +8,6 @@ PyMySQL
 python-dotenv
 bcrypt
 email_validator
+itsdangerous>=2.2
+reportlab>=3.6
+pyHanko>=0.19

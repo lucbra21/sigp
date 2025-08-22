@@ -1,0 +1,21 @@
+{% extends 'layouts/base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="card mx-auto" style="max-width:640px;">
+    <div class="card-body">
+      <h5 class="mb-3">Firma del contrato</h5>
+      <p>Elegí el método de firma para continuar.</p>
+      <div class="d-flex gap-2">
+        <form method="GET" action="#" onsubmit="alert('Flujo electrónico se implementará en el siguiente paso'); return false;">
+          <input type="hidden" name="token" value="{{ token }}">
+          <button class="btn btn-primary" type="submit">Firma electrónica (prescriptor)</button>
+        </form>
+        <form method="GET" action="#" onsubmit="alert('La firma del presidente (PAdES) se gatilla luego de la firma del prescriptor'); return false;">
+          <input type="hidden" name="token" value="{{ token }}">
+          <button class="btn btn-outline-secondary" type="submit">Continuar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
