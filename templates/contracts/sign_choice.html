@@ -6,14 +6,8 @@
       <h5 class="mb-3">Firma del contrato</h5>
       <p>Elegí el método de firma para continuar.</p>
       <div class="d-flex gap-2">
-        <form method="GET" action="#" onsubmit="alert('Flujo electrónico se implementará en el siguiente paso'); return false;">
-          <input type="hidden" name="token" value="{{ token }}">
-          <button class="btn btn-primary" type="submit">Firma electrónica (prescriptor)</button>
-        </form>
-        <form method="GET" action="#" onsubmit="alert('La firma del presidente (PAdES) se gatilla luego de la firma del prescriptor'); return false;">
-          <input type="hidden" name="token" value="{{ token }}">
-          <button class="btn btn-outline-secondary" type="submit">Continuar</button>
-        </form>
+        <a class="btn btn-primary" href="{{ url_for('contracts.sign_draw_get', token=token) }}">Firmar dibujando (prescriptor)</a>
+        <button class="btn btn-outline-secondary" type="button" disabled>Continuar (firma presidente luego)</button>
       </div>
     </div>
   </div>

@@ -11,3 +11,4 @@ email_validator
 itsdangerous>=2.2
 reportlab>=3.6
 pyHanko>=0.19
+pypdf>=4.2.0

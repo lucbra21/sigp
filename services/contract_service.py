@@ -80,16 +80,69 @@ Cláusula 4: Duración y terminación...\n\n
 
 def stamp_signature_image(input_pdf: Path, signature_png: Path, output_pdf: Path,
                            page: int = 1, x: int = 200, y: int = 120, w: int = 200, h: int = 40) -> None:
+    """Superpone una imagen PNG de firma sobre el PDF en la página indicada.
+    page es 1-based en este API; internamente se convierte a 0-based.
+    Coordenadas x,y están en puntos PDF (origen inferior izquierdo).
     """
-    TODO: Estampar imagen de firma manuscrita sobre el PDF (overlay).
-    Implementaremos con pypdf o reportlab+merge en iteración siguiente.
-    Por ahora, dejaremos un NotImplementedError para evitar falsas expectativas.
-    """
-    raise NotImplementedError("stamp_signature_image aún no implementado")
+    from tempfile import NamedTemporaryFile
+    from pypdf import PdfReader, PdfWriter
+
+    # Crear un PDF de overlay con la imagen en la posición deseada
+    with NamedTemporaryFile(suffix="_overlay.pdf", delete=False) as tmp:
+        overlay_path = Path(tmp.name)
+    try:
+        # Determinar tamaño de página del input para el overlay
+        reader = PdfReader(str(input_pdf))
+        target_index = max(0, page - 1)
+        target_index = min(target_index, len(reader.pages) - 1)
+        mediabox = reader.pages[target_index].mediabox
+        width = float(mediabox.width)
+        height = float(mediabox.height)
+
+        c = canvas.Canvas(str(overlay_path), pagesize=(width, height))
+        # Dibujar la imagen (ajustar a w x h)
+        c.drawImage(str(signature_png), x, y, width=w, height=h, mask='auto')
+        c.showPage()
+        c.save()
+
+        # Fusionar overlay con la página destino
+        overlay_reader = PdfReader(str(overlay_path))
+        overlay_page = overlay_reader.pages[0]
+
+        writer = PdfWriter()
+        for i, pg in enumerate(reader.pages):
+            new_page = pg
+            if i == target_index:
+                # merge_page modifica in place
+                new_page.merge_page(overlay_page)
+            writer.add_page(new_page)
+
+        with open(output_pdf, "wb") as outf:
+            writer.write(outf)
+    finally:
+        try:
+            overlay_path.unlink(missing_ok=True)
+        except Exception:
+            pass
 
 
 def sign_pades(input_pdf: Path, output_pdf: Path) -> None:
+    """Firma el PDF con PAdES-BES usando el certificado P12 configurado.
+    Si se configura PKCS#11 en el futuro, se puede ampliar.
     """
-    TODO: Firmar PDF con pyHanko usando P12 o PKCS#11, configurable por env.
-    """
-    raise NotImplementedError("PAdES con pyHanko aún no implementado")
+    from pyhanko.sign import signers
+    from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
+
+    p12_path = current_app.config.get("PRESIDENT_CERT_PATH")
+    p12_pass = current_app.config.get("PRESIDENT_CERT_PASS", "")
+    if not p12_path:
+        raise RuntimeError("PRESIDENT_CERT_PATH no configurado")
+
+    p12_bytes = Path(current_app.root_path, p12_path).read_bytes() if not p12_path.startswith("/") else Path(p12_path).read_bytes()
+    signer = signers.SimpleSigner.load_pkcs12(p12_bytes, passphrase=p12_pass.encode() if p12_pass else None)
+
+    with open(input_pdf, "rb") as inf:
+        w = IncrementalPdfFileWriter(inf)
+        meta = signers.PdfSignatureMetadata()  # firma invisible
+        with open(output_pdf, "wb") as outf:
+            signers.PdfSigner(meta, signer=signer).sign_pdf(w, output=outf)

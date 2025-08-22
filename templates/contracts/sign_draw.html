@@ -1,0 +1,50 @@
+{% extends 'layouts/base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="card mx-auto" style="max-width:740px;">
+    <div class="card-body">
+      <h5 class="mb-3">Firma del Prescriptor</h5>
+      <p>Dibujá tu firma en el recuadro y confirmá para aplicarla al contrato.</p>
+      <div class="border rounded p-2 mb-3 bg-light">
+        <canvas id="sigpad" style="width:100%;height:220px;border:1px dashed #999;background:#fff;"></canvas>
+      </div>
+      <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-secondary" id="btn-clear" type="button">Limpiar</button>
+      </div>
+      <form method="post" action="{{ url_for('contracts.sign_draw_post') }}" onsubmit="return submitSignature();">
+        <input type="hidden" name="token" value="{{ token }}">
+        <input type="hidden" name="signature_data" id="signature_data">
+        <button class="btn btn-primary" type="submit">Aplicar firma</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.2.0/dist/signature_pad.umd.min.js"></script>
+<script>
+(function(){
+  const canvas = document.getElementById('sigpad');
+  // Ajustar tamaño real del canvas al contenedor
+  function resizeCanvas(){
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * ratio;
+    canvas.height = 220 * ratio;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(ratio, ratio);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  const pad = new SignaturePad(canvas, {backgroundColor: 'rgb(255,255,255)'});
+  document.getElementById('btn-clear').addEventListener('click', function(){ pad.clear(); });
+
+  window.submitSignature = function(){
+    if (pad.isEmpty()) { alert('Por favor dibujá tu firma.'); return false; }
+    const dataUrl = pad.toDataURL('image/png');
+    document.getElementById('signature_data').value = dataUrl;
+    return true;
+  }
+})();
+</script>
+{% endblock %}
