@@ -478,7 +478,7 @@ def generate_contract_pdf(prescriptor, filename: Optional[str] = None) -> Path:
     y -= 8
     c.setFont("Helvetica-Bold", 13)
     c.drawString(margin_x, y, "DÉCIMA. – Protección de Datos")
-    # y -= 18
+    y -= 18
 
     y = draw_paragraph("1. EL COLABORADOR tratará los datos personales proporcionados por LA EMPRESA y los adquiridos durante el periodo de vigencia de este acuerdo, exclusivamente, para los fines establecidos en este contrato, no pudiendo utilizarlos para ningún otro fin personal o profesional.", margin_x + 15, y, width - 2 * margin_x)
     y = draw_paragraph("2. EL COLABORADOR implementará las medidas de seguridad necesarias para garantizar la protección de los datos personales tratados.", margin_x + 15, y, width - 2 * margin_x)
@@ -758,6 +758,10 @@ def sign_pades(input_pdf: Path, output_pdf: Path) -> None:
     with open(input_pdf, "rb") as inf:
         w = IncrementalPdfFileWriter(inf)
         # Definimos un nombre de campo para permitir crear el campo de firma si no existe
-        meta = signers.PdfSignatureMetadata(field_name="PresidentSignature")  # firma invisible
+        # Forzamos SHA-256 para evitar problemas de selección automática del mecanismo
+        meta = signers.PdfSignatureMetadata(
+            field_name="PresidentSignature",
+            md_algorithm="sha256",
+        )  # firma invisible
         with open(output_pdf, "wb") as outf:
             signers.PdfSigner(meta, signer=signer).sign_pdf(w, output=outf)
