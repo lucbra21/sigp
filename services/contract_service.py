@@ -5,6 +5,7 @@ from pathlib import Path
 from flask import current_app
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from typing import Optional
 
 
 def _contracts_dir() -> Path:
@@ -22,7 +23,7 @@ def sha256_file(path: Path) -> str:
             h.update(chunk)
     return h.hexdigest()
 
-def generate_contract_pdf(prescriptor, filename: str | None = None) -> Path:
+def generate_contract_pdf(prescriptor, filename: Optional[str] = None) -> Path:
     """
     Genera un PDF base del contrato con datos mínimos del prescriptor.
     Devuelve la ruta absoluta del PDF.
