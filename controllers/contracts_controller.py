@@ -500,8 +500,15 @@ def sign_president_post():
             pass
         sign_pades(visible_pdf, output_pdf)
     except Exception as exc:  # noqa
+        # Log detallado con traceback
         current_app.logger.exception("Error firmando PAdES: %s", exc)
-        flash(f"Error firmando el contrato (PAdES): {str(exc)}", "danger")
+        # Mensaje más informativo en UI: clase + mensaje y causa si existe
+        err_cls = exc.__class__.__name__
+        cause = getattr(exc, "__cause__", None) or getattr(exc, "__context__", None)
+        ui_msg = f"{err_cls}: {exc}"
+        if cause:
+            ui_msg += f" | causa: {cause.__class__.__name__}: {cause}"
+        flash(f"Error firmando el contrato (PAdES): {ui_msg}", "danger")
         return redirect(url_for("contracts.sign_president_get", token=token))
 
     final_url = url_for("static", filename=f"contracts/{signed_name}")
