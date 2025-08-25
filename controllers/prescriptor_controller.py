@@ -82,6 +82,9 @@ def prescriptor_form_factory(is_create=True):
         email = StringField("Email", validators=[DataRequired(), Length(max=255)])
         cellular = StringField("Celular", validators=[DataRequired(), Length(max=50)])
         squeeze_page_name = StringField("Nombre", validators=[DataRequired(), Length(max=255)])
+        document_type = StringField("Tipo de documento", validators=[Optional(), Length(max=20)])
+        document_number = StringField("Número de documento", validators=[Optional(), Length(max=50)])
+        domicile = StringField("Domicilio", validators=[Optional(), Length(max=255)])
         squeeze_page_status = SelectField("Estado squeeze page", choices=squeeze_status_choices, validators=[Optional()])
         observations = TextAreaField("Detalles de pago", render_kw={"placeholder": "CBU, Alias, Banco, Titular, etc."}, validators=[Optional(), Length(max=1000)])
         extra_observations = TextAreaField("Observaciones", validators=[Optional(), Length(max=1000)])
@@ -589,6 +592,10 @@ def create_prescriptor():
         for fld in ["face_url", "linkedin_url", "instagram_url", "x_url"]:
             if hasattr(form, fld) and hasattr(Model, fld):
                 obj_kwargs[fld] = getattr(form, fld).data or None
+        # nuevos campos de documento/domicilio
+        for fld in ["document_type", "document_number", "domicile"]:
+            if hasattr(form, fld) and hasattr(Model, fld):
+                obj_kwargs[fld] = getattr(form, fld).data or None
         if hasattr(form, "squeeze_page_status"):
             obj_kwargs["squeeze_page_status"] = form.squeeze_page_status.data or "TEST"
         if hasattr(form, "observations") and form.observations.data:
@@ -838,6 +845,9 @@ def update_prescriptor(prescriptor_id):
             "instagram_url",
             "x_url",
             "squeeze_page_status",
+            "document_type",
+            "document_number",
+            "domicile",
         ]
         for fld in simple_fields:
             if hasattr(obj, fld) and hasattr(form, fld):
@@ -851,6 +861,65 @@ def update_prescriptor(prescriptor_id):
         # datos de facturación
         if hasattr(obj, "billing_data") and hasattr(form, "billing_data"):
             obj.billing_data = form.billing_data.data or None
+
+        # Validación condicional: requerir datos de documento y domicilio cuando el subestado es de firma
+        try:
+            SubModel = getattr(Base.classes, "substate_prescriptor", None)
+            new_sub_id = getattr(obj, "sub_state_id", None)
+            going_to_signature = False
+            if SubModel is not None and new_sub_id is not None:
+                sub_row = db.session.get(SubModel, int(new_sub_id))
+                sub_name = (getattr(sub_row, "name", "") or getattr(sub_row, "nombre", "") or "").strip().lower()
+                if "firma" in sub_name:
+                    going_to_signature = True
+            # Fallback por seguridad si no se pudo resolver nombre
+            if not going_to_signature and SubModel is not None and new_sub_id is not None:
+                try:
+                    cand_ids = [r.id for r in db.session.query(SubModel).all() if "firma" in ((getattr(r, "name", "") or getattr(r, "nombre", "")).strip().lower())]
+                    if int(new_sub_id) in set(map(int, cand_ids)):
+                        going_to_signature = True
+                except Exception:
+                    pass
+
+            if going_to_signature:
+                missing = []
+                # Usar datos del formulario si existen, si no, del objeto
+                doc_type_val = getattr(form, "document_type").data.strip() if hasattr(form, "document_type") and getattr(form, "document_type").data else (getattr(obj, "document_type", None) or "").strip()
+                doc_num_val = getattr(form, "document_number").data.strip() if hasattr(form, "document_number") and getattr(form, "document_number").data else (getattr(obj, "document_number", None) or "").strip()
+                domicile_val = getattr(form, "domicile").data.strip() if hasattr(form, "domicile") and getattr(form, "domicile").data else (getattr(obj, "domicile", None) or "").strip()
+
+                if not doc_type_val:
+                    missing.append("Tipo de documento")
+                    if hasattr(form, "document_type"):
+                        form.document_type.errors.append("Obligatorio para firmar")
+                if not doc_num_val:
+                    missing.append("Número de documento")
+                    if hasattr(form, "document_number"):
+                        form.document_number.errors.append("Obligatorio para firmar")
+                if not domicile_val:
+                    missing.append("Domicilio")
+                    if hasattr(form, "domicile"):
+                        form.domicile.errors.append("Obligatorio para firmar")
+
+                if missing:
+                    flash("Completá los siguientes campos antes de pasar a FIRMAR: " + ", ".join(missing), "warning")
+                    image_urls = {
+                        "photo": getattr(obj, "photo_url", None),
+                        "img1": getattr(obj, "squeeze_page_image_1", None),
+                        "img2": getattr(obj, "squeeze_page_image_2", None),
+                        "img3": getattr(obj, "squeeze_page_image_3", None),
+                    }
+                    return render_template(
+                        "records/prescriptor_form.html",
+                        form=form,
+                        action=url_for("prescriptors.update_prescriptor", prescriptor_id=prescriptor_id),
+                        contract_url=getattr(obj, "contract_url", None),
+                        image_urls=image_urls,
+                        edit=True,
+                        obj=obj,
+                    )
+        except Exception as _exc:
+            current_app.logger.error("Error en validación de firma: %s", _exc)
 
         # gestionar uploads de imágenes
         upload_dir = current_app.config.get("PRESCRIPTOR_IMG_FOLDER", os.path.join(current_app.root_path, "static", "prescriptors"))

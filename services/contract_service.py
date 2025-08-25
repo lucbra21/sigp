@@ -36,6 +36,10 @@ def generate_contract_pdf(prescriptor, filename: str | None = None) -> Path:
     name = getattr(prescriptor, "squeeze_page_name", "") or getattr(prescriptor, "name", "")
     email = getattr(prescriptor, "email", "")
     today = datetime.utcnow().strftime("%Y-%m-%d")
+    # Datos de documento/domicilio dinámicos con fallbacks legibles
+    _doc_type = (getattr(prescriptor, "document_type", None) or "DNI").strip()
+    _doc_num = (getattr(prescriptor, "document_number", None) or "__________").strip()
+    _domicile = (getattr(prescriptor, "domicile", None) or "__________________________").strip()
 
     c = canvas.Canvas(str(out_path), pagesize=A4)
     width, height = A4
@@ -154,8 +158,9 @@ def generate_contract_pdf(prescriptor, filename: str | None = None) -> Path:
         margin_x, y_clausulas, width - 2 * margin_x
     )
     y_clausulas -= 20
+    # Bloque de datos del prescriptor con datos reales si están disponibles
     y_clausulas = draw_paragraph(
-        f"Y, de otra parte, {nombre_prescriptor.upper()}, con DNI N.º __________, con domicilio real en la calle __________________________, __________, __________ (CP________), España. " ,
+        f"Y, de otra parte, {nombre_prescriptor.upper()}, con {_doc_type} N.º {_doc_num}, con domicilio real en {_domicile}. ",
         margin_x, y_clausulas, width - 2 * margin_x
     )
     y_clausulas -= 20

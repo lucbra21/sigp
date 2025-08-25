@@ -18,18 +18,6 @@
         {{ form.squeeze_page_name(class="form-control", placeholder="Ingrese nombre") }}
         {% for err in form.squeeze_page_name.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
     </div>
-    {% if form.type_id is defined %}
-    <div class="col-md-4">
-        {{ form.type_id.label(class="form-label") }}
-        {{ form.type_id(class="form-select") }}
-    </div>
-{% endif %}
-    {% if form.proposed_type_id is defined %}
-    <div class="col-md-4">
-        {{ form.proposed_type_id.label(class="form-label") }}
-        {{ form.proposed_type_id(class="form-select") }}
-    </div>
-    {% endif %}
     {% if form.state_id is defined %}
     <div class="col-md-4">
         {{ form.state_id.label(class="form-label") }}
@@ -37,11 +25,45 @@
         {% for err in form.state_id.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
     </div>
     {% endif %}
+    {% if form.type_id is defined %}
+    <div class="col-md-4">
+        {{ form.type_id.label(class="form-label") }}
+        {{ form.type_id(class="form-select") }}
+    </div>
+    {% endif %}
+    {% if form.proposed_type_id is defined %}
+    <div class="col-md-4">
+        {{ form.proposed_type_id.label(class="form-label") }}
+        {{ form.proposed_type_id(class="form-select") }}
+    </div>
+    {% endif %}
+
     {% if form.sub_state is defined %}
     <div class="col-md-4">
         {{ form.sub_state.label(class="form-label") }}
         {{ form.sub_state(class="form-select") }}
         {% for err in form.sub_state.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+    </div>
+    {% endif %}
+    {% if form.document_type is defined %}
+    <div class="col-md-4">
+        {{ form.document_type.label(class="form-label") }}
+        {{ form.document_type(class="form-control", placeholder="DNI / NIE / Pasaporte ...") }}
+        {% for err in form.document_type.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+    </div>
+    {% endif %}
+    {% if form.document_number is defined %}
+    <div class="col-md-4">
+        {{ form.document_number.label(class="form-label") }}
+        {{ form.document_number(class="form-control") }}
+        {% for err in form.document_number.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+    </div>
+    {% endif %}
+    {% if form.domicile is defined %}
+    <div class="col-md-4">
+        {{ form.domicile.label(class="form-label") }}
+        {{ form.domicile(class="form-control") }}
+        {% for err in form.domicile.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
     </div>
     {% endif %}
     {% if form.email is defined %}

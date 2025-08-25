@@ -47,7 +47,7 @@ class Config:
     SIGN_MODE = os.getenv("SIGN_MODE", "DIY").upper()
 
     # Email del presidente (contra-firmante)
-    PRESIDENT_EMAIL = os.getenv("PRESIDENT_EMAIL", "presidente@example.com")
+    PRESIDENT_EMAIL = os.getenv("PRESIDENT_EMAIL", "ing.lucasbracamonte@gmail.com")
 
     # Enlaces de firma (tokens firmados y expirables)
     SIGN_TOKEN_SECRET = os.getenv("SIGN_TOKEN_SECRET", "change-this-token-secret")
