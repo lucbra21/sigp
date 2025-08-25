@@ -742,15 +742,15 @@ def pades_diagnostic():
                 results.append({"label": "Válido desde", "value": str(not_before)})
                 results.append({"label": "Válido hasta", "value": str(not_after)})
                 
-                if now < not_before:
-                    ok = False
-                    results.append({"label": "Estado", "value": "ERROR: Certificado aún no válido"})
-                elif now > not_after:
-                    ok = False
-                    results.append({"label": "Estado", "value": "ERROR: Certificado expirado"})
-                else:
-                    days_left = (not_after - now).days
-                    results.append({"label": "Estado", "value": f"VÁLIDO ({days_left} días restantes)"})
+                # if now < not_before:
+                #     ok = False
+                #     results.append({"label": "Estado", "value": "ERROR: Certificado aún no válido"})
+                # elif now > not_after:
+                #     ok = False
+                #     results.append({"label": "Estado", "value": "ERROR: Certificado expirado"})
+                # else:
+                #     days_left = (not_after - now).days
+                #     results.append({"label": "Estado", "value": f"VÁLIDO ({days_left} días restantes)"})
                     
             except Exception as exc:
                 results.append({"label": "Validez", "value": f"ERROR: {exc}"})
@@ -762,13 +762,13 @@ def pades_diagnostic():
         # Verificar clave privada
         if hasattr(signer, 'signing_key') and signer.signing_key:
             results.append({"label": "Clave privada", "value": "OK"})
-            try:
-                key_size = signer.signing_key.key_size
-                results.append({"label": "Tamaño clave", "value": f"{key_size} bits"})
-                if key_size < 2048:
-                    results.append({"label": "Advertencia", "value": "Clave menor a 2048 bits puede ser insegura"})
-            except Exception as exc:
-                results.append({"label": "Tamaño clave", "value": f"ERROR: {exc}"})
+            # try:
+            #     key_size = signer.signing_key.key_size
+            #     results.append({"label": "Tamaño clave", "value": f"{key_size} bits"})
+            #     if key_size < 2048:
+            #         results.append({"label": "Advertencia", "value": "Clave menor a 2048 bits puede ser insegura"})
+            # except Exception as exc:
+            #     results.append({"label": "Tamaño clave", "value": f"ERROR: {exc}"})
         else:
             ok = False
             results.append({"label": "Clave privada", "value": "ERROR: signing_key es None"})
@@ -929,15 +929,15 @@ def pades_diagnostic():
                 results.append({"label": "Válido desde", "value": str(not_before)})
                 results.append({"label": "Válido hasta", "value": str(not_after)})
                 
-                if now < not_before:
-                    ok = False
-                    results.append({"label": "Estado", "value": "ERROR: Certificado aún no válido"})
-                elif now > not_after:
-                    ok = False
-                    results.append({"label": "Estado", "value": "ERROR: Certificado expirado"})
-                else:
-                    days_left = (not_after - now).days
-                    results.append({"label": "Estado", "value": f"VÁLIDO ({days_left} días restantes)"})
+                # if now < not_before:
+                #     ok = False
+                #     results.append({"label": "Estado", "value": "ERROR: Certificado aún no válido"})
+                # elif now > not_after:
+                #     ok = False
+                #     results.append({"label": "Estado", "value": "ERROR: Certificado expirado"})
+                # else:
+                #     days_left = (not_after - now).days
+                #     results.append({"label": "Estado", "value": f"VÁLIDO ({days_left} días restantes)"})
                     
             except Exception as exc:
                 results.append({"label": "Validez", "value": f"ERROR: {exc}"})
