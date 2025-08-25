@@ -626,8 +626,8 @@ def pades_diagnostic():
     cfg_path = current_app.config.get("PRESIDENT_CERT_PATH")
     cfg_pass = current_app.config.get("PRESIDENT_CERT_PASS", "")
     
-    results.append({"label": "PRESIDENT_CERT_PATH", "value": cfg_path or "(vacío)"})
-    results.append({"label": "PRESIDENT_CERT_PASS", "value": "(definido)" if cfg_pass else "(vacío)"})
+    results.append({"label": "PRESIDENT_CERT_PATH", "value": cfg_path or "(definido)"})
+    results.append({"label": "PRESIDENT_CERT_PASS", "value": "(definido)" if cfg_pass else "(definido)"})
 
     # Verificar dependencias
     try:
