@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Firma del Presidente requerida</title>
+</head>
+<body style="font-family:Arial,Helvetica,sans-serif;background:#f7f7f9;padding:24px;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;">
+    <tr>
+      <td style="padding:24px;">
+        {% if logo_url %}
+        <div style="text-align:center;margin-bottom:12px;">
+          <img src="{{ logo_url }}" alt="Logo" style="height:40px;max-width:200px;display:inline-block;"/>
+        </div>
+        {% endif %}
+        <h2 style="margin:0 0 12px 0;color:#111827;">Firma del Presidente requerida</h2>
+        <p style="margin:0 0 16px 0;color:#374151;">
+          Hola Presidente,
+        </p>
+        <p style="margin:0 0 16px 0;color:#374151;">
+          El contrato del prescriptor
+          {% if prescriptor and prescriptor.name %}
+            <strong>{{ prescriptor.name }}</strong>
+          {% elif prescriptor and prescriptor.squeeze_page_name %}
+            <strong>{{ prescriptor.squeeze_page_name }}</strong>
+          {% else %}
+            <strong>sin nombre</strong>
+          {% endif %}
+          está listo para tu firma.
+        </p>
+        <p style="margin:0 0 16px 0;">
+          <a href="{{ sign_link }}" style="display:inline-block;background:#0d6efd;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:6px;">Firmar contrato</a>
+        </p>
+        <p style="margin:0 0 16px 0;color:#6b7280;font-size:14px;">
+          Si el botón no funciona, copiá y pegá este enlace en tu navegador:<br>
+          <span style="word-break:break-all;">{{ sign_link }}</span>
+        </p>
+        {% if contract_url %}
+        <p style="margin:0 0 16px 0;color:#6b7280;font-size:14px;">
+          Podés ver el PDF actual del contrato aquí:<br>
+          <a href="{{ contract_url }}">{{ contract_url }}</a>
+        </p>
+        {% endif %}
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
+        <p style="margin:0;color:#9ca3af;font-size:12px;">Este enlace puede expirar por motivos de seguridad.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

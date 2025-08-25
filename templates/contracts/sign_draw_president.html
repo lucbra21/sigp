@@ -5,18 +5,18 @@
     <div class="col-12 col-lg-6">
       <div class="card h-100">
         <div class="card-body">
-          <h5 class="mb-3">Firma del Prescriptor</h5>
-          <p>Dibujá tu firma en el recuadro y confirmá para aplicarla al contrato.</p>
+          <h5 class="mb-3">Firma del Presidente</h5>
+          <p>Dibujá tu firma en el recuadro y confirmá para aplicarla al contrato y firmarlo digitalmente.</p>
           <div class="border rounded p-2 mb-3 bg-light">
             <canvas id="sigpad" style="width:100%;height:220px;border:1px dashed #999;background:#fff;"></canvas>
           </div>
           <div class="d-flex gap-2 mb-3">
             <button class="btn btn-secondary" id="btn-clear" type="button">Limpiar</button>
           </div>
-          <form method="post" action="{{ url_for('contracts.sign_draw_post') }}" onsubmit="return submitSignature();">
+          <form method="post" action="{{ url_for('contracts.sign_president_post') }}" onsubmit="return submitSignature();">
             <input type="hidden" name="token" value="{{ token }}">
             <input type="hidden" name="signature_data" id="signature_data">
-            <button class="btn btn-primary" type="submit">Aplicar firma</button>
+            <button class="btn btn-primary" type="submit">Firmar ahora</button>
           </form>
         </div>
       </div>
@@ -45,7 +45,6 @@
 <script>
 (function(){
   const canvas = document.getElementById('sigpad');
-  // Ajustar tamaño real del canvas al contenedor
   function resizeCanvas(){
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
     const rect = canvas.getBoundingClientRect();
@@ -64,7 +63,6 @@
     if (pad.isEmpty()) { alert('Por favor dibujá tu firma.'); return false; }
     const dataUrl = pad.toDataURL('image/png');
     document.getElementById('signature_data').value = dataUrl;
-    // Mostrar overlay de carga global
     const overlay = document.getElementById('globalLoading');
     if (overlay){ overlay.classList.remove('d-none'); overlay.classList.add('d-flex'); }
     return true;

@@ -20,6 +20,9 @@ from wtforms import StringField, SelectField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Length, Optional, URL
 
 from sigp import db
+from sigp.services.contract_service import generate_contract_pdf, sha256_file
+from sigp.common.email_utils import send_simple_mail
+from itsdangerous import URLSafeTimedSerializer
 import os
 from werkzeug.utils import secure_filename
 import hashlib
@@ -895,6 +898,100 @@ def update_prescriptor(prescriptor_id):
         try:
             db.session.commit()
             flash("Prescriptor actualizado", "success")
+            # ---- Enviar contrato para firma si el SUBESTADO cambió a "FIRMA DE CONTRATO" ----
+            try:
+                # Detectar cambio de subestado y verificar nombre del nuevo subestado
+                new_sub_id = getattr(obj, "sub_state_id", None)
+                should_trigger = False
+                if old_sub_id != new_sub_id and new_sub_id is not None:
+                    SubModel = getattr(Base.classes, "substate_prescriptor", None)
+                    if SubModel is not None:
+                        # Primero: resolver nombre del nuevo subestado y chequear 'firma'
+                        sub_row = db.session.get(SubModel, int(new_sub_id))
+                        sub_name = (getattr(sub_row, "name", "") or getattr(sub_row, "nombre", "") or "").strip().lower()
+                        if "firma" in sub_name:
+                            should_trigger = True
+                        else:
+                            # Fallback: buscar IDs cuyo nombre contenga 'firma' y comparar
+                            try:
+                                cand_ids = [r.id for r in db.session.query(SubModel).all() if "firma" in ((getattr(r, "name", "") or getattr(r, "nombre", "")).strip().lower())]
+                                if int(new_sub_id) in set(map(int, cand_ids)):
+                                    should_trigger = True
+                            except Exception:
+                                pass
+                if should_trigger:
+                    # 1) Generar (o regenerar) el PDF base y guardar URL
+                    pdf_path = generate_contract_pdf(obj, filename=f"contract_{obj.id}.pdf")
+                    rel_url = url_for("static", filename=f"contracts/{os.path.basename(pdf_path)}")
+                    abs_url = url_for("static", filename=f"contracts/{os.path.basename(pdf_path)}", _external=True)
+                    if hasattr(obj, "contract_url"):
+                        obj.contract_url = rel_url
+                        db.session.commit()
+
+                    # 2) Construir token de firma para el prescriptor
+                    secret = current_app.config.get("SIGN_TOKEN_SECRET")
+                    serializer = URLSafeTimedSerializer(secret_key=secret, salt="sigp.contracts")
+                    token_p = serializer.dumps({"c": str(obj.id), "r": "prescriptor"})
+                    link = url_for("contracts.sign_prescriptor", token=token_p, _external=True)
+
+                    # 3) Enviar email con el enlace
+                    presc_email = None
+                    # priorizar email del formulario si cambió
+                    if hasattr(form, "email") and getattr(form, "email").data:
+                        presc_email = form.email.data.strip()
+                    if not presc_email:
+                        presc_email = getattr(obj, "email", None) or getattr(obj, "squeeze_page_email", None)
+                    if not presc_email and getattr(obj, "user_id", None):
+                        UserModel = getattr(Base.classes, "users", None)
+                        if UserModel:
+                            u = db.session.get(UserModel, obj.user_id)
+                            if u and getattr(u, "email", None):
+                                presc_email = u.email
+
+                    if presc_email:
+                        try:
+                            logo_url = url_for("static", filename="img/logos/SDC-logo.jpg", _external=True)
+                            html_body = render_template(
+                                "emails/contract_link.html",
+                                prescriptor=obj,
+                                sign_link=link,
+                                contract_url=abs_url,
+                                logo_url=logo_url,
+                            )
+                            plain_body = (
+                                "Hola,\n\n"
+                                "Para firmar tu contrato ingresá al siguiente enlace:\n"
+                                f"{link}\n\n"
+                                "Si no solicitaste esto, ignorá este mensaje."
+                            )
+                            send_simple_mail([presc_email], "Contrato disponible para firma", html_body, html=True, text_body=plain_body)
+                            flash(f"Email de firma enviado a {presc_email}", "info")
+                        except Exception as exc:
+                            current_app.logger.exception("Error enviando correo de contrato auto: %s", exc)
+                            flash("No se pudo enviar el email de contrato al prescriptor", "warning")
+
+                    # 4) Notificación in-app
+                    try:
+                        Notification = getattr(Base.classes, "notifications", None)
+                        if Notification is not None and getattr(obj, "user_id", None):
+                            # Campos válidos según notifications_controller.py
+                            from datetime import datetime as _dt
+                            notif = Notification(
+                                id=str(uuid.uuid4()),
+                                user_id=obj.user_id,
+                                title="Contrato disponible para firma",
+                                body=f"Firmá tu contrato: {link}",
+                                link_url=link,
+                                notif_type="ACTION",
+                                is_read=0,
+                                created_at=_dt.utcnow(),
+                            )
+                            db.session.add(notif)
+                            db.session.commit()
+                    except Exception as exc:
+                        current_app.logger.error("Error creando notificación de contrato: %s", exc)
+            except Exception as exc:
+                current_app.logger.error("Error en auto-disparo de contrato por subestado: %s", exc)
             # ---- Enviar correo si el estado cambió a EN CAPACITACION ----
             try:
                 StateModel = getattr(Base.classes, "state_prescriptor", None)
@@ -931,7 +1028,6 @@ def update_prescriptor(prescriptor_id):
                         "En el menú verás el módulo Multimedia > Mis archivos con los recursos de capacitación (videos, links y archivos).\n\n"
                         "¡Éxitos en tu formación!"
                     )
-                    from sigp.common.email_utils import send_simple_mail
                     send_simple_mail([presc_email], "Acceso a plataforma de capacitación", html_body, html=True, text_body=plain_body)
     
 

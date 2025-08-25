@@ -131,9 +131,19 @@
         {{ form.contract_file.label(class="form-label") }}
         {{ form.contract_file(class="form-control") }}
         {% for err in form.contract_file.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
-        {% if contract_url %}
-             <a href="{{ contract_url }}" target="_blank" class="btn btn-link">Descargar contrato existente</a>
-        {% endif %}
+        <div class="mt-2">
+          {% if contract_url %}
+               <a href="{{ contract_url }}" target="_blank" class="btn btn-outline-secondary me-2"><i class="bi bi-file-earmark-pdf"></i> Ver contrato actual</a>
+          {% endif %}
+          {% if edit and obj %}
+            <button type="submit"
+                    class="btn btn-outline-primary"
+                    formaction="{{ url_for('contracts.generate_for_prescriptor', prescriptor_id=obj.id) }}"
+                    formmethod="post" formnovalidate>
+              <i class="bi bi-envelope-paper"></i> Generar / Reenviar link de firma
+            </button>
+          {% endif %}
+        </div>
     </div>
     <div class="col-md-12">
         {% if form.observations is defined %}
@@ -163,6 +173,7 @@
   document.addEventListener('DOMContentLoaded', function(){
     const form = document.getElementById('prescriptorForm');
     const overlay = document.getElementById('prescriptorFormLoading');
+    const genForm = document.getElementById('generateContractAdminForm');
     if(form){
       form.addEventListener('submit', function(){
         if(form.checkValidity()){
@@ -171,6 +182,7 @@
         }
       });
     }
+    // No nested form anymore; the generate button submits the main form with formaction.
     const cancelBtn = document.getElementById('cancelPrescriptor');
     if(cancelBtn){
       cancelBtn.addEventListener('click', function(){

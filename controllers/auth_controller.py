@@ -10,6 +10,7 @@ from flask import (
     request,
     url_for,
     current_app,
+    session,
 )
 from flask_login import login_user, logout_user, current_user
 from flask_wtf import FlaskForm
@@ -149,7 +150,16 @@ def reset_password_post(token):
 def login_get():
     # Si ya está logueado redirigimos
     if current_user.is_authenticated:
-        return redirect(url_for("index"))
+        # Permitir forzar pantalla de login (p.ej. para firmar como otro usuario)
+        if request.args.get("force") == "1":
+            logout_user()
+        else:
+            return redirect(url_for("index"))
+
+    # Guardar next en sesión si viene como parámetro
+    nxt = request.args.get("next")
+    if nxt:
+        session["next_url"] = nxt
 
     form = LoginForm()
     return render_template("layouts/login.html", form=form)
@@ -200,6 +210,10 @@ def login_post():
     if user and user.password_hash and user.password_hash.lower() == hashlib.sha256(form.password.data.encode()).hexdigest():
         _audit_event(user.id, True, "LOGIN")
         login_user(user, remember=form.remember.data)
+        # Redirigir a next si existe y es relativo (simple check)
+        nxt = session.pop("next_url", None) or request.args.get("next")
+        if nxt and isinstance(nxt, str) and nxt.startswith("/"):
+            return redirect(nxt)
         return redirect("/")
 
     if user:

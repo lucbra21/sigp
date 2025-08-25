@@ -36,6 +36,24 @@
     {{ form.observations.label(class='form-label') }}
     {{ form.observations(class='form-control', rows=3) }}
   </div>
+  <div class="col-md-12">
+    <hr>
+    <h5 class="mb-2">Contrato</h5>
+    {% if current_prescriptor %}
+      <button type="submit"
+              id="btnGenerateContract"
+              class="btn btn-outline-primary"
+              formaction="{{ url_for('contracts.generate_for_prescriptor', prescriptor_id=current_prescriptor.id) }}"
+              formmethod="post" formnovalidate>
+        <i class="bi bi-envelope-paper"></i> Generar / Reenviar link de firma
+      </button>
+    {% endif %}
+    {% if presc_contract_url %}
+      <a class="btn btn-outline-secondary ms-2" href="{{ presc_contract_url }}" target="_blank">
+        <i class="bi bi-file-earmark-pdf"></i> Ver contrato actual
+      </a>
+    {% endif %}
+  </div>
   <div class="col-12 text-end">
     <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar cambios</button>
     <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
@@ -43,13 +61,11 @@
   <script>
     document.addEventListener('DOMContentLoaded',()=>{
       const f=document.getElementById('selfEditForm');
+      const btn=document.getElementById('btnGenerateContract');
       const overlay=document.getElementById('globalLoading');
-      if(f&&overlay){
-        f.addEventListener('submit',()=>{
-          overlay.classList.remove('d-none');
-          overlay.classList.add('d-flex');
-        });
-      }
+      const showOverlay=()=>{ if(overlay){ overlay.classList.remove('d-none'); overlay.classList.add('d-flex'); } };
+      if(f){ f.addEventListener('submit',showOverlay); }
+      if(btn){ btn.addEventListener('click',()=>{ showOverlay(); }); }
     });
         const input=document.getElementById('squeezeImg');
       const preview=document.getElementById('previewImg');

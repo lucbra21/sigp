@@ -1,0 +1,25 @@
+{% extends "layouts/base.html" %}
+{% block title %}Contrato enviado al presidente{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 720px">
+  <div class="card mt-4 shadow-sm">
+    <div class="card-body py-4">
+      <h3 class="mb-3">¡Tu firma fue aplicada!</h3>
+      <p class="lead mb-3">Notificamos al presidente para que complete su firma.</p>
+      <div class="alert alert-info">
+        <strong>¿Qué sigue?</strong>
+        <ul class="mb-0 mt-2">
+          <li>El presidente recibirá un correo para firmar el contrato.</li>
+          <li>Cuando el presidente firme, te llegará un email y una notificación en la plataforma.</li>
+          <li>Luego podrás continuar con la capacitación.</li>
+        </ul>
+      </div>
+      <div class="d-flex gap-2 mt-3">
+        <a href="/" class="btn btn-primary">Ir al inicio</a>
+        <a href="{{ notifications_url }}" class="btn btn-outline-secondary">Ver mis notificaciones</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
