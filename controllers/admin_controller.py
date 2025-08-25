@@ -10,6 +10,7 @@ from sigp.models import Base
 from sigp.security import require_perm
 from sigp.common.lead_utils import log_lead_change
 from sigp.common.email_utils import send_simple_mail
+from typing import Optional
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -96,7 +97,7 @@ def _state_name(state_id: int) -> str:
     st = db.session.get(StateLedger, state_id)
     return st.name if st else str(state_id)
 
-def _state_id(code: str) -> int | None:
+def _state_id(code: str) -> Optional[int]:
     """Devuelve el id de state_ledger dado su código."""
     if StateLedger is None:
         return None

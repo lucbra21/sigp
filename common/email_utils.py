@@ -5,11 +5,11 @@ from __future__ import annotations
 
 import smtplib
 from email.message import EmailMessage
-from typing import Sequence
+from typing import Sequence, Optional
 from flask import current_app
 
 
-def send_simple_mail(to: Sequence[str], subject: str, body: str, *, html: bool=False, text_body: str | None=None) -> None:
+def send_simple_mail(to: Sequence[str], subject: str, body: str, *, html: bool=False, text_body: Optional[str]=None) -> None:
     if not to:
         return
     cfg = current_app.config

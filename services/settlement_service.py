@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Sequence, Optional, Any
+from typing import List, Sequence, Optional, Any, Union
 from pathlib import Path
 
 from flask import current_app as app
@@ -95,7 +95,7 @@ def _send_mail(prescriptor_email: str, subject: str, body: str, attachment: Opti
 # API pública
 # ---------------------------------------------------------------------------
 
-def settle_invoices(invoice_ids: Sequence[int], paid_amounts: Sequence[str | float], receipt_filename: Optional[str] = None) -> None:
+def settle_invoices(invoice_ids: Sequence[int], paid_amounts: Sequence[Union[str, float]], receipt_filename: Optional[str] = None) -> None:
     """Marca las facturas como rendidas.
 
     Args:

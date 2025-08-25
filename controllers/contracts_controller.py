@@ -15,6 +15,7 @@ from sigp.common.email_utils import send_simple_mail
 import uuid
 from datetime import datetime
 import os
+from typing import Optional, Union
 
 contracts_bp = Blueprint("contracts", __name__, url_prefix="/contracts")
 
@@ -38,7 +39,7 @@ def _read_token(token: str, max_age_min: int):
         return None
 
 
-def _audit(event: str, prescriptor_id: str | int, extra: dict | None = None):
+def _audit(event: str, prescriptor_id: Union[str, int], extra: Optional[dict] = None):
     """Inserta un registro en contract_audit_trail si la tabla existe."""
     try:
         Audit = getattr(Base.classes, "contract_audit_trail", None)

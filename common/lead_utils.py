@@ -4,6 +4,7 @@ from __future__ import annotations
 import datetime
 import uuid
 from flask_login import current_user
+from typing import Optional
 from sigp import db
 from sigp.models import Base
 
@@ -12,7 +13,7 @@ def _model():
     return getattr(Base.classes, "lead_history", None)
 
 
-def log_lead_change(lead_id: str, state_id: int, observations: str | None = None):
+def log_lead_change(lead_id: str, state_id: int, observations: Optional[str] = None):
     """Insert a row into lead_history and commit immediately.
 
     Does nothing if model not available or user anonymous.
