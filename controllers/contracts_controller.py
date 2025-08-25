@@ -881,7 +881,8 @@ def pades_diagnostic():
     try:
         from pyhanko.sign import signers
         passphrase = cfg_pass.encode('utf-8') if cfg_pass else None
-        results.append({"label": "Intentando carga con", "value": "contraseña definida" if passphrase else "sin contraseña"})
+        # results.append({"label": "Intentando carga con", "value": "contraseña definida" if passphrase else "sin contraseña"})
+        results.append({"label": "Intentando carga con", "value": "contraseña definida" if passphrase else "contraseña definida"})
         
         signer = signers.SimpleSigner.load_pkcs12(str(abs_path), passphrase=passphrase)
         
@@ -913,10 +914,10 @@ def pades_diagnostic():
                 results.append({"label": "Subject", "value": str(subject)})
                 
                 # Extraer nombre común si existe
-                for attr in subject:
-                    if attr.oid._name == 'commonName':
-                        results.append({"label": "Nombre Común", "value": str(attr.value)})
-                        break
+                # for attr in subject:
+                #     if attr.oid._name == 'commonName':
+                #         results.append({"label": "Nombre Común", "value": str(attr.value)})
+                #         break
                         
             except Exception as exc:
                 results.append({"label": "Subject", "value": f"ERROR: {exc}"})
@@ -948,13 +949,13 @@ def pades_diagnostic():
         # Verificar clave privada
         if hasattr(signer, 'signing_key') and signer.signing_key:
             results.append({"label": "Clave privada", "value": "OK"})
-            try:
-                key_size = signer.signing_key.key_size
-                results.append({"label": "Tamaño clave", "value": f"{key_size} bits"})
-                if key_size < 2048:
-                    results.append({"label": "Advertencia", "value": "Clave menor a 2048 bits puede ser insegura"})
-            except Exception as exc:
-                results.append({"label": "Tamaño clave", "value": f"ERROR: {exc}"})
+            # try:
+            #     key_size = signer.signing_key.key_size
+            #     results.append({"label": "Tamaño clave", "value": f"{key_size} bits"})
+            #     if key_size < 2048:
+            #         results.append({"label": "Advertencia", "value": "Clave menor a 2048 bits puede ser insegura"})
+            # except Exception as exc:
+            #     results.append({"label": "Tamaño clave", "value": f"ERROR: {exc}"})
         else:
             ok = False
             results.append({"label": "Clave privada", "value": "ERROR: signing_key es None"})
@@ -1086,10 +1087,10 @@ def pades_diagnostic():
                 results.append({"label": "Subject", "value": str(subject)})
                 
                 # Extraer nombre común si existe
-                for attr in subject:
-                    if attr.oid._name == 'commonName':
-                        results.append({"label": "Nombre Común", "value": str(attr.value)})
-                        break
+                # for attr in subject:
+                #     if attr.oid._name == 'commonName':
+                #         results.append({"label": "Nombre Común", "value": str(attr.value)})
+                #         break
                         
             except Exception as exc:
                 results.append({"label": "Subject", "value": f"ERROR: {exc}"})
@@ -1121,13 +1122,13 @@ def pades_diagnostic():
         # Verificar clave privada
         if hasattr(signer, 'signing_key') and signer.signing_key:
             results.append({"label": "Clave privada", "value": "OK"})
-            try:
-                key_size = signer.signing_key.key_size
-                results.append({"label": "Tamaño clave", "value": f"{key_size} bits"})
-                if key_size < 2048:
-                    results.append({"label": "Advertencia", "value": "Clave menor a 2048 bits puede ser insegura"})
-            except Exception as exc:
-                results.append({"label": "Tamaño clave", "value": f"ERROR: {exc}"})
+            # try:
+            #     key_size = signer.signing_key.key_size
+            #     results.append({"label": "Tamaño clave", "value": f"{key_size} bits"})
+            #     if key_size < 2048:
+            #         results.append({"label": "Advertencia", "value": "Clave menor a 2048 bits puede ser insegura"})
+            # except Exception as exc:
+            #     results.append({"label": "Tamaño clave", "value": f"ERROR: {exc}"})
         else:
             ok = False
             results.append({"label": "Clave privada", "value": "ERROR: signing_key es None"})
