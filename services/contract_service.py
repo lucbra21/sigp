@@ -740,7 +740,7 @@ def stamp_text_overlay(input_pdf: Path, output_pdf: Path, text_lines: list[str],
         except Exception:
             pass
 
-def sign_pades(input_pdf: Path, output_pdf: Path) -> None:
+def sign_pades_old(input_pdf: Path, output_pdf: Path) -> None:
     """Firma el PDF con PAdES-BES usando el certificado P12 configurado.
     Si se configura PKCS#11 en el futuro, se puede ampliar.
     """
@@ -765,3 +765,96 @@ def sign_pades(input_pdf: Path, output_pdf: Path) -> None:
         )  # firma invisible
         with open(output_pdf, "wb") as outf:
             signers.PdfSigner(meta, signer=signer).sign_pdf(w, output=outf)
+
+def sign_pades(input_pdf: Path, output_pdf: Path) -> None:
+    """Firma el PDF con PAdES-BES usando el certificado P12 configurado.
+    Si se configura PKCS#11 en el futuro, se puede ampliar.
+    """
+    from pyhanko.sign import signers
+    from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
+    from pyhanko.sign.general import SigningError
+
+    p12_path = current_app.config.get("PRESIDENT_CERT_PATH")
+    p12_pass = current_app.config.get("PRESIDENT_CERT_PASS", "")
+    
+    if not p12_path:
+        raise RuntimeError("PRESIDENT_CERT_PATH no configurado")
+
+    # Resolver ruta absoluta
+    if p12_path.startswith("/"):
+        p12_abs = Path(p12_path)
+    else:
+        p12_abs = Path(current_app.root_path) / p12_path
+    
+    # Verificar que el archivo existe
+    if not p12_abs.exists():
+        raise RuntimeError(f"Certificado P12 no encontrado en: {p12_abs}")
+    
+    current_app.logger.info(f"Cargando certificado desde: {p12_abs}")
+    
+    try:
+        # Cargar el certificado P12
+        passphrase = p12_pass.encode('utf-8') if p12_pass else None
+        signer = signers.SimpleSigner.load_pkcs12(
+            str(p12_abs), 
+            passphrase=passphrase
+        )
+        
+        # Verificar que el signer se creó correctamente
+        if signer is None:
+            raise RuntimeError("No se pudo crear el signer - certificado inválido")
+            
+        current_app.logger.info("Certificado cargado correctamente")
+        
+        # Verificar propiedades del signer
+        if hasattr(signer, 'signing_cert') and signer.signing_cert:
+            current_app.logger.info(f"Certificado subject: {signer.signing_cert.subject}")
+        
+        if hasattr(signer, 'cert_registry') and signer.cert_registry:
+            current_app.logger.info("Registro de certificados disponible")
+            
+    except Exception as exc:
+        current_app.logger.error(f"Error cargando certificado P12: {exc}")
+        raise RuntimeError(f"No se pudo cargar el certificado P12: {exc}")
+
+    try:
+        with open(input_pdf, "rb") as inf:
+            # Crear el writer
+            w = IncrementalPdfFileWriter(inf)
+            
+            # Configuración de metadatos de firma más explícita
+            meta = signers.PdfSignatureMetadata(
+                field_name="PresidentSignature",
+                md_algorithm="sha256",
+                location="Valladolid, España",
+                reason="Firma del Presidente de Sports Data Campus",
+            )
+            
+            current_app.logger.info("Iniciando proceso de firma PAdES")
+            
+            # Crear el PdfSigner
+            pdf_signer = signers.PdfSigner(meta, signer=signer)
+            
+            # Verificar que el pdf_signer se creó correctamente
+            if pdf_signer is None:
+                raise RuntimeError("No se pudo crear PdfSigner")
+            
+            with open(output_pdf, "wb") as outf:
+                # Intentar la firma
+                pdf_signer.sign_pdf(w, output=outf)
+                
+        current_app.logger.info("Firma PAdES completada exitosamente")
+        
+    except SigningError as exc:
+        current_app.logger.error(f"Error específico de firma: {exc}")
+        raise RuntimeError(f"Error en proceso de firma: {exc}")
+    except Exception as exc:
+        current_app.logger.error(f"Error general en firma PAdES: {exc}")
+        # Más debug específico
+        if "'NoneType' object has no attribute" in str(exc):
+            current_app.logger.error("Error sugiere problema con certificado o configuración")
+            if hasattr(signer, 'signing_cert'):
+                current_app.logger.error(f"signing_cert es None: {signer.signing_cert is None}")
+            if hasattr(signer, 'signing_key'):
+                current_app.logger.error(f"signing_key es None: {signer.signing_key is None}")
+        raise
