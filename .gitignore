@@ -211,3 +211,4 @@ static/certificadodigital/*.p12
 static/certificadodigital/*.key
 static/certificadodigital/*.csr
 static/certificadodigital/*.crt
+config.py

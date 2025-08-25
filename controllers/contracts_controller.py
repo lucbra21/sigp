@@ -83,7 +83,7 @@ def _get_prescriptor_from_token_for_user(token: str, expected_role: str):
     return prescriptor, None
 
 
-@contracts_bp.post("/<prescriptor_id>/generate")
+@contracts_bp.route("/<prescriptor_id>/generate", methods=["GET", "POST"])
 @login_required
 def generate_for_prescriptor(prescriptor_id):
     Prescriptor = getattr(Base.classes, "prescriptors", None)
@@ -94,6 +94,11 @@ def generate_for_prescriptor(prescriptor_id):
     if not prescriptor:
         flash("Prescriptor no encontrado", "warning")
         return redirect("/")
+
+    # Permitir que url_for construya la URL durante una petición GET (render de formulario)
+    # pero sólo ejecutar la generación en POST.
+    if request.method == "GET":
+        return redirect(url_for("prescriptors.edit_prescriptor", prescriptor_id=prescriptor_id))
 
     # Crear registro básico en memory (usaremos tabla luego con migración)
     # Por ahora solo generamos PDF base y mostramos link.
