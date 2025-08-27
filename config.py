@@ -68,6 +68,16 @@ class Config:
     # Comprobantes de pago a prescriptores
     RECEIPT_UPLOAD_FOLDER = "static/receipts"
 
+    # Comprobantes de pago a prescriptores
+    RECEIPT_UPLOAD_FOLDER = "static/receipts"
+    def _as_bool(v: str, default=True):
+      if v is None:
+        return default
+      return v.strip().lower() in ("1", "true", "yes", "on")
+
+    # ...
+    NOTIFY_ON_PRESCRIPTOR_CREATE = _as_bool(os.getenv("NOTIFY_ON_PRESCRIPTOR_CREATE"), default=True)
+
     # config.py  (modo desarrollo)
     SQLALCHEMY_ECHO = False
 

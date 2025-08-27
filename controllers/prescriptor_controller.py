@@ -661,6 +661,41 @@ def create_prescriptor():
                 sync_commissions_for_prescriptor(new_obj.id)
             except Exception as exc:
                 current_app.logger.exception("Error sincronizando comisiones: %s", exc)
+
+            # Enviar notificación a administración (controlado por flag)
+            if current_app.config.get("NOTIFY_ON_PRESCRIPTOR_CREATE", True):
+                try:
+                    admin_emails = current_app.config.get("ADMIN_EMAILS") or []
+                    if isinstance(admin_emails, str):
+                        admin_emails = [e.strip() for e in admin_emails.split(",") if e.strip()]
+                    if not admin_emails:
+                        fallback = current_app.config.get("MAIL_DEFAULT_SENDER") or current_app.config.get("MAIL_USERNAME")
+                        admin_emails = [fallback] if fallback else []
+
+                    if admin_emails:
+                        edit_url = (current_app.config.get('BASE_URL') or request.host_url.rstrip('/')) + url_for('prescriptors.edit_prescriptor', prescriptor_id=new_obj.id)
+                        html_body = render_template(
+                            'emails/new_prescriptor_created.html',
+                            name=new_obj.squeeze_page_name,
+                            email=form.email.data,
+                            cellular=form.cellular.data,
+                            prescriptor_id=new_obj.id,
+                            created_by=current_user.name,
+                            edit_url=edit_url,
+                        )
+                        text_body = (
+                            f"Nuevo prescriptor creado:\n\n"
+                            f"Nombre: {new_obj.squeeze_page_name}\n"
+                            f"Email: {form.email.data}\n"
+                            f"Celular: {form.cellular.data}\n"
+                            f"ID: {new_obj.id}\n"
+                            f"Creado por: {current_user.name}\n\n"
+                            f"Editar/ver: {edit_url}\n"
+                        )
+                        send_simple_mail(admin_emails, f"Nuevo prescriptor dado de alta: {new_obj.squeeze_page_name}", html_body, html=True, text_body=text_body)
+                except Exception as exc:
+                    current_app.logger.exception("Error enviando notificación de alta de prescriptor: %s", exc)
+                    # No interrumpe el flujo
         except Exception as e:
             db.session.rollback()
             current_app.logger.exception("Error al guardar prescriptor: %s", e)

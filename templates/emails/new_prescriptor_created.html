@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Nuevo prescriptor dado de alta</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f7f7f9;margin:0;padding:24px}
+    .card{max-width:640px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:24px}
+    .btn{display:inline-block;background:#0d6efd;color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px}
+    .muted{font-size:12px;color:#9ca3af}
+    .list{margin:0 0 16px 18px;padding:0;color:#374151}
+  </style>
+</head>
+<body>
+  <div class="card">
+    {% if logo_url %}
+    <div style="text-align:center;margin-bottom:12px;">
+      <img src="{{ logo_url }}" alt="Logo" style="height:32px;max-width:180px;display:inline-block;opacity:0.9;"/>
+    </div>
+    {% endif %}
+
+    <h2 style="margin:0 0 12px 0;color:#111827;">Nuevo prescriptor dado de alta</h2>
+    <p style="margin:0 0 12px 0;color:#374151;">Se registró un nuevo prescriptor en el sistema.</p>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin:0 0 16px 0;color:#374151;">
+      <tr><td style="padding:4px 0;width:160px;color:#6b7280;">Nombre</td><td style="padding:4px 0;"><strong>{{ name }}</strong></td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280;">Email</td><td style="padding:4px 0;">{{ email }}</td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280;">Celular</td><td style="padding:4px 0;">{{ cellular }}</td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280;">ID</td><td style="padding:4px 0;">{{ prescriptor_id }}</td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280;">Creado por</td><td style="padding:4px 0;">{{ created_by }}</td></tr>
+    </table>
+
+    {% if edit_url %}
+    <p style="margin:0 0 16px 0;"><a class="btn" href="{{ edit_url }}">Abrir/Editar prescriptor</a></p>
+    <p class="muted">Si el botón no funciona, copiá y pegá este enlace:<br/><span style="word-break:break-all;">{{ edit_url }}</span></p>
+    {% endif %}
+  </div>
+</body>
+</html>
