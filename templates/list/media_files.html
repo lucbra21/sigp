@@ -34,21 +34,33 @@
         <tr>
             <td>
             {% if can('media_view') %}
-              {% if f.source_type == 'LINK' and ('youtube.com' in f.storage_key or 'youtu.be' in f.storage_key or 'vimeo.com' in f.storage_key) %}
-              <button class="btn btn-sm btn-outline-secondary preview-btn" data-url="{{ f.storage_key }}" title="Previsualizar"><i class="bi bi-play-circle"></i></button>
+              {% if f.source_type == 'VIDEO' %}
+                <button class="btn btn-sm btn-outline-secondary preview-btn" data-url="{{ f.storage_key }}" title="Previsualizar"><i class="bi bi-play-circle"></i></button>
+              {% elif f.source_type == 'LINK' %}
+                <i class="bi bi-link-45deg" style="font-size:1.2rem;"></i>
               {% else %}
-              <i class="bi bi-folder-fill" style="font-size:1.2rem;"></i>
+                {# FILE: escoger icono por MIME #}
+                {% set mt = (f.mime_type or '') %}
+                {% if 'pdf' in mt %}
+                  <i class="bi bi-file-earmark-pdf-fill" style="font-size:1.2rem;"></i>
+                {% elif mt.startswith('image/') %}
+                  <i class="bi bi-file-earmark-image" style="font-size:1.2rem;"></i>
+                {% elif mt.startswith('video/') %}
+                  <i class="bi bi-file-earmark-play" style="font-size:1.2rem;"></i>
+                {% else %}
+                  <i class="bi bi-file-earmark" style="font-size:1.2rem;"></i>
+                {% endif %}
               {% endif %}
             {% endif %}
             </td>
             <td>{{ f.title or f.original_name }}</td>
             <td>{{ f.category_name }}</td>
             <td>{{ f.role_name }}</td>
-            <td>{{ f.mime_type }}</td>
+            <td>{% if f.source_type == 'VIDEO' %}VIDEO{% elif f.source_type == 'LINK' %}ENLACE{% else %}{{ f.mime_type or 'ARCHIVO' }}{% endif %}</td>
             <td>{% if f.size_bytes %}{{ (f.size_bytes / 1024)|round(1) }} KB{% else %}-{% endif %}</td>
             <td>{{ f.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
             <td class="text-nowrap">
-            {% if f.source_type == 'LINK' %}
+            {% if f.source_type == 'LINK' or f.source_type == 'VIDEO' %}
                 <a href="{{ f.storage_key }}" target="_blank" class="btn btn-sm btn-outline-primary">Abrir</a>
             {% else %}
                 <a href="{{ url_for('static', filename=f.storage_key) }}" download class="btn btn-sm btn-outline-primary">Descargar</a>

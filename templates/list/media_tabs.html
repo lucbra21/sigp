@@ -32,7 +32,7 @@
           {% else %}
             {% if f.source_type == 'LINK' %}
               <a href="{{ f.storage_key }}" target="_blank" class="text-decoration-none">
-                <i class="bi bi-globe" style="font-size:3rem;"></i>
+                <i class="bi bi-link-45deg" style="font-size:3rem;"></i>
               </a>
             {% else %}
               <a href="{{ url_for('static', filename=f.storage_key) }}" download class="text-decoration-none">
