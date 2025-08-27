@@ -1019,21 +1019,43 @@ def update_prescriptor(prescriptor_id):
 
                     if presc_email:
                         try:
-                            logo_url = url_for("static", filename="img/logos/SDC-logo.jpg", _external=True)
+                            from sigp.controllers.auth_controller import _generate_token
+                            # Logo para emails
+                            logo_url = "https://i.ibb.co/cXKzBGPd/logo-innova.png"
+
+                            platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
+                            login_path = url_for("auth.login_get")
+                            login_url = f"{platform_base}{login_path}"
+                            token = _generate_token(presc_email.strip().lower()) if presc_email else None
+                            reset_path = url_for("auth.reset_password", token=token) if token else None
+                            reset_url = f"{platform_base}{reset_path}" if reset_path else None
+
                             html_body = render_template(
                                 "emails/contract_link.html",
                                 prescriptor=obj,
                                 sign_link=link,
                                 contract_url=abs_url,
                                 logo_url=logo_url,
+                                platform_url=platform_base + "/",
+                                email=presc_email,
+                                login_url=login_url,
+                                reset_url=reset_url,
                             )
                             plain_body = (
-                                "Hola,\n\n"
-                                "Para firmar tu contrato ingresá al siguiente enlace:\n"
-                                f"{link}\n\n"
-                                "Si no solicitaste esto, ignorá este mensaje."
+                                f"Hola{',' if not obj else ' ' + (getattr(obj, 'squeeze_page_name', None) or getattr(obj, 'name', '') ) + ','}\n\n"
+                                "¡Te damos la bienvenida al Programa de Prescriptores!\n\n"
+                                "Paso 1: Accedé a tu cuenta\n"
+                                f"- URL: {platform_base}/\n"
+                                f"- Usuario: {presc_email}\n\n"
+                                "Paso 2: Establecé tu contraseña\n"
+                                f"- Restablecer contraseña: {reset_url or '(no disponible)'}\n\n"
+                                "Paso 3: Firmá tu convenio de prescriptor\n"
+                                f"- Enlace para firmar: {link}\n"
+                                + (f"- Descargar convenio: {abs_url}\n" if abs_url else "") +
+                                "\n¿Necesitás ayuda? Respondé este correo y te asistimos.\n"
+                                "Los enlaces pueden expirar por motivos de seguridad."
                             )
-                            send_simple_mail([presc_email], "Contrato disponible para firma", html_body, html=True, text_body=plain_body)
+                            send_simple_mail([presc_email], "¡Bienvenido al Programa de Prescriptores - Demos los primeros pasos.", html_body, html=True, text_body=plain_body)
                             flash(f"Email de firma enviado a {presc_email}", "info")
                         except Exception as exc:
                             current_app.logger.exception("Error enviando correo de contrato auto: %s", exc)

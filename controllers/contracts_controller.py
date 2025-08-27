@@ -154,24 +154,47 @@ def generate_for_prescriptor(prescriptor_id):
         if not mail_server:
             flash("Email NO enviado: MAIL_SERVER no está configurado", "warning")
         try:
-            # Cuerpo HTML usando template (igual que reset password)
-            logo_url = url_for("static", filename="img/logos/SDC-logo.jpg", _external=True)
+            # Cuerpo HTML usando template (agregamos datos de acceso y reset de contraseña)
+            from sigp.controllers.auth_controller import _generate_token
+            # Logo para emails
+            logo_url = "https://i.ibb.co/cXKzBGPd/logo-innova.png"
+
+            # Construir URLs de plataforma/login/reset teniendo en cuenta dominio configurable
+            platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
+            login_path = url_for("auth.login_get")
+            login_url = f"{platform_base}{login_path}"
+            token = _generate_token(presc_email.strip().lower()) if presc_email else None
+            reset_path = url_for("auth.reset_password", token=token) if token else None
+            reset_url = f"{platform_base}{reset_path}" if reset_path else None
+
             html_body = render_template(
                 "emails/contract_link.html",
                 prescriptor=prescriptor,
                 sign_link=link,
                 contract_url=abs_url,
                 logo_url=logo_url,
+                platform_url=platform_base + "/",
+                email=presc_email,
+                login_url=login_url,
+                reset_url=reset_url,
             )
             plain_body = (
-                "Hola,\n\n"
-                "Para firmar tu contrato ingresá al siguiente enlace:\n"
-                f"{link}\n\n"
-                "Si no solicitaste esto, ignorá este mensaje."
+                f"Hola{',' if not prescriptor else ' ' + (getattr(prescriptor, 'squeeze_page_name', None) or getattr(prescriptor, 'name', '') ) + ','}\n\n"
+                "¡Te damos la bienvenida al Programa de Prescriptores!\n\n"
+                "Paso 1: Accedé a tu cuenta\n"
+                f"- URL: {platform_base}/\n"
+                f"- Usuario: {presc_email}\n\n"
+                "Paso 2: Establecé tu contraseña\n"
+                f"- Restablecer contraseña: {reset_url or '(no disponible)'}\n\n"
+                "Paso 3: Firmá tu convenio de prescriptor\n"
+                f"- Enlace para firmar: {link}\n"
+                + (f"- Descargar convenio: {abs_url}\n" if abs_url else "") +
+                "\n¿Necesitás ayuda? Respondé este correo y te asistimos.\n"
+                "Los enlaces pueden expirar por motivos de seguridad."
             )
             send_simple_mail(
                 [presc_email],
-                "Contrato disponible para firma",
+                "¡Bienvenido al Programa de Prescriptores - Demos los primeros pasos.",
                 html_body,
                 html=True,
                 text_body=plain_body,
@@ -319,23 +342,46 @@ def sign_draw_post():
     to_pres = current_app.config.get("PRESIDENT_EMAIL")
     if to_pres:
         try:
-            # Cuerpo HTML a partir del template
-            logo_url = url_for("static", filename="img/logos/SDC-logo.jpg", _external=True)
+            # Datos para el email del Presidente
+            pres_name = current_app.config.get("PRESIDENT_DISPLAY_NAME", "Jesús")
+            presc_name = getattr(prescriptor, "squeeze_page_name", "") or getattr(prescriptor, "name", "Prescriptor")
+            # Logo externo
+            logo_url = "https://i.ibb.co/cXKzBGPd/logo-innova.png"
+            # URL absoluta del PDF actual del contrato
+            import os as _os
+            _rel = getattr(prescriptor, "contract_url", None)
+            _fname = _os.path.basename(_rel) if _rel else None
+            contract_abs = url_for("static", filename=f"contracts/{_fname}", _external=True) if _fname else None
+
             html_body = render_template(
                 "emails/president_sign_request.html",
-                prescriptor=prescriptor,
+                pres_name=pres_name,
+                prescriptor_name=presc_name,
                 sign_link=link_pres,
-                contract_url=getattr(prescriptor, "contract_url", None),
+                contract_url=contract_abs,
                 logo_url=logo_url,
             )
             plain_body = (
-                "Hola,\n\n"
-                "Hay un contrato para firmar como Presidente. Accedé al siguiente enlace:\n"
+                f"Hola {pres_name},\n\n"
+                f"Tenemos buenas noticias: {presc_name} ha firmado exitosamente su convenio de prescriptor y ahora necesitamos tu aprobación final.\n\n"
+                "Resumen del proceso:\n"
+                "- Prescriptor evaluado y aprobado por el equipo\n"
+                f"- Contrato firmado por {presc_name}\n"
+                "- Pendiente: tu firma como Presidente\n\n"
+                "Firmá el contrato (Presidente):\n"
                 f"{link_pres}\n\n"
+                + (f"Ver PDF del contrato:\n{contract_abs}\n\n" if contract_abs else "") +
+                "Una vez que firmes, automáticamente:\n"
+                "- El convenio quedará completamente ejecutado\n"
+                f"- {presc_name} pasará al estado 'Captación'\n"
+                "- El sistema enviará confirmaciones a ambas partes\n\n"
+                "Nota de seguridad: Este enlace tiene validez temporal por motivos de seguridad.\n"
+                f"Gracias por tu tiempo, {pres_name}.\n"
             )
+            subject = f"{pres_name}, necesitamos tu firma - Contrato prescriptor {presc_name} listo para aprobación"
             send_simple_mail(
                 [to_pres],
-                "Firma del Presidente requerida",
+                subject,
                 html_body,
                 html=True,
                 text_body=plain_body,
@@ -566,27 +612,41 @@ def sign_president_post():
             pass
         if presc_email:
             try:
-                # Reusar el template de capacitación
+                # Email de capacitación al prescriptor (nuevo copy)
                 from sigp.controllers.auth_controller import _generate_token
-                platform_url = "https://sigp.eniit.es/"
+                platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
                 token = _generate_token(presc_email)
                 reset_path = url_for("auth.reset_password", token=token)
-                reset_url = platform_url.rstrip("/") + reset_path
+                reset_url = f"{platform_base}{reset_path}"
+                platform_url = platform_base + "/"
+                # Logo externo sutil
+                logo_url = "https://i.ibb.co/cXKzBGPd/logo-innova.png"
 
-                logo_url = url_for("static", filename="img/logos/SDC-logo.jpg", _external=True)
                 html_body = render_template(
                     "emails/prescriptor_training.html",
+                    prescriptor=prescriptor,
                     platform_url=platform_url,
                     email=presc_email,
                     reset_url=reset_url,
                     contract_url=final_url_abs,
+                    logo_url=logo_url,
                 )
                 plain_body = (
-                    "Hola!\n\n"
-                    "Tu contrato ya fue firmado por Jesús Serrano Sanz (Presidente y Administrador Único) y tu cuenta está habilitada para la fase de capacitación.\n\n"
-                    f"Plataforma: {platform_url}\nUsuario: {presc_email}\nRestablecer contraseña: {reset_url}\n\n"
-                    f"Descargar contrato firmado: {final_url_abs}\n\n"
-                    "En el menú verás el módulo Multimedia > Mis archivos con los recursos de capacitación (videos, links y archivos).\n\n"
+                    f"Hola {(getattr(prescriptor, 'squeeze_page_name', None) or getattr(prescriptor, 'name', '') or '').strip()}!\n\n"
+                    "Excelentes noticias: nuestro presidente Jesús ha firmado tu convenio y ahora oficialmente formas parte del equipo de prescriptores.\n\n"
+                    "Tu convenio está listo:\n"
+                    f"- Descargar contrato firmado: {final_url_abs}\n\n"
+                    "Acceso a la plataforma:\n"
+                    f"- URL: {platform_url}\n- Usuario: {presc_email}\n- Restablecer contraseña: {reset_url}\n\n"
+                    "Recursos de capacitación:\n"
+                    "- Video tutorial introductorio: https://www.youtube.com/watch?v=QwaQiqBHbZM\n"
+                    "- En la plataforma: Multimedia > Mis archivos (videos, enlaces y archivos)\n\n"
+                    "Próximos pasos:\n"
+                    "- Descargar y guardar tu convenio con las dos firmas\n"
+                    "- Completar la capacitación inicial en la plataforma\n"
+                    "- Informar al equipo referente cuando finalices\n"
+                    "- Coordinar una meet para checklist previo a generación de leads\n"
+                    "- Activación: al completar el checklist, pasarás de 'capacitación' a 'activo'\n\n"
                     "¡Éxitos en tu formación!"
                 )
                 mail_server = current_app.config.get("MAIL_SERVER")
@@ -594,7 +654,7 @@ def sign_president_post():
                     flash("Email NO enviado: MAIL_SERVER no está configurado", "warning")
                 send_simple_mail(
                     [presc_email],
-                    "Acceso a plataforma de capacitación",
+                    "¡Convenio aprobado! Bienvenido a la fase de capacitación",
                     html_body,
                     html=True,
                     text_body=plain_body,

@@ -82,6 +82,13 @@ def generate_contract_pdf(prescriptor, filename: Optional[str] = None) -> Path:
         tw = c.stringWidth(text, font, size)
         c.drawString((width - tw) / 2, y, text)
 
+    def draw_right(text: str, y: float, font: str = "Helvetica", size: int = 12, margin_right: float = 72):
+        """Dibuja texto alineado a la derecha respetando un margen derecho."""
+        c.setFont(font, size)
+        tw = c.stringWidth(text, font, size)
+        x = max(0, width - margin_right - tw)
+        c.drawString(x, y, text)
+
     # Helpers de maquetación
     def wrap_text(text: str, max_width: float, font: str = "Helvetica", size: int = 11) -> list[str]:
         """Rompe texto por palabras para que no exceda max_width."""
@@ -140,11 +147,11 @@ def generate_contract_pdf(prescriptor, filename: Optional[str] = None) -> Path:
     nombre_prescriptor = name or "PRESCRIPTOR"
     draw_centered(f"Y {nombre_prescriptor.upper()}", y_cursor, size=14)
 
-    # Línea de lugar/fecha centrada
+    # Línea de lugar/fecha alineada a la derecha
     y_cursor -= 36
     ciudad = current_app.config.get("CONTRACT_CITY", "Valladolid")
     fecha_larga = _spanish_long_date(datetime.utcnow())
-    draw_centered(f"En {ciudad}, {fecha_larga}.", y_cursor, font="Helvetica", size=12)
+    draw_right(f"En {ciudad}, {fecha_larga}.", y_cursor, font="Helvetica", size=12)
 
     # Separador hacia el bloque REUNIDOS
     y_cursor -= 28
@@ -739,230 +746,6 @@ def stamp_text_overlay(input_pdf: Path, output_pdf: Path, text_lines: list[str],
             overlay_path.unlink(missing_ok=True)
         except Exception:
             pass
-
-def sign_pades_old(input_pdf: Path, output_pdf: Path) -> None:
-    """Firma el PDF con PAdES-BES usando el certificado P12 configurado.
-    Si se configura PKCS#11 en el futuro, se puede ampliar.
-    """
-    from pyhanko.sign import signers
-    from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
-
-    p12_path = current_app.config.get("PRESIDENT_CERT_PATH")
-    p12_pass = current_app.config.get("PRESIDENT_CERT_PASS", "")
-    if not p12_path:
-        raise RuntimeError("PRESIDENT_CERT_PATH no configurado")
-
-    p12_abs = Path(current_app.root_path, p12_path) if not p12_path.startswith("/") else Path(p12_path)
-    signer = signers.SimpleSigner.load_pkcs12(str(p12_abs), passphrase=p12_pass.encode() if p12_pass else None)
-
-    with open(input_pdf, "rb") as inf:
-        w = IncrementalPdfFileWriter(inf)
-        # Definimos un nombre de campo para permitir crear el campo de firma si no existe
-        # Forzamos SHA-256 para evitar problemas de selección automática del mecanismo
-        meta = signers.PdfSignatureMetadata(
-            field_name="PresidentSignature",
-            md_algorithm="sha256",
-        )  # firma invisible
-        with open(output_pdf, "wb") as outf:
-            signers.PdfSigner(meta, signer=signer).sign_pdf(w, output=outf)
-
-def sign_pades_old2(input_pdf: Path, output_pdf: Path) -> None:
-    """Firma el PDF con PAdES-BES usando el certificado P12 configurado.
-    Si se configura PKCS#11 en el futuro, se puede ampliar.
-    """
-    from pyhanko.sign import signers
-    from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
-    from pyhanko.sign.general import SigningError
-
-    p12_path = current_app.config.get("PRESIDENT_CERT_PATH")
-    p12_pass = current_app.config.get("PRESIDENT_CERT_PASS", "")
-    
-    if not p12_path:
-        raise RuntimeError("PRESIDENT_CERT_PATH no configurado")
-
-    # Resolver ruta absoluta
-    if p12_path.startswith("/"):
-        p12_abs = Path(p12_path)
-    else:
-        p12_abs = Path(current_app.root_path) / p12_path
-    
-    # Verificar que el archivo existe
-    if not p12_abs.exists():
-        raise RuntimeError(f"Certificado P12 no encontrado en: {p12_abs}")
-    
-    current_app.logger.info(f"Cargando certificado desde: {p12_abs}")
-    
-    try:
-        # Cargar el certificado P12
-        passphrase = p12_pass.encode('utf-8') if p12_pass else None
-        signer = signers.SimpleSigner.load_pkcs12(
-            str(p12_abs), 
-            passphrase=passphrase
-        )
-        
-        # Verificar que el signer se creó correctamente
-        if signer is None:
-            raise RuntimeError("No se pudo crear el signer - certificado inválido")
-            
-        current_app.logger.info("Certificado cargado correctamente")
-        
-        # Verificar propiedades del signer
-        if hasattr(signer, 'signing_cert') and signer.signing_cert:
-            current_app.logger.info(f"Certificado subject: {signer.signing_cert.subject}")
-        
-        if hasattr(signer, 'cert_registry') and signer.cert_registry:
-            current_app.logger.info("Registro de certificados disponible")
-            
-    except Exception as exc:
-        current_app.logger.error(f"Error cargando certificado P12: {exc}")
-        raise RuntimeError(f"No se pudo cargar el certificado P12: {exc}")
-
-    try:
-        with open(input_pdf, "rb") as inf:
-            # Crear el writer
-            w = IncrementalPdfFileWriter(inf)
-            
-            # Configuración de metadatos de firma más explícita
-            meta = signers.PdfSignatureMetadata(
-                field_name="PresidentSignature",
-                md_algorithm="sha256",
-                location="Valladolid, España",
-                reason="Firma del Presidente de Sports Data Campus",
-            )
-            
-            current_app.logger.info("Iniciando proceso de firma PAdES")
-            
-            # Crear el PdfSigner
-            pdf_signer = signers.PdfSigner(meta, signer=signer)
-            
-            # Verificar que el pdf_signer se creó correctamente
-            if pdf_signer is None:
-                raise RuntimeError("No se pudo crear PdfSigner")
-            
-            with open(output_pdf, "wb") as outf:
-                # Intentar la firma
-                pdf_signer.sign_pdf(w, output=outf)
-                
-        current_app.logger.info("Firma PAdES completada exitosamente")
-        
-    except SigningError as exc:
-        current_app.logger.error(f"Error específico de firma: {exc}")
-        raise RuntimeError(f"Error en proceso de firma: {exc}")
-    except Exception as exc:
-        current_app.logger.error(f"Error general en firma PAdES: {exc}")
-        # Más debug específico
-        if "'NoneType' object has no attribute" in str(exc):
-            current_app.logger.error("Error sugiere problema con certificado o configuración")
-            if hasattr(signer, 'signing_cert'):
-                current_app.logger.error(f"signing_cert es None: {signer.signing_cert is None}")
-            if hasattr(signer, 'signing_key'):
-                current_app.logger.error(f"signing_key es None: {signer.signing_key is None}")
-        raise
-
-def sign_pades_old3(input_pdf: Path, output_pdf: Path) -> None:
-    """Firma el PDF con PAdES-BES usando el certificado P12 configurado."""
-    from pyhanko.sign import signers
-    from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
-    from pyhanko.sign.general import SigningError
-    import traceback
-
-    p12_path = current_app.config.get("PRESIDENT_CERT_PATH")
-    p12_pass = current_app.config.get("PRESIDENT_CERT_PASS", "")
-    
-    if not p12_path:
-        raise RuntimeError("PRESIDENT_CERT_PATH no configurado")
-
-    # Resolver ruta absoluta
-    if p12_path.startswith("/"):
-        p12_abs = Path(p12_path)
-    else:
-        p12_abs = Path(current_app.root_path) / p12_path
-    
-    if not p12_abs.exists():
-        raise RuntimeError(f"Certificado P12 no encontrado en: {p12_abs}")
-    
-    current_app.logger.info(f"Cargando certificado desde: {p12_abs}")
-    
-    # Cargar certificado con validaciones exhaustivas
-    signer = None
-    try:
-        passphrase = p12_pass.encode('utf-8') if p12_pass else None
-        signer = signers.SimpleSigner.load_pkcs12(str(p12_abs), passphrase=passphrase)
-        
-        if signer is None:
-            raise RuntimeError("SimpleSigner.load_pkcs12 retornó None")
-        
-        # Validaciones críticas
-        if not hasattr(signer, 'signing_cert') or signer.signing_cert is None:
-            raise RuntimeError("El certificado no tiene signing_cert válido")
-            
-        if not hasattr(signer, 'signing_key') or signer.signing_key is None:
-            raise RuntimeError("El certificado no tiene signing_key válida")
-        
-        current_app.logger.info(f"Certificado válido - Subject: {signer.signing_cert.subject}")
-        
-    except Exception as exc:
-        current_app.logger.error(f"Error cargando P12: {exc}")
-        current_app.logger.error(f"Traceback: {traceback.format_exc()}")
-        raise RuntimeError(f"Fallo cargando certificado: {exc}")
-
-    # Intentar firma con manejo robusto de errores
-    try:
-        current_app.logger.info("Abriendo PDF para firma")
-        with open(input_pdf, "rb") as inf:
-            w = IncrementalPdfFileWriter(inf)
-            
-            # Metadatos más básicos para evitar problemas
-            meta = signers.PdfSignatureMetadata(
-                field_name="PresidentSignature",
-                md_algorithm="sha256",
-                location="Valladolid, España",
-                reason="Firma del Presidente",
-            )
-            
-            current_app.logger.info("Creando PdfSigner")
-            
-            # Validar antes de crear PdfSigner
-            if not hasattr(signer, 'get_signature_mechanism_for_digest'):
-                current_app.logger.error("El signer no tiene el método get_signature_mechanism_for_digest")
-                # Intentar recrear el signer con parámetros explícitos
-                try:
-                    from pyhanko.sign.signers import SimpleSigner
-                    from pyhanko.sign.signers.pdf_signer import PdfSigner
-                    current_app.logger.info("Intentando recrear signer con parámetros explícitos")
-                    # Forzar creación con algoritmo explícito
-                    pdf_signer = PdfSigner(
-                        meta, 
-                        signer=signer,
-                        timestamper=None,
-                        new_field_spec=None
-                    )
-                except Exception as fallback_exc:
-                    current_app.logger.error(f"Fallo en fallback: {fallback_exc}")
-                    raise RuntimeError(f"No se puede crear PdfSigner: {fallback_exc}")
-            else:
-                pdf_signer = signers.PdfSigner(meta, signer=signer)
-            
-            current_app.logger.info("Ejecutando firma")
-            with open(output_pdf, "wb") as outf:
-                pdf_signer.sign_pdf(w, output=outf)
-                
-        current_app.logger.info("Firma PAdES completada")
-        
-    except Exception as exc:
-        current_app.logger.error(f"Error en proceso de firma: {exc}")
-        current_app.logger.error(f"Tipo de error: {type(exc).__name__}")
-        current_app.logger.error(f"Traceback completo: {traceback.format_exc()}")
-        
-        # Debug específico para el error NoneType
-        if "'NoneType' object has no attribute 'get_signature_mechanism_for_digest'" in str(exc):
-            current_app.logger.error("=== DEBUG DETALLADO ===")
-            current_app.logger.error(f"signer type: {type(signer)}")
-            current_app.logger.error(f"signer dir: {dir(signer)}")
-            if hasattr(signer, '__dict__'):
-                current_app.logger.error(f"signer __dict__: {signer.__dict__}")
-        
-        raise RuntimeError(f"Error firmando PDF: {exc}")
 
 def sign_pades(input_pdf: Path, output_pdf: Path) -> None:
     """Firma el PDF con PAdES-BES usando el certificado P12 configurado."""

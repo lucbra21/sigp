@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Firma del Presidente requerida</title>
+  <title>Firma requerida - Contrato de prescriptor</title>
 </head>
 <body style="font-family:Arial,Helvetica,sans-serif;background:#f7f7f9;padding:24px;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;">
@@ -10,39 +10,50 @@
       <td style="padding:24px;">
         {% if logo_url %}
         <div style="text-align:center;margin-bottom:12px;">
-          <img src="{{ logo_url }}" alt="Logo" style="height:40px;max-width:200px;display:inline-block;"/>
+          <img src="{{ logo_url }}" alt="Logo" style="height:32px;max-width:180px;display:inline-block;opacity:0.9;"/>
         </div>
         {% endif %}
-        <h2 style="margin:0 0 12px 0;color:#111827;">Firma del Presidente requerida</h2>
+        <h2 style="margin:0 0 12px 0;color:#111827;">{{ pres_name }}, necesitamos tu firma</h2>
+        <p style="margin:0 0 12px 0;color:#374151;">Hola {{ pres_name }},</p>
         <p style="margin:0 0 16px 0;color:#374151;">
-          Hola Presidente,
+          Tenemos buenas noticias: <strong>{{ prescriptor_name }}</strong> ha firmado exitosamente su convenio de prescriptor y ahora necesitamos tu aprobación final.
         </p>
-        <p style="margin:0 0 16px 0;color:#374151;">
-          El contrato del prescriptor
-          {% if prescriptor and prescriptor.name %}
-            <strong>{{ prescriptor.name }}</strong>
-          {% elif prescriptor and prescriptor.squeeze_page_name %}
-            <strong>{{ prescriptor.squeeze_page_name }}</strong>
-          {% else %}
-            <strong>sin nombre</strong>
-          {% endif %}
-          está listo para tu firma.
+
+        <h3 style="margin:16px 0 8px 0;color:#111827;font-size:16px;">📋 Resumen del proceso</h3>
+        <ul style="margin:0 0 16px 18px;color:#374151;padding:0;">
+          <li>✅ Prescriptor evaluado y aprobado por el equipo</li>
+          <li>✅ Contrato firmado por {{ prescriptor_name }}</li>
+          <li>⏳ Pendiente: Tu firma como Presidente</li>
+        </ul>
+
+        <h3 style="margin:16px 0 8px 0;color:#111827;font-size:16px;">🖊️ Firma el contrato</h3>
+        <p style="margin:0 0 8px 0;">
+          <a href="{{ sign_link }}" style="display:inline-block;background:#0d6efd;color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;">Firmar como Presidente</a>
         </p>
-        <p style="margin:0 0 16px 0;">
-          <a href="{{ sign_link }}" style="display:inline-block;background:#0d6efd;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:6px;">Firmar contrato</a>
-        </p>
-        <p style="margin:0 0 16px 0;color:#6b7280;font-size:14px;">
-          Si el botón no funciona, copiá y pegá este enlace en tu navegador:<br>
+        <p style="margin:0 0 16px 0;color:#6b7280;font-size:12px;">Si el botón no funciona, copiá y pegá este enlace en tu navegador:<br/>
           <span style="word-break:break-all;">{{ sign_link }}</span>
         </p>
+
         {% if contract_url %}
-        <p style="margin:0 0 16px 0;color:#6b7280;font-size:14px;">
-          Podés ver el PDF actual del contrato aquí:<br>
-          <a href="{{ contract_url }}">{{ contract_url }}</a>
+        <h3 style="margin:16px 0 8px 0;color:#111827;font-size:16px;">📄 Revisar el contrato</h3>
+        <p style="margin:0 0 8px 0;color:#374151;">Podés descargar y revisar el convenio con la firma del prescriptor:</p>
+        <p style="margin:0 0 16px 0;">
+          <a href="{{ contract_url }}" style="display:inline-block;background:#6b7280;color:#ffffff !important;text-decoration:none;padding:8px 12px;border-radius:6px;">Ver PDF del contrato</a>
         </p>
         {% endif %}
+
+        <p style="margin:16px 0 16px 0;color:#374151;">
+          Una vez que firmes, automáticamente:
+        </p>
+        <ul style="margin:0 16px 16px 18px;color:#374151;padding:0;">
+          <li>El convenio quedará completamente ejecutado</li>
+          <li>{{ prescriptor_name }} pasará al estado "Captación"</li>
+          <li>El sistema enviará confirmaciones a ambas partes</li>
+        </ul>
+
         <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
-        <p style="margin:0;color:#9ca3af;font-size:12px;">Este enlace puede expirar por motivos de seguridad.</p>
+        <p style="margin:0 0 8px 0;color:#9ca3af;font-size:12px;">⚠️ Nota de seguridad: Este enlace tiene validez temporal por motivos de seguridad.</p>
+        <p style="margin:0;color:#374151;">Gracias por tu tiempo, {{ pres_name }}.<br/>Fuerte abrazo,</p>
       </td>
     </tr>
   </table>

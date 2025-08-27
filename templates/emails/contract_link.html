@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Contrato disponible para firma</title>
+  <title>¡Bienvenido al Programa de Prescriptores!</title>
 </head>
 <body style="font-family:Arial,Helvetica,sans-serif;background:#f7f7f9;padding:24px;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;">
@@ -13,28 +13,57 @@
           <img src="{{ logo_url }}" alt="Logo" style="height:40px;max-width:200px;display:inline-block;"/>
         </div>
         {% endif %}
-        <h2 style="margin:0 0 12px 0;color:#111827;">Contrato disponible para firma</h2>
-        <p style="margin:0 0 16px 0;color:#374151;">
-          Hola{% if prescriptor and prescriptor.name %} {{ prescriptor.name }}{% endif %},
+        <h2 style="margin:0 0 12px 0;color:#111827;">¡Bienvenido al Programa de Prescriptores!</h2>
+        <p style="margin:0 0 12px 0;color:#374151;">
+          Hola{% if prescriptor %} {{ prescriptor.squeeze_page_name or prescriptor.name }}{% endif %},
         </p>
         <p style="margin:0 0 16px 0;color:#374151;">
-          Ya podés firmar tu contrato accediendo al siguiente enlace seguro:
+          ¡Te damos la bienvenida al Programa de Prescriptores! 🎉 Nos complace que hayas decidido sumarte a nuestro equipo. Como conversamos, ahora formas parte de una red de profesionales que ayudan a conectar talento deportivo con oportunidades académicas.
         </p>
-        <p style="margin:0 0 16px 0;">
-          <a href="{{ sign_link }}" style="display:inline-block;background:#0d6efd;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:6px;">Firmar contrato</a>
+
+        <h3 style="margin:16px 0 8px 0;color:#111827;font-size:16px;">Paso 1: Accedé a tu cuenta</h3>
+        {% if platform_url and email %}
+        <div style="padding:16px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;margin:8px 0 16px 0;">
+          <p style="margin:0 0 8px 0;color:#374151;">
+            🔗 URL de la plataforma: <a href="{{ platform_url }}" style="color:#0d6efd;">{{ platform_url }}</a><br/>
+            📧 Tu usuario: <strong>{{ email }}</strong>
+          </p>
+          {% if login_url %}
+          <p style="margin:0;">
+            <a href="{{ login_url }}" style="display:inline-block;background:#10b981;color:#ffffff;text-decoration:none;padding:8px 12px;border-radius:6px;">Ir a la plataforma</a>
+          </p>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <h3 style="margin:16px 0 8px 0;color:#111827;font-size:16px;">Paso 2: Establecé tu contraseña</h3>
+        {% if reset_url %}
+        <p style="margin:0 0 8px 0;color:#374151;">Antes de acceder, necesitás establecer tu contraseña inicial:</p>
+        <p style="margin:0 0 8px 0;">
+          <a href="{{ reset_url }}" style="display:inline-block;background:#f59e0b;color:#111827;text-decoration:none;padding:8px 12px;border-radius:6px;">Restablecer contraseña</a>
         </p>
-        <p style="margin:0 0 16px 0;color:#6b7280;font-size:14px;">
-          Si el botón no funciona, copiá y pegá este enlace en tu navegador:<br>
+        <p style="margin:0 0 16px 0;color:#6b7280;font-size:12px;">Si el botón no funciona, copiá y pegá este enlace en tu navegador:<br/>
+          <span style="word-break:break-all;">{{ reset_url }}</span>
+        </p>
+        {% else %}
+        <p style="margin:0 0 16px 0;color:#6b7280;font-size:14px;">El enlace para restablecer contraseña no está disponible momentáneamente. Escribinos si lo necesitas.</p>
+        {% endif %}
+
+        <h3 style="margin:16px 0 8px 0;color:#111827;font-size:16px;">Paso 3: Firmá tu convenio de prescriptor</h3>
+        <p style="margin:0 0 8px 0;color:#374151;">Una vez que ingreses a la plataforma, ya podés firmar tu convenio de colaboración:</p>
+        <p style="margin:0 0 8px 0;">
+          <a href="{{ sign_link }}" style="display:inline-block;background:#0d6efd;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:6px;">Firmar convenio</a>
+        </p>
+        <p style="margin:0 0 16px 0;color:#6b7280;font-size:12px;">Si el botón no funciona, copiá y pegá este enlace en tu navegador:<br/>
           <span style="word-break:break-all;">{{ sign_link }}</span>
         </p>
         {% if contract_url %}
-        <p style="margin:0 0 16px 0;color:#6b7280;font-size:14px;">
-          Podés descargar el PDF base del contrato aquí:<br>
-          <a href="{{ contract_url }}">{{ contract_url }}</a>
-        </p>
+        <p style="margin:0 0 16px 0;color:#374151;">📄 También podés descargar el PDF del convenio aquí: <a href="{{ contract_url }}">Descargar convenio</a></p>
         {% endif %}
+
         <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
-        <p style="margin:0;color:#9ca3af;font-size:12px;">Este enlace puede expirar por motivos de seguridad.</p>
+        <p style="margin:0 0 8px 0;color:#374151;">¿Necesitás ayuda? Si tenés alguna dificultad con el acceso o la firma del contrato, respondé este correo y te asistimos.</p>
+        <p style="margin:0;color:#9ca3af;font-size:12px;">Los enlaces pueden expirar por motivos de seguridad.</p>
       </td>
     </tr>
   </table>

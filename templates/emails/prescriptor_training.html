@@ -2,34 +2,62 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Acceso a capacitación SIGP</title>
+  <title>¡Convenio aprobado! Bienvenido a la fase de capacitación</title>
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;color:#333;margin:0;padding:0}
-    .container{max-width:600px;margin:0 auto;padding:20px}
-    .btn{display:inline-block;background:#0d6efd;color:#fff;text-decoration:none;padding:12px 22px;border-radius:4px;margin-top:15px}
-    .small{font-size:13px;color:#666}
+    body{font-family:Arial,Helvetica,sans-serif;color:#333;margin:0;padding:0;background:#f7f7f9}
+    .container{max-width:640px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:24px}
+    .btn{display:inline-block;background:#0d6efd;color:#fff;text-decoration:none;padding:12px 20px;border-radius:6px}
+    .btn-secondary{background:#6b7280;color:#fff}
+    .muted{font-size:12px;color:#9ca3af}
+    .list{margin:0 0 16px 18px;padding:0;color:#374151}
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>¡Bienvenido a la fase de capacitación!</h2>
-    <p>Tu cuenta en la plataforma SIGP ya está activa.</p>
-    <p>
-      <strong>Plataforma:</strong> <a href="{{ platform_url }}">{{ platform_url }}</a><br>
-      <strong>Usuario:</strong> {{ email }}
-    </p>
-    <p>Antes de ingresar, por favor establece tu contraseña haciendo clic en el siguiente botón:</p>
-    <p><a href="{{ reset_url }}" class="btn">Restablecer contraseña</a></p>
-    {% if contract_url %}
-    <p>Ya hemos firmado tu contrato. Descárgalo aquí:</p>
-    <p><a href="{{ contract_url }}" class="btn">Descargar contrato firmado</a></p>
-    <p class="small">Firmado por nuestro presidente.</p>
+    {% if logo_url %}
+    <div style="text-align:center;margin-bottom:12px;">
+      <img src="{{ logo_url }}" alt="Logo" style="height:32px;max-width:180px;display:inline-block;opacity:0.9;"/>
+    </div>
     {% endif %}
-    <p>Antes de empezar, mira el siguiente video tutorial donde explicamos cómo usar la plataforma como prescriptor:</p>
-      <p><a href="https://www.youtube.com/watch?v=QwaQiqBHbZM" class="btn" target="_blank">Ver tutorial en YouTube</a></p>
-      <p>Una vez dentro verás en el menú el módulo <strong>Multimedia &gt; Mis archivos</strong> con videos, enlaces y archivos de capacitación.</p>
-    <p>¡Éxitos en tu formación!</p>
-    <p class="small">Si no solicitaste este correo, simplemente ignóralo.</p>
+    <h2 style="margin:0 0 12px 0;color:#111827;">¡Convenio aprobado! Bienvenido a la fase de capacitación</h2>
+    <p style="margin:0 0 12px 0;color:#374151;">¡Hola {{ (prescriptor.squeeze_page_name or prescriptor.name) if prescriptor else '' }}!</p>
+    <p style="margin:0 0 16px 0;color:#374151;">🎉 ¡Excelentes noticias! Nuestro presidente Jesús ha firmado tu convenio y ahora oficialmente formas parte del equipo de prescriptores.</p>
+
+    {% if contract_url %}
+    <h3 style="margin:16px 0 8px 0;color:#111827;font-size:16px;">📜 Tu convenio está listo</h3>
+    <p style="margin:0 0 8px 0;color:#374151;">El proceso de firma ha sido completado exitosamente. Podés descargar tu convenio firmado por ambas partes:</p>
+    <p style="margin:0 0 16px 0;"><a href="{{ contract_url }}" class="btn" style="color:#ffffff !important;">Descargar contrato firmado</a></p>
+    {% endif %}
+
+    <h3 style="margin:16px 0 8px 0;color:#111827;font-size:16px;">🎓 ¡Comenzamos con tu capacitación!</h3>
+    <p style="margin:0 0 8px 0;color:#374151;">Ahora que eres oficialmente parte del equipo, es momento de profundizar en tu formación como prescriptor.</p>
+
+    <h4 style="margin:12px 0 8px 0;color:#111827;font-size:15px;">🔗 Recordatorio de acceso a la plataforma</h4>
+    <p style="margin:0 0 8px 0;color:#374151;">
+      <strong>URL:</strong> <a href="{{ platform_url }}">{{ platform_url }}</a><br/>
+      <strong>Tu usuario:</strong> {{ email }}
+    </p>
+    <p style="margin:0 0 16px 0;color:#374151;">(Si necesitás restablecer tu contraseña, hacé clic aquí)</p>
+    <p style="margin:0 0 16px 0;"><a href="{{ reset_url }}" class="btn btn-secondary" style="color:#ffffff !important;">Restablecer contraseña</a></p>
+
+    <h4 style="margin:12px 0 8px 0;color:#111827;font-size:15px;">📚 Recursos de capacitación disponibles</h4>
+    <ol class="list" style="list-style: decimal;">
+      <li>Video tutorial introductorio: <a href="https://www.youtube.com/watch?v=QwaQiqBHbZM" target="_blank">Ver tutorial en YouTube</a></li>
+      <li>Materiales de capacitación en la plataforma: Una vez dentro, encontrarás en el menú <strong>Multimedia &gt; Mis archivos</strong> todos los videos, enlaces y archivos que necesitás.</li>
+    </ol>
+
+    <h4 style="margin:12px 0 8px 0;color:#111827;font-size:15px;">🚀 Próximos pasos</h4>
+    <ul class="list" style="list-style: disc;">
+      <li>📥 Descargar y guardar tu convenio con las dos firmas para tus registros</li>
+      <li>📖 Completar la capacitación inicial usando los materiales disponibles en la plataforma</li>
+      <li>✉️ Informar al equipo de referentes del programa de prescriptores cuando hayas finalizado la capacitación</li>
+      <li>📅 Coordinar una meet para hacer un checklist y verificar que todo esté listo para el éxito de la generación de leads</li>
+      <li>🎯 Activación: Una vez completado el checklist, el equipo referente te pasará de estado "capacitación" a "activo"</li>
+    </ul>
+
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;"/>
+    <p class="muted">Estamos emocionados de tenerte en el equipo. Si tenés dudas durante tu capacitación, no dudes en contactarnos.</p>
+    <p style="margin:0;color:#374151;">¡Éxitos en tu formación!</p>
   </div>
 </body>
 </html>
