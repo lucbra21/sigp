@@ -160,7 +160,7 @@
           {% if contract_url %}
                <a href="{{ contract_url }}" target="_blank" class="btn btn-outline-secondary me-2"><i class="bi bi-file-earmark-pdf"></i> Ver contrato actual</a>
           {% endif %}
-          {% if edit and obj %}
+          {% if edit and obj and current_user.role_id and (current_user.role_id|string == '550e8400-e29b-41d4-a716-446655440001') %}
             <button type="submit"
                     class="btn btn-outline-primary"
                     formaction="{{ url_for('contracts.generate_for_prescriptor', prescriptor_id=obj.id) }}"
