@@ -129,23 +129,28 @@ def generate_for_prescriptor(prescriptor_id):
 
     flash("Contrato generado", "success")
     # Enviar email al prescriptor con su enlace si tenemos correo
-    presc_email = getattr(prescriptor, "email", None) or getattr(prescriptor, "squeeze_page_email", None)
-    # Fallback: usar email del usuario asociado si no hay email en el prescriptor
-    if not presc_email:
+    # 1) Preferir email del usuario asociado (más confiable en producción)
+    presc_email = None
+    try:
+        UserModel = getattr(Base.classes, "users", None)
+    except Exception:
+        UserModel = None
+    if UserModel is None:
         try:
-            UserModel = getattr(Base.classes, "users", None)
-        except Exception:  # Base puede estar importado al inicio del módulo
+            from sigp.models import Base as _Base
+            UserModel = getattr(_Base.classes, "users", None)
+        except Exception:
             UserModel = None
-        if UserModel is None:
-            try:
-                from sigp.models import Base as _Base
-                UserModel = getattr(_Base.classes, "users", None)
-            except Exception:
-                UserModel = None
-        if UserModel is not None and getattr(prescriptor, "user_id", None):
-            u = db.session.get(UserModel, prescriptor.user_id)
-            if u and getattr(u, "email", None):
-                presc_email = u.email
+    if UserModel is not None and getattr(prescriptor, "user_id", None):
+        u = db.session.get(UserModel, prescriptor.user_id)
+        if u and getattr(u, "email", None):
+            presc_email = u.email
+    # 2) Fallback a email cargado en prescriptor
+    if not presc_email:
+        presc_email = getattr(prescriptor, "email", None) or getattr(prescriptor, "squeeze_page_email", None)
+    # 3) Normalizar
+    if presc_email:
+        presc_email = presc_email.strip().lower()
     if not presc_email:
         flash("No se envió email: el prescriptor no tiene email cargado", "warning")
     else:
