@@ -760,6 +760,16 @@ def embed_lead_get():
     return _apply_frame_headers(make_response(html))
 
 
+@leads_bp.route("/embed/guide", methods=["GET"])  # final URL: /leads/embed/guide
+def embed_lead_guide():
+    # Public guide page for prescriptors
+    try:
+        programs = db.session.query(Program).order_by(Program.name).all() if Program is not None else []
+    except Exception:
+        programs = []
+    html = render_template("public/lead_embed_guide.html", programs=programs)
+    return make_response(html)
+
 @leads_bp.route("/embed", methods=["POST"])  # final URL: /leads/embed
 def embed_lead_post():
     prescriptor_id = request.form.get("prescriptor_id", "").strip()
@@ -827,6 +837,102 @@ def embed_lead_post():
             db.session.commit()
         except Exception:
             pass
+
+        # notify commercials if program has configured emails (best-effort)
+        try:
+            if Program is not None and program_id:
+                program = db.session.get(Program, program_id)
+                if program and getattr(program, "commercial_emails", None):
+                    from sigp.common.email_utils import send_simple_mail
+                    emails = [e.strip() for e in program.commercial_emails.split(',') if e.strip()]
+                    if emails:
+                        # resolve prescriptor display name similar to landing
+                        try:
+                            PrescriptorTbl = getattr(Base.classes, 'prescriptors', None)
+                            presc_name = prescriptor_id
+                            if PrescriptorTbl is not None:
+                                presc = db.session.get(PrescriptorTbl, prescriptor_id)
+                                if presc:
+                                    presc_name = getattr(presc, 'squeeze_page_name', None) or getattr(presc, 'name', None) or presc_name
+                        except Exception:
+                            presc_name = prescriptor_id
+                        subject = f"Nuevo lead para programa {getattr(program,'name', program.id)}"
+                        plain_body = (
+                            "Se ha generado un nuevo lead desde el formulario embebido.\n\n"
+                            f"Prescriptor: {presc_name}\n"
+                            f"Programa: {getattr(program,'name', program.id)}\n"
+                            f"Nombre candidato: {name}\n"
+                            f"Email: {email or '-'}\n"
+                            f"Celular: {cellular or '-'}\n"
+                            f"Observaciones: {observations or '-'}\n"
+                        )
+                        # absolute URL to edit/view lead in backoffice
+                        try:
+                            lead_url = url_for('leads.edit_lead', lead_id=lead.id, _external=True)
+                        except Exception:
+                            lead_url = None
+                        html_body = render_template(
+                            'emails/new_lead.html',
+                            origin='Formulario embebido',
+                            prescriptor=presc_name,
+                            program=getattr(program,'name', program.id),
+                            candidate_name=name,
+                            candidate_email=email,
+                            candidate_cellular=cellular,
+                            observations=observations,
+                            lead_url=lead_url,
+                        )
+                        send_simple_mail(emails, subject, html_body, html=True, text_body=plain_body)
+        except Exception as exc:
+            current_app.logger.exception("Error enviando mail a comerciales (iframe): %s", exc)
+
+        # notify prescriptor (best-effort)
+        try:
+            PrescriptorTbl = getattr(Base.classes, 'prescriptors', None)
+            UsersTbl = getattr(Base.classes, 'users', None)
+            if PrescriptorTbl is not None:
+                presc = db.session.get(PrescriptorTbl, prescriptor_id)
+                presc_email = None
+                presc_name = prescriptor_id
+                if presc:
+                    presc_name = getattr(presc, 'squeeze_page_name', None) or getattr(presc, 'name', None) or prescriptor_id
+                    # prefer linked user email
+                    if getattr(presc, 'user_id', None) and UsersTbl is not None:
+                        u = db.session.get(UsersTbl, presc.user_id)
+                        if u and getattr(u, 'email', None):
+                            presc_email = u.email
+                    presc_email = presc_email or getattr(presc, 'email', None)
+                if presc_email:
+                    subject = "Nuevo lead recibido"
+                    # absolute URL
+                    try:
+                        lead_url = url_for('leads.edit_lead', lead_id=lead.id, _external=True)
+                    except Exception:
+                        lead_url = None
+                    plain_body = (
+                        f"Hola {presc_name}, se generó un nuevo lead desde tu formulario.\n\n"
+                        f"Programa: {getattr(program,'name', program.id) if program_id and program else '-'}\n"
+                        f"Nombre candidato: {name}\n"
+                        f"Email: {email or '-'}\n"
+                        f"Celular: {cellular or '-'}\n"
+                        f"Observaciones: {observations or '-'}\n"
+                        + (f"\nVer lead: {lead_url}\n" if lead_url else "")
+                    )
+                    html_body = render_template(
+                        'emails/new_lead.html',
+                        origin='Tu formulario embebido',
+                        prescriptor=presc_name,
+                        program=(getattr(program,'name', program.id) if program_id and program else '-'),
+                        candidate_name=name,
+                        candidate_email=email,
+                        candidate_cellular=cellular,
+                        observations=observations,
+                        lead_url=lead_url,
+                    )
+                    from sigp.common.email_utils import send_simple_mail
+                    send_simple_mail([presc_email], subject, html_body, html=True, text_body=plain_body)
+        except Exception as exc:
+            current_app.logger.exception("Error enviando mail a prescriptor (iframe): %s", exc)
     except Exception as exc:
         current_app.logger.exception("Error creando lead vía iframe: %s", exc)
         html = render_template(

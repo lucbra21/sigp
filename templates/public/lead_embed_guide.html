@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Guía para integrar el formulario de Leads</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;margin:0;background:#fff;color:#111}
+    .wrap{max-width:860px;margin:0 auto;padding:28px}
+    h1{font-size:24px;margin:0 0 12px}
+    h2{font-size:18px;margin:22px 0 8px}
+    code,pre{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px}
+    pre{padding:14px;overflow:auto}
+    .muted{color:#6b7280}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:18px;background:#fafafa}
+    a{color:#0d6efd}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .field{display:flex;flex-direction:column}
+    label{font-size:12px;color:#555;margin-bottom:6px}
+    input{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px}
+    .builder{margin-top:8px}
+    .btn{display:inline-block;background:#0d6efd;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .codebox{width:100%;min-height:120px}
+    iframe.demo{width:100%;height:320px;border:1px solid #e5e7eb;border-radius:8px}
+    @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Guía rápida: integrar el formulario de Leads por iframe</h1>
+    <p class="muted">Esta página puede compartirse con prescriptores para que lo integren en su web.</p>
+
+    <h2>Snippet listo para pegar</h2>
+    <p>Reemplazar <strong>PRESCRIPTOR_ID</strong> por el ID del prescriptor.</p>
+    <pre><code>&lt;iframe
+  src="{{ request.host_url.rstrip('/') }}/leads/embed?prescriptor=PRESCRIPTOR_ID&amp;title=Quiero+informaci%C3%B3n&amp;primary=%230d6efd"
+  width="100%"
+  height="620"
+  style="border:0; max-width: 720px; width: 100%;"
+  loading="lazy"
+  referrerpolicy="no-referrer-when-downgrade"
+  allowtransparency="true"&gt;
+&lt;/iframe&gt;</code></pre>
+
+    <p>Parámetros opcionales:</p>
+    <ul>
+      <li><code>program=PROGRAM_ID</code> preseleccionar programa</li>
+      <li><code>success_url=https://tusitio.com/gracias</code> redirección tras enviar</li>
+      <li><code>title=Texto</code> título del formulario</li>
+      <li><code>primary=%23HEXCOLOR</code> color del botón (usar <code>%23</code> por <code>#</code>)</li>
+    </ul>
+
+    <h2>Constructor de iframe</h2>
+    <div class="card builder">
+      <div class="grid">
+        <div class="field">
+          <label for="prescriptor">PRESCRIPTOR_ID (obligatorio)</label>
+          <input id="prescriptor" placeholder="uuid-del-prescriptor" />
+        </div>
+        <div class="field">
+          <label for="program">PROGRAM_ID (opcional)</label>
+          <input id="program" placeholder="uuid-del-programa" />
+          <div class="muted" style="margin-top:6px">O seleccioná un programa</div>
+          <select id="program_sel" onchange="document.getElementById('program').value=this.value;">
+            <option value="">- Seleccionar -</option>
+            {% for p in (programs or []) %}
+              {% set pid = p.id %}
+              {% set pname = p.name or p.nombre or pid %}
+              <option value="{{ pid }}">{{ pname }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="title">Título (opcional)</label>
+          <input id="title" placeholder="Quiero información" />
+        </div>
+        <div class="field">
+          <label for="primary">Color primario HEX (opcional)</label>
+          <input id="primary" placeholder="#0d6efd" />
+        </div>
+        <div class="field" style="grid-column:1/-1">
+          <label for="success">Success URL (opcional)</label>
+          <input id="success" placeholder="https://tusitio.com/gracias" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" type="button" onclick="build()">Generar</button>
+        <button class="btn" type="button" onclick="copyCode()" style="background:#111827">Copiar código</button>
+      </div>
+      <div style="margin-top:12px">
+        <label style="display:block;margin-bottom:6px;color:#555">Código generado</label>
+        <textarea id="code" class="codebox" readonly></textarea>
+      </div>
+      <div style="margin-top:12px">
+        <label style="display:block;margin-bottom:6px;color:#555">Vista previa</label>
+        <iframe id="preview" class="demo"></iframe>
+      </div>
+    </div>
+
+    <h2>Dónde pegarlo</h2>
+    <ul>
+      <li>WordPress (Gutenberg): bloque “HTML personalizado”</li>
+      <li>Constructores (Elementor/Divi): widget/elemento HTML</li>
+      <li>Webflow/Wix/Squarespace: embed HTML</li>
+      <li>HTML puro: dentro del <code>&lt;body&gt;</code></li>
+    </ul>
+
+    <h2>Campos del formulario</h2>
+    <ul>
+      <li>Nombre y apellido (obligatorio)</li>
+      <li>Email (opcional)</li>
+      <li>Celular (opcional)</li>
+      <li>Programa (opcional)</li>
+      <li>Observaciones (opcional)</li>
+    </ul>
+
+    <div class="card">
+      <strong>Tip:</strong> dejá <code>width="100%"</code> y <code>max-width: 720px</code> para mejor responsive.
+    </div>
+
+    <h2>Pruebas</h2>
+    <ol>
+      <li>Pegá el iframe en un borrador de tu página.</li>
+      <li>Completá los campos y enviá.</li>
+      <li>Deberías ver “¡Gracias!” o redirección a tu página de gracias.</li>
+      <li>Verificá en SIGP que el lead se creó.</li>
+    </ol>
+
+    <h2>Problemas comunes</h2>
+    <ul>
+      <li>Iframe en blanco: verificá que la URL tenga <code>prescriptor=</code> con un ID válido.</li>
+      <li>Me pide login: usá exactamente <code>{{ request.host_url.rstrip('/') }}/leads/embed</code>.</li>
+      <li>No se ve en tu dominio: solicitar autorización de dominio (seguridad CSP).</li>
+    </ul>
+
+    <p class="muted">¿Dudas? Contactanos e indicá la URL de tu landing y tu PRESCRIPTOR_ID.</p>
+  </div>
+  <script>
+    const base = "{{ request.host_url.rstrip('/') }}/leads/embed";
+    function build(){
+      const prescriptor = document.getElementById('prescriptor').value.trim();
+      const program = document.getElementById('program').value.trim();
+      const title = document.getElementById('title').value.trim();
+      const primary = document.getElementById('primary').value.trim();
+      const success = document.getElementById('success').value.trim();
+      if(!prescriptor){
+        alert('Completá PRESCRIPTOR_ID');
+        return;
+      }
+      const params = new URLSearchParams();
+      params.set('prescriptor', prescriptor);
+      if(program) params.set('program', program);
+      if(title) params.set('title', title);
+      if(primary){
+        const hex = primary.startsWith('#') ? primary.replace('#','%23') : primary;
+        params.set('primary', hex);
+      }
+      if(success) params.set('success_url', success);
+      const src = `${base}?${params.toString()}`;
+      const code = `<iframe\n  src="${src}"\n  width="100%"\n  height="620"\n  style="border:0; max-width: 720px; width: 100%;"\n  loading="lazy"\n  referrerpolicy="no-referrer-when-downgrade"\n  allowtransparency="true">\n</iframe>`;
+      document.getElementById('code').value = code;
+      document.getElementById('preview').src = src;
+    }
+    async function copyCode(){
+      const txt = document.getElementById('code').value;
+      if(!txt){ build(); }
+      try{
+        await navigator.clipboard.writeText(document.getElementById('code').value);
+        alert('Código copiado');
+      }catch(e){
+        // Fallback
+        const ta = document.getElementById('code');
+        ta.select();
+        document.execCommand('copy');
+        alert('Código copiado');
+      }
+    }
+    // Prefill from URL params and auto-build if prescriptor is provided
+    (function(){
+      try{
+        const usp = new URLSearchParams(window.location.search);
+        const setVal = (id, key) => {
+          const v = usp.get(key);
+          if(v){
+            document.getElementById(id).value = decodeURIComponent(v);
+          }
+        };
+        setVal('prescriptor','prescriptor');
+        setVal('program','program');
+        setVal('title','title');
+        setVal('primary','primary');
+        setVal('success','success_url');
+        if(document.getElementById('prescriptor').value.trim()){
+          build();
+        }
+      }catch(e){}
+    })();
+  </script>
+</body>
+</html>
