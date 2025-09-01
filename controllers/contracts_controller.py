@@ -172,6 +172,18 @@ def generate_for_prescriptor(prescriptor_id):
             reset_path = url_for("auth.reset_password", token=token) if token else None
             reset_url = f"{platform_base}{reset_path}" if reset_path else None
 
+            # Depuración rápida: registrar valores resueltos (sin datos sensibles)
+            try:
+                current_app.logger.info(
+                    "[contracts.generate_for_prescriptor] email_debug presc_email=%s platform_base=%s login_url=%s reset_url=%s",
+                    presc_email,
+                    platform_base,
+                    login_url,
+                    reset_url,
+                )
+            except Exception:
+                pass
+
             html_body = render_template(
                 "emails/contract_link.html",
                 prescriptor=prescriptor,
@@ -186,7 +198,7 @@ def generate_for_prescriptor(prescriptor_id):
             plain_body = (
                 f"Hola{',' if not prescriptor else ' ' + (getattr(prescriptor, 'squeeze_page_name', None) or getattr(prescriptor, 'name', '') ) + ','}\n\n"
                 "¡Te damos la bienvenida al Programa de Prescriptores!\n\n"
-                "Paso 1: Accedé a tu cuenta\n"
+                "Paso 1: Accedé a tu cuenta1\n"
                 f"- URL: {platform_base}/\n"
                 f"- Usuario: {presc_email}\n\n"
                 "Paso 2: Establecé tu contraseña\n"
