@@ -1,7 +1,7 @@
 """Leads management blueprint: simple listing of leads."""
 from __future__ import annotations
 
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, abort
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, abort, make_response
 import uuid
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, SubmitField, TextAreaField, IntegerField
@@ -681,3 +681,174 @@ def edit_lead(lead_id):
         return redirect(url_for("leads.leads_list"))
 
     return render_template("records/lead_form.html", form=form, action=url_for("leads.edit_lead", lead_id=lead_id), edit=True)
+
+# ---------------------------------------------------------------------------
+# Public embeddable lead form (iframe)
+# URL: GET/POST /leads/embed?prescriptor=<id>&title=&primary=&program=&success_url=
+# ---------------------------------------------------------------------------
+
+def _apply_frame_headers(resp):
+    """Apply CSP to allow embedding from configured origins."""
+    allow = current_app.config.get("EMBED_ALLOWED_ORIGINS")
+    if isinstance(allow, str) and allow.strip():
+        # Comma-separated to space-separated list for frame-ancestors
+        origins = " ".join([o.strip() for o in allow.split(",") if o.strip()])
+    else:
+        origins = "*"  # fallback: allow anywhere (consider restricting in prod)
+    resp.headers["Content-Security-Policy"] = f"frame-ancestors {origins}"
+    # Avoid legacy X-Frame-Options that would block framing
+    resp.headers.pop("X-Frame-Options", None)
+    return resp
+
+
+def _default_pending_state_id():
+    """Try to find a 'Pendiente de contactar' like state, else fallback to 1."""
+    try:
+        if StateLead is not None:
+            srows = db.session.query(StateLead).all()
+            for s in srows:
+                name = getattr(s, "name", "").upper()
+                if "PENDIENTE" in name and "CONTACT" in name:
+                    return s.id
+    except Exception:
+        pass
+    return 1
+
+
+@leads_bp.route("/embed", methods=["GET"])  # final URL: /leads/embed
+def embed_lead_get():
+    prescriptor_id = request.args.get("prescriptor", "").strip()
+    if not prescriptor_id or Prescriptor is None:
+        # Show simple error inside iframe
+        html = render_template(
+            "public/lead_embed.html",
+            error="Prescriptor no especificado",
+            title=request.args.get("title", "Quiero información"),
+            primary=request.args.get("primary", "#0d6efd"),
+        )
+        return _apply_frame_headers(make_response(html))
+
+    prescriptor = db.session.get(Prescriptor, prescriptor_id)
+    if not prescriptor:
+        html = render_template(
+            "public/lead_embed.html",
+            error="Prescriptor no válido",
+            title=request.args.get("title", "Quiero información"),
+            primary=request.args.get("primary", "#0d6efd"),
+        )
+        return _apply_frame_headers(make_response(html))
+
+    # Optional preselect program
+    program_id = request.args.get("program", "")
+    programs = []
+    if Program is not None:
+        try:
+            programs = db.session.query(Program).order_by(Program.name).all()
+        except Exception:
+            programs = []
+
+    html = render_template(
+        "public/lead_embed.html",
+        prescriptor_id=prescriptor_id,
+        title=request.args.get("title", "Quiero información"),
+        primary=request.args.get("primary", "#0d6efd"),
+        program_id=program_id,
+        programs=programs,
+        success=False,
+        success_url=request.args.get("success_url", ""),
+    )
+    return _apply_frame_headers(make_response(html))
+
+
+@leads_bp.route("/embed", methods=["POST"])  # final URL: /leads/embed
+def embed_lead_post():
+    prescriptor_id = request.form.get("prescriptor_id", "").strip()
+    name = request.form.get("candidate_name", "").strip()
+    email = request.form.get("candidate_email", "").strip()
+    cellular = request.form.get("candidate_cellular", "").strip()
+    observations = request.form.get("observations", "").strip()
+    program_id = request.form.get("program_info_id", "").strip() or None
+    title = request.args.get("title", "Quiero información")
+    primary = request.args.get("primary", "#0d6efd")
+    success_url = request.args.get("success_url", "")
+
+    errors = []
+    if not prescriptor_id:
+        errors.append("Falta prescriptor")
+    if not name:
+        errors.append("El nombre es obligatorio")
+    # email opcional, pero si viene, validación mínima
+    if email and ("@" not in email or "." not in email.split("@")[-1]):
+        errors.append("Email inválido")
+
+    if errors or Prescriptor is None or Lead is None:
+        html = render_template(
+            "public/lead_embed.html",
+            prescriptor_id=prescriptor_id,
+            title=title,
+            primary=primary,
+            error=" | ".join(errors) if errors else "Modelo no disponible",
+            candidate_name=name,
+            candidate_email=email,
+            candidate_cellular=cellular,
+            observations=observations,
+            program_id=program_id,
+            programs=db.session.query(Program).order_by(Program.name).all() if Program is not None else [],
+        )
+        return _apply_frame_headers(make_response(html))
+
+    # Create lead
+    try:
+        state_id = _default_pending_state_id()
+        lead = Lead(
+            id=str(uuid.uuid4()),
+            prescriptor_id=prescriptor_id,
+            program_info_id=program_id,
+            state_id=state_id,
+            candidate_name=name,
+            candidate_email=email or None,
+            candidate_cellular=cellular or None,
+        )
+        # Persist observations if the model supports it
+        try:
+            if hasattr(lead, "observations"):
+                setattr(lead, "observations", observations)
+        except Exception:
+            pass
+        db.session.add(lead)
+        db.session.commit()
+        # log history (best-effort)
+        try:
+            from sigp.common.lead_utils import log_lead_change
+            note = "Alta de lead desde iframe público"
+            if observations:
+                note = f"{note}. Observaciones: {observations}"
+            log_lead_change(lead.id, lead.state_id, note)
+            db.session.commit()
+        except Exception:
+            pass
+    except Exception as exc:
+        current_app.logger.exception("Error creando lead vía iframe: %s", exc)
+        html = render_template(
+            "public/lead_embed.html",
+            prescriptor_id=prescriptor_id,
+            title=title,
+            primary=primary,
+            error="No se pudo crear el lead. Intenta más tarde.",
+            candidate_name=name,
+            candidate_email=email,
+            candidate_cellular=cellular,
+            program_id=program_id,
+            programs=db.session.query(Program).order_by(Program.name).all() if Program is not None else [],
+        )
+        return _apply_frame_headers(make_response(html))
+
+    # Success: render thank-you or in-iframe redirect
+    html = render_template(
+        "public/lead_embed.html",
+        success=True,
+        success_url=success_url,
+        title=title,
+        primary=primary,
+    )
+    return _apply_frame_headers(make_response(html))

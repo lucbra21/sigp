@@ -198,7 +198,7 @@ def generate_for_prescriptor(prescriptor_id):
             plain_body = (
                 f"Hola{',' if not prescriptor else ' ' + (getattr(prescriptor, 'squeeze_page_name', None) or getattr(prescriptor, 'name', '') ) + ','}\n\n"
                 "¡Te damos la bienvenida al Programa de Prescriptores!\n\n"
-                "Paso 1: Accedé a tu cuenta1\n"
+                "Paso 1: Accedé a tu cuenta\n"
                 f"- URL: {platform_base}/\n"
                 f"- Usuario: {presc_email}\n\n"
                 "Paso 2: Establecé tu contraseña\n"

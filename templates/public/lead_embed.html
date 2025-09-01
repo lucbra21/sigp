@@ -1,0 +1,110 @@
+{% set _primary = primary or '#0d6efd' %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{{ title or 'Quiero información' }}</title>
+  <style>
+    :root { --primary: {{ _primary }}; }
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;margin:0;background:#f8fafc;color:#111827}
+    .wrap{max-width:720px;margin:0 auto;padding:20px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .hd{padding:16px 20px;border-bottom:1px solid #f1f5f9}
+    h1{font-size:18px;margin:0}
+    .bd{padding:20px}
+    .row{display:block}
+    .col{width:100%; margin-bottom:12px}
+    label{display:block;font-size:13px;color:#374151;margin:0 0 6px}
+    input,select{width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font-size:14px}
+    textarea{width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font-size:14px;min-height:96px;resize:vertical}
+    input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent)}
+    .actions{margin-top:14px}
+    .btn{display:inline-block;background:var(--primary);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+    .muted{font-size:12px;color:#6b7280;margin-top:8px}
+    .alert{padding:10px 12px;border-radius:8px;margin-bottom:12px}
+    .alert-err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+    .ok{padding:18px;text-align:center}
+    .ok h2{margin:0 0 8px}
+    .link{color:var(--primary)}
+  </style>
+  <script>
+    // Resize helper: post height to parent if same-origin listeners exist
+    function postHeight(){ try{ parent.postMessage({sigp_iframe_height: document.body.scrollHeight}, '*'); }catch(e){} }
+    window.addEventListener('load', postHeight);
+    window.addEventListener('resize', postHeight);
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="hd"><h1>{{ title or 'Quiero información' }}</h1></div>
+      <div class="bd">
+        {% if error %}
+          <div class="alert alert-err">{{ error }}</div>
+        {% endif %}
+
+        {% if success %}
+          {% if success_url %}
+            <div class="ok">
+              <h2>¡Gracias! Redirigiendo…</h2>
+              <p class="muted">Si no redirige automáticamente, <a class="link" href="{{ success_url }}" target="_blank" rel="noopener">hacé clic aquí</a>.</p>
+            </div>
+            <script> setTimeout(function(){ window.location.href = {{ success_url|tojson }}; }, 600); </script>
+          {% else %}
+            <div class="ok">
+              <h2>¡Gracias! Recibimos tus datos</h2>
+              <p class="muted">Pronto nos pondremos en contacto.</p>
+            </div>
+          {% endif %}
+        {% else %}
+          <form method="post" action="{{ url_for('leads.embed_lead_post', **request.args) }}">
+            <input type="hidden" name="prescriptor_id" value="{{ prescriptor_id }}"/>
+
+            <div class="row">
+              <div class="col">
+                <label>Nombre y apellido *</label>
+                <input type="text" name="candidate_name" value="{{ candidate_name or '' }}" required />
+              </div>
+              <div class="col">
+                <label>Email</label>
+                <input type="email" name="candidate_email" value="{{ candidate_email or '' }}" />
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:12px">
+              <div class="col">
+                <label>Celular</label>
+                <input type="text" name="candidate_cellular" value="{{ candidate_cellular or '' }}" />
+              </div>
+              <div class="col">
+                <label>Programa (opcional)</label>
+                <select name="program_info_id">
+                  <option value="">- Seleccionar -</option>
+                  {% for p in (programs or []) %}
+                    {% set pid = p.id %}
+                    {% set pname = p.name or p.nombre or pid %}
+                    <option value="{{ pid }}" {% if program_id|string == pid|string %}selected{% endif %}>{{ pname }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col">
+                <label>Observaciones</label>
+                <textarea name="observations" placeholder="Contanos qué te interesa...">{{ observations or '' }}</textarea>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn" type="submit">Enviar</button>
+              <div class="muted">* Campo obligatorio</div>
+            </div>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1079,10 +1079,10 @@ def update_prescriptor(prescriptor_id):
                             plain_body = (
                                 f"Hola{',' if not obj else ' ' + (getattr(obj, 'squeeze_page_name', None) or getattr(obj, 'name', '') ) + ','}\n\n"
                                 "¡Te damos la bienvenida al Programa de Prescriptores!\n\n"
-                                "Paso 1: Accedé a tu cuenta2\n"
+                                "Paso 1: Accedé a tu cuenta\n"
                                 f"- URL: {platform_base}/\n"
                                 f"- Usuario: {presc_email}\n\n"
-                                "Paso 2: Establecé tu contraseña2\n"
+                                "Paso 2: Establecé tu contraseña\n"
                                 f"- Restablecer contraseña: {reset_url or '(no disponible)'}\n\n"
                                 "Paso 3: Firmá tu convenio de prescriptor\n"
                                 f"- Enlace para firmar: {link}\n"
