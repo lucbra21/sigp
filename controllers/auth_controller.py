@@ -17,6 +17,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
 from wtforms.validators import EqualTo
 from wtforms.validators import DataRequired, Email, Length
+from werkzeug.middleware.proxy_fix import ProxyFix  
 
 import hashlib
 from sigp import db, bcrypt
@@ -165,15 +166,27 @@ def login_get():
     return render_template("layouts/login.html", form=form)
 
 
+def _client_ip():
+    fwd = request.headers.get("X-Forwarded-For")
+    return fwd.split(",")[0].strip() if fwd else request.remote_addr
+
 def _audit_event(user_id, success: bool, event_type: str):
     """Inserta un registro en login_audit."""
     Audit = getattr(Base.classes, "login_audit", None)
     if not Audit:
         return
-    ip_addr = request.remote_addr
-    record = Audit(user_id=user_id, success=1 if success else 0, ip_addr=ip_addr, event_type=event_type)
-    db.session.add(record)
-    db.session.commit()
+    try:
+        record = Audit(
+            user_id=user_id,  # si es None no grabamos (ver logout)
+            success=1 if success else 0,
+            ip_addr=_client_ip(),
+            event_type=event_type,
+        )
+        db.session.add(record)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Audit failed")
 
 
 @auth_bp.post("/contact")
