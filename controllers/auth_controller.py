@@ -85,7 +85,7 @@ def _serializer():
 def _generate_token(email:str):
     return _serializer().dumps(email, salt='pwd-reset')
 
-def _confirm_token(token, max_age=3600):
+def _confirm_token(token, max_age=5184000):
     try:
         email = _serializer().loads(token, salt='pwd-reset', max_age=max_age)
         return email

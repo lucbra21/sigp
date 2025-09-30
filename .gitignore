@@ -212,3 +212,7 @@ static/certificadodigital/*.key
 static/certificadodigital/*.csr
 static/certificadodigital/*.crt
 config.py
+
+.DS_Store
+static/.DS_Store
+templates/.DS_Store
