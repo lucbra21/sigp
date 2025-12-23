@@ -47,11 +47,11 @@ class Config:
     SIGN_MODE = os.getenv("SIGN_MODE", "DIY").upper()
 
     # Email del presidente (contra-firmante)
-    PRESIDENT_EMAIL = os.getenv("PRESIDENT_EMAIL", "ing.lucasbracamonte@gmail.com")
+    PRESIDENT_EMAIL = os.getenv("PRESIDENT_EMAIL", "jesus.serrano@eniit.es")
 
     # Enlaces de firma (tokens firmados y expirables)
     SIGN_TOKEN_SECRET = os.getenv("SIGN_TOKEN_SECRET", "change-this-token-secret")
-    SIGN_LINK_EXP_MINUTES = int(os.getenv("SIGN_LINK_EXP_MINUTES", 60))
+    SIGN_LINK_EXP_MINUTES = int(os.getenv("SIGN_LINK_EXP_MINUTES", 86400))
 
     # Certificado del presidente para PAdES (modo DIY)
     # Ruta a .p12/.pfx y password; alternativamente, configuración PKCS#11
