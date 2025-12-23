@@ -107,7 +107,51 @@ def _program_form(program_id=None):
                 setattr(program, attr, url_saved)
         try:
             db.session.commit()
-            flash("Programa guardado", "success")
+            
+            # -----------------------------------------------------------------------
+            # NUEVO: Sincronizar comisiones para todos los prescriptores existentes
+            # -----------------------------------------------------------------------
+            try:
+                Prescriptor = _model("prescriptors")
+                PrescComm = _model("prescriptor_commission")
+                
+                if Prescriptor and PrescComm:
+                    # Obtenemos todos los IDs de prescriptores
+                    # Nota: Podrías filtrar por state_id=1 (Activos) si no quieres asignarlo a dados de baja
+                    prescriptors_ids = db.session.query(Prescriptor.id).all()
+                    
+                    added_count = 0
+                    for (pid,) in prescriptors_ids:
+                        # Verificamos si ya existe la comisión para este par (Prescriptor, Programa)
+                        exists = db.session.query(PrescComm.id).filter_by(
+                            prescriptor_id=pid, 
+                            program_id=program.id
+                        ).first()
+                        
+                        if not exists:
+                            # Creamos la relación usando los valores por defecto del programa actual
+                            new_comm = PrescComm(
+                                id=str(uuid4()),
+                                prescriptor_id=pid,
+                                program_id=program.id,
+                                commission_value=program.commission_value or 0.0,
+                                registration_value=program.registration_value or 0.0,
+                                value_quotas=program.value_quotas or 0.0,
+                                first_installment_pct=program.first_installment_pct or 0.0
+                            )
+                            db.session.add(new_comm)
+                            added_count += 1
+                    
+                    if added_count > 0:
+                        db.session.commit()
+                        current_app.logger.info(f"Programa {program.name} sincronizado a {added_count} prescriptores.")
+
+            except Exception as e_sync:
+                # Logueamos el error pero no fallamos la petición principal, ya que el programa sí se guardó
+                current_app.logger.error(f"Error sincronizando comisiones al guardar programa: {e_sync}")
+            # -----------------------------------------------------------------------
+
+            flash("Programa guardado correctamente", "success")
             return redirect(url_for("programs.programs_list"))
         except Exception as e:
             db.session.rollback()
@@ -198,6 +242,30 @@ def program_duplicate(program_id):
     new.name = f"{src.name} (copia)"
     db.session.add(new)
     db.session.commit()
+    
+    # -----------------------------------------------------------------------
+    # También sincronizamos al duplicar para que los prescriptores tengan la copia
+    # -----------------------------------------------------------------------
+    try:
+        PrescComm = _model("prescriptor_commission")
+        Prescriptor = _model("prescriptors")
+        if PrescComm and Prescriptor:
+             prescriptors_ids = db.session.query(Prescriptor.id).all()
+             for (pid,) in prescriptors_ids:
+                 new_comm = PrescComm(
+                    id=str(uuid4()),
+                    prescriptor_id=pid,
+                    program_id=new.id,
+                    commission_value=new.commission_value or 0.0,
+                    registration_value=new.registration_value or 0.0,
+                    value_quotas=new.value_quotas or 0.0,
+                    first_installment_pct=new.first_installment_pct or 0.0
+                 )
+                 db.session.add(new_comm)
+             db.session.commit()
+    except Exception as e_dup:
+        current_app.logger.error(f"Error sync duplicado: {e_dup}")
+    
     flash("Programa duplicado", "success")
     return redirect(url_for("programs.program_edit", program_id=new.id))
 

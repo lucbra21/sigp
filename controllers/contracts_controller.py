@@ -62,7 +62,7 @@ def _get_prescriptor_from_token_for_user(token: str, expected_role: str):
     """Lee el token y valida que el usuario logueado coincide con el prescriptor dueño.
     Devuelve (prescriptor, error_redirect) donde error_redirect es una respuesta redirect si falla.
     """
-    data = _read_token(token, current_app.config.get("SIGN_LINK_EXP_MINUTES", 60))
+    data = _read_token(token, current_app.config.get("SIGN_LINK_EXP_MINUTES", 86400))
     if not data or data.get("r") != expected_role:
         flash("Enlace inválido o expirado", "warning")
         return None, redirect("/")

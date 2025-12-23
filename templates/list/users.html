@@ -72,17 +72,16 @@
         </form>
         {% endif %}
       </td>
-    </tr>
     {% endfor %}
   </tbody>
     </table>
   </div>
 </div>
 <nav class="d-flex justify-content-center mt-4">
-    <ul class="pagination pagination-sm pagination-glass mb-0">
+  <ul class="pagination pagination-sm pagination-glass mb-0">
     {% for p in range(1, pages + 1) %}
     <li class="page-item {% if p == page %}active{% endif %}">
-      <a class="page-link" href="?q={{ q }}&page={{ p }}">{{ p }}</a>
+      <a class="page-link" href="{{ url_for('users.users_list', q=q, role=role_filter, state=state_filter, page=p) }}">{{ p }}</a>
     </li>
     {% endfor %}
   </ul>
