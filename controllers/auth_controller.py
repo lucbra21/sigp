@@ -2,6 +2,7 @@
 
 Define un Blueprint llamado ``auth`` con rutas para login y logout.
 """
+import uuid
 from flask import (
     Blueprint,
     flash,
@@ -29,6 +30,17 @@ from sigp.models import Base
 # ---------------------------------------------------------------------------
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+
+# ---------------------------------------------------------------------------
+# Formulario de Alta Rápida (Signup)
+# ---------------------------------------------------------------------------
+class SignupForm(FlaskForm):
+    name = StringField("Nombre y Apellido", validators=[DataRequired(), Length(max=255)])
+    email = StringField("Email", validators=[DataRequired(), Email(), Length(max=255)])
+    cellular = StringField("Celular / WhatsApp", validators=[DataRequired(), Length(max=50)])
+    is_student = BooleanField("Soy alumno de Sports Data Campus", default=True)
+    observations = TextAreaField("Observaciones", validators=[DataRequired(), Length(max=1000)]) # Campo obligatorio para que cuenten por qué quieren entrar
+    submit = SubmitField("Enviar Solicitud")
 
 # ---------------------------------------------------------------------------
 # Formulario de Login
@@ -165,6 +177,132 @@ def login_get():
     form = LoginForm()
     return render_template("layouts/login.html", form=form)
 
+# Busca la función signup_post y reemplázala por esta corregida:
+@auth_bp.post("/signup")
+def signup_post():
+    form = SignupForm(request.form)
+    
+    if not form.validate_on_submit():
+        flash("Por favor verifica los datos ingresados.", "warning")
+        return redirect(url_for('auth.login_get'))
+
+    User = getattr(Base.classes, "users", None)
+    if not User:
+        flash("Error interno: Modelo User no disponible", "danger")
+        return redirect(url_for('auth.login_get'))
+
+    email_val = form.email.data.strip().lower()
+    existing = db.session.query(User).filter_by(email=email_val).first()
+    if existing:
+        flash("Ese correo ya está registrado en el sistema.", "warning")
+        return redirect(url_for('auth.login_get'))
+
+    try:
+        # --- LÓGICA DE ALUMNO VS EXTERNO ---
+        # Si el check está marcado (True):
+        if form.is_student.data:
+            target_type = 5      # Tipo Alumno
+            target_conf = 10     # Confianza Alta
+            obs_prefix = "[ALUMNO] "
+        else:
+            target_type = 6      # Tipo Externo/Otro
+            target_conf = 11     # Confianza Media/Baja (id 11)
+            obs_prefix = "[EXTERNO] "
+        
+        # -----------------------------------
+
+        # 2. Crear USUARIO
+        PRESCRIPTOR_ROLE_ID = "5e6e517e-584b-42be-a7a3-564ee14e8723" 
+        new_user = User(id=str(uuid.uuid4()))
+        new_user.name = form.name.data
+        new_user.email = email_val
+        new_user.cellular = form.cellular.data
+        new_user.role_id = PRESCRIPTOR_ROLE_ID
+        new_user.state_id = 1 
+        temp_pass = str(uuid.uuid4())
+        new_user.password_hash = hashlib.sha256(temp_pass.encode()).hexdigest()
+        
+        db.session.add(new_user)
+        db.session.flush()
+
+        # 3. Crear PRESCRIPTOR
+        Prescriptor = getattr(Base.classes, "prescriptors", None)
+        if not Prescriptor: raise Exception("Modelo Prescriptor no encontrado")
+
+        CAPTADOR_ID = "828f0ff2-c863-4dcf-b6b9-7b0baea68c72"
+
+        new_presc = Prescriptor(
+            id=str(uuid.uuid4()),
+            user_id=new_user.id,
+            squeeze_page_name=form.name.data,
+            # Agregamos el prefijo para identificar rápido visualmente
+            observations=f"{obs_prefix}{form.observations.data}", 
+            
+            # --- VALORES VARIABLES SEGÚN CHECK ---
+            proposed_type_id=target_type,
+            type_id=target_type,
+            confidence_level_id=target_conf,
+            
+            # --- VALORES FIJOS ---
+            user_getter_id=CAPTADOR_ID,
+            state_id=1,
+            sub_state_id=1,
+            squeeze_page_status="TEST",
+            created_at=db.func.now()
+        )
+        
+        db.session.add(new_presc)
+        db.session.commit()
+
+        # 4. Notificar
+        try:
+            admin_emails = current_app.config.get("ADMIN_EMAILS") or []
+            if isinstance(admin_emails, str):
+                admin_emails = [e.strip() for e in admin_emails.split(",") if e.strip()]
+            if not admin_emails:
+                fallback = current_app.config.get("MAIL_DEFAULT_SENDER") or current_app.config.get("MAIL_USERNAME")
+                if fallback: admin_emails = [fallback]
+
+            if admin_emails:
+                base_url = (current_app.config.get('BASE_URL') or request.host_url).rstrip('/')
+                edit_url = f"{base_url}{url_for('prescriptors.edit_prescriptor', prescriptor_id=new_presc.id)}"
+                from sigp.common.email_utils import send_simple_mail
+
+                # Determinamos etiqueta para el mail
+                label_alumno = "SÍ" if form.is_student.data else "NO"
+
+                html_body = render_template(
+                    'emails/new_prescriptor_created.html',
+                    name=new_presc.squeeze_page_name,
+                    email=new_user.email,
+                    cellular=new_user.cellular,
+                    prescriptor_id=new_presc.id,
+                    created_by="SOLICITUD WEB",
+                    edit_url=edit_url,
+                    # Pasamos info extra en observaciones
+                    observations=f"Es Alumno: {label_alumno} | Motivo: {form.observations.data}" 
+                )
+                
+                text_body = (
+                    f"Nueva solicitud de prescriptor (Web):\n\n"
+                    f"Candidato: {new_presc.squeeze_page_name}\n"
+                    f"Es Alumno: {label_alumno}\n"
+                    f"Email: {new_user.email}\n"
+                    f"Motivo: {form.observations.data}\n\n"
+                    f"Aprobar: {edit_url}\n"
+                )
+                send_simple_mail(admin_emails, f"Solicitud Prescriptor ({label_alumno} es alumno): {new_presc.squeeze_page_name}", html_body, html=True, text_body=text_body)
+        except Exception as exc:
+            current_app.logger.exception("Error notif: %s", exc)
+
+        flash("¡Solicitud enviada con éxito! Te contactaremos pronto.", "success")
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.exception("Error signup: %s", e)
+        flash("Ocurrió un error al procesar tu solicitud.", "danger")
+
+    return redirect(url_for('auth.login_get'))
 
 def _client_ip():
     fwd = request.headers.get("X-Forwarded-For")

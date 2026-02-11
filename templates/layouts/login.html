@@ -13,12 +13,60 @@
         background:url('{{ url_for('static', filename='img/fondo8.jpg') }}') no-repeat center center fixed;
         background-size:cover;
       }
+      /* Estilos para el modal dark mode */
+      .modal-content-dark {
+          background-color: #2a2b38;
+          color: #c4c3ca;
+          border: 1px solid #ffeba7;
+      }
+      .form-style-modal {
+          background-color: #1f2029;
+          border: none;
+          color: #fff;
+          padding: 10px;
+          border-radius: 4px;
+      }
+      .form-style-modal:focus {
+          background-color: #1f2029;
+          color: #fff;
+          box-shadow: 0 0 0 2px #ffeba7;
+      }
+      /* Ocultamos el input real para que no moleste */
+      .hidden-input {
+          display: none !important;
+      }
+
+      /* Dibujamos el cuadradito nosotros mismos */
+      .custom-checkmark {
+          width: 22px;
+          height: 22px;
+          background-color: #1f2029; /* Fondo oscuro */
+          border: 1px solid #ffeba7; /* Borde dorado */
+          border-radius: 4px;
+          display: inline-flex;      /* Para centrar el tilde */
+          align-items: center;
+          justify-content: center;
+          margin-right: 10px;
+          cursor: pointer;
+          flex-shrink: 0;            /* Evita que se aplaste */
+          transition: all 0.2s;
+      }
+
+      /* Cuando el input real (oculto) está marcado, pintamos el cuadradito */
+      .hidden-input:checked + .custom-checkmark {
+          background-color: #ffeba7;
+      }
+
+      /* Dibujamos el tilde (✔) */
+      .hidden-input:checked + .custom-checkmark::after {
+          content: '✔';
+          color: #2a2b38; /* Color oscuro */
+          font-size: 14px;
+          font-weight: bold;
+      }
     </style>
 </head>
 <body>
-    <!-- <a href="https://sportsdatacampus.com/" class="logo" target="_blank">
-        <img style="width: 400px; height: 100px;" src="../static/img/logos/SDC_horizontal_monocromo_negro.svg" alt="">
-    </a> -->
     <div class="section">
         <div class="container">
             <h1 class="fw-semibold text-center " style="font-size:2.8rem; margin-top: 10vh; margin-bottom: 1vh;">Sistema Integral de Gestión de Prescriptores <br>(SIGP)</h1>
@@ -51,7 +99,16 @@
                                                         {{ form.remember.label(class="form-check-label") }}
                                                     </div>
                                                     {{ form.submit(class="btn mt-4") }}
-                                                    <p class="mb-0 mt-4 text-center"><a href="{{ url_for('auth.forgot_get') }}" class="link" style="color: #a2a1a6 !important;">¿Olvidaste tu contraseña?</a></p>
+                                                    
+                                                    <p class="mb-0 mt-4 text-center">
+                                                        <a href="{{ url_for('auth.forgot_get') }}" class="link" style="color: #a2a1a6 !important;">¿Olvidaste tu contraseña?</a>
+                                                    </p>
+
+                                                    <p class="mb-0 mt-3 text-center">
+                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#signupModal" class="link fw-bold" style="color: #000000 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); text-decoration: none;">
+                                                            ¿Deseas ser prescriptor? <br> <span style="border-bottom: 1px dotted #ffeba7;">¡Inscríbete aquí!</span>
+                                                        </a>
+                                                    </p>
                                                 </form>
                                             </div>
                                        
@@ -87,10 +144,63 @@
         </div>
     </div>
 
-<!-- Loading overlay -->
 <div id="loginLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
   <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
 </div>
+
+<div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true" style="color: #333;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content modal-content-dark">
+      <div class="modal-header" style="border-bottom: 1px solid #444;">
+        <h5 class="modal-title" id="signupModalLabel" style="color: #ffeba7;">Solicitud de Prescriptor</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="{{ url_for('auth.signup_post') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ form.csrf_token.current_token }}">
+            
+            <div class="mb-3">
+                <label for="name" class="form-label">Nombre y Apellido</label>
+                <input type="text" class="form-control form-style-modal" name="name" required placeholder="Juan Pérez">
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control form-style-modal" name="email" required placeholder="tu@email.com">
+            </div>
+            
+            <div class="mb-3">
+                <label for="cellular" class="form-label">Celular / WhatsApp</label>
+                <input type="text" class="form-control form-style-modal" name="cellular" required placeholder="+54 9 ...">
+            </div>
+            
+            <div class="mb-3 mt-3">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" name="is_student" value="y" checked class="hidden-input">
+                    
+                    <span class="custom-checkmark"></span>
+                    
+                    <span style="color: #fff; user-select: none;">Soy alumno de Sports Data Campus</span>
+                </label>
+            </div>
+            <div class="mb-3">
+                <label for="observations" class="form-label">¿Por qué quieres ser prescriptor?</label>
+                <textarea class="form-control form-style-modal" name="observations" rows="3" required placeholder="Contanos brevemente..."></textarea>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-warning" style="background-color: #ffeba7; color: #2a2b38; border: none; font-weight: 600;">
+                    Enviar Solicitud
+                </button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
 <script>
   document.addEventListener('DOMContentLoaded', function(){
     const overlay = document.getElementById('loginLoading');
@@ -102,7 +212,7 @@
         overlay.classList.add('d-flex');
       });
     }
-      const cform=document.getElementById('contactForm');
+    const cform=document.getElementById('contactForm');
     if(cform){cform.addEventListener('submit',()=>{overlay.classList.remove('d-none');overlay.classList.add('d-flex');});}
   });
 </script>
