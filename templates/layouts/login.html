@@ -103,12 +103,16 @@
                                                     <p class="mb-0 mt-4 text-center">
                                                         <a href="{{ url_for('auth.forgot_get') }}" class="link" style="color: #a2a1a6 !important;">¿Olvidaste tu contraseña?</a>
                                                     </p>
-
                                                     <p class="mb-0 mt-3 text-center">
-                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#signupModal" class="link fw-bold" style="color: #000000 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); text-decoration: none;">
+                                                        <a href="{{ url_for('public.signup_get') }}" class="link fw-bold" style="color: #000000 !important;">
                                                             ¿Deseas ser prescriptor? <br> <span style="border-bottom: 1px dotted #ffeba7;">¡Inscríbete aquí!</span>
                                                         </a>
                                                     </p>
+                                                    <!-- <p class="mb-0 mt-3 text-center">
+                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#signupModal" class="link fw-bold" style="color: #000000 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); text-decoration: none;">
+                                                            ¿Deseas ser prescriptor? <br> <span style="border-bottom: 1px dotted #ffeba7;">¡Inscríbete aquí!</span>
+                                                        </a>
+                                                    </p> -->
                                                 </form>
                                             </div>
                                        
@@ -148,56 +152,7 @@
   <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
 </div>
 
-<div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true" style="color: #333;">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content modal-content-dark">
-      <div class="modal-header" style="border-bottom: 1px solid #444;">
-        <h5 class="modal-title" id="signupModalLabel" style="color: #ffeba7;">Solicitud de Prescriptor</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form action="{{ url_for('auth.signup_post') }}" method="POST">
-            <input type="hidden" name="csrf_token" value="{{ form.csrf_token.current_token }}">
-            
-            <div class="mb-3">
-                <label for="name" class="form-label">Nombre y Apellido</label>
-                <input type="text" class="form-control form-style-modal" name="name" required placeholder="Juan Pérez">
-            </div>
-            
-            <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control form-style-modal" name="email" required placeholder="tu@email.com">
-            </div>
-            
-            <div class="mb-3">
-                <label for="cellular" class="form-label">Celular / WhatsApp</label>
-                <input type="text" class="form-control form-style-modal" name="cellular" required placeholder="+54 9 ...">
-            </div>
-            
-            <div class="mb-3 mt-3">
-                <label style="display: flex; align-items: center; cursor: pointer;">
-                    <input type="checkbox" name="is_student" value="y" checked class="hidden-input">
-                    
-                    <span class="custom-checkmark"></span>
-                    
-                    <span style="color: #fff; user-select: none;">Soy alumno de Sports Data Campus</span>
-                </label>
-            </div>
-            <div class="mb-3">
-                <label for="observations" class="form-label">¿Por qué quieres ser prescriptor?</label>
-                <textarea class="form-control form-style-modal" name="observations" rows="3" required placeholder="Contanos brevemente..."></textarea>
-            </div>
 
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-warning" style="background-color: #ffeba7; color: #2a2b38; border: none; font-weight: 600;">
-                    Enviar Solicitud
-                </button>
-            </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 

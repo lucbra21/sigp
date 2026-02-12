@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Solicitud Recibida!</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/unicons/4.0.0/css/line.css">
+    <style>
+      body {
+        background: url('{{ url_for("static", filename="img/fondo8.jpg") }}') no-repeat center center fixed;
+        background-size: cover;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Poppins', sans-serif;
+      }
+      .success-card {
+          background-color: #2a2b38;
+          color: #fff;
+          border: 1px solid #ffeba7;
+          border-radius: 10px;
+          padding: 50px 30px;
+          width: 100%;
+          max-width: 500px;
+          text-align: center;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      }
+      .icon-circle {
+          width: 80px; height: 80px;
+          background-color: #ffeba7;
+          border-radius: 50%;
+          display: inline-flex;
+          align-items: center; justify-content: center;
+          margin-bottom: 20px;
+          box-shadow: 0 0 15px rgba(255, 235, 167, 0.4);
+      }
+      .icon-circle i { font-size: 40px; color: #2a2b38; }
+      h2 { color: #ffeba7; margin-bottom: 15px; font-weight: 600; }
+      p { color: #c4c3ca; font-size: 1.1rem; line-height: 1.6; }
+      .btn-home {
+          background: transparent;
+          border: 1px solid #c4c3ca;
+          color: #c4c3ca;
+          padding: 10px 25px;
+          border-radius: 50px;
+          text-decoration: none;
+          display: inline-block;
+          margin-top: 30px;
+          transition: all 0.3s;
+      }
+      .btn-home:hover {
+          border-color: #ffeba7;
+          color: #ffeba7;
+      }
+    </style>
+</head>
+<body>
+    <div class="success-card">
+        <div class="icon-circle">
+            <i class="uil uil-check"></i>
+        </div>
+        <h2>¡Felicitaciones!</h2>
+        <p>Tu solicitud ha sido enviada con éxito.</p>
+        <p class="mt-4">
+            Pronto, los responsables de gestionar la prescripción de 
+            <strong style="color: #fff;">Sports Data Campus</strong> 
+            se pondrán en contacto contigo.
+        </p>
+        
+        <a href="{{ url_for('auth.login_get') }}" class="btn-home">
+            <i class="uil uil-arrow-left"></i> Ir al SIGP
+        </a>
+    </div>
+</body>
+</html>

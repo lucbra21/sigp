@@ -108,7 +108,10 @@ def create_app(config_class=Config):
     from sigp.controllers.contracts_controller import contracts_bp
     from sigp.controllers.adjustments_controller import adjustments_bp
     from sigp.controllers.dashboard_directive_controller import bp as dashboard_directive_bp
-
+    # --- formulario de registro público ---
+    from sigp.controllers.public_controller import public_bp
+    app.register_blueprint(public_bp)
+    # ------------------------
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
     app.register_blueprint(dashboard_bp)

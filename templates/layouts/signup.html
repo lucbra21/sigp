@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscripción Prescriptores | SDC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/unicons/4.0.0/css/line.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth_light.css') }}">
+    <style>
+      body{
+        background:url('{{ url_for('static', filename='img/fondo8.jpg') }}') no-repeat center center fixed;
+        background-size:cover;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .signup-card {
+          background-color: #2a2b38;
+          color: #fff;
+          border: 1px solid #ffeba7;
+          border-radius: 10px;
+          padding: 40px;
+          width: 100%;
+          max-width: 500px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      }
+
+      .form-style {
+          padding: 13px 20px;
+          padding-left: 55px;
+          height: 48px;
+          width: 100%;
+          font-weight: 500;
+          border-radius: 4px;
+          font-size: 14px;
+          line-height: 22px;
+          letter-spacing: 0.5px;
+          outline: none;
+          color: #c4c3ca;
+          background-color: #1f2029;
+          border: none;
+          transition: all 200ms linear;
+          box-shadow: 0 4px 8px 0 rgba(21,21,21,.2);
+          margin-bottom: 15px;
+      }
+      .form-style:focus {
+          border: none;
+          outline: none;
+          box-shadow: 0 4px 8px 0 rgba(21,21,21,.2);
+          background-color: #1f2029; /* mantener oscuro al focus */
+          color: #ffeba7;
+      }
+
+      /* Checkbox personalizado (Técnica del Span) */
+      .hidden-input { display: none !important; }
+      .custom-checkmark {
+          width: 22px; height: 22px;
+          background-color: #1f2029;
+          border: 1px solid #ffeba7;
+          border-radius: 4px;
+          display: inline-flex;
+          align-items: center; justify-content: center;
+          margin-right: 10px; cursor: pointer;
+          flex-shrink: 0; transition: all 0.2s;
+      }
+      .hidden-input:checked + .custom-checkmark { background-color: #ffeba7; }
+      .hidden-input:checked + .custom-checkmark::after {
+          content: '✔'; color: #2a2b38; font-size: 14px; font-weight: bold;
+      }
+
+      .btn-gold {
+          background-color: #ffeba7;
+          color: #2a2b38;
+          border: none;
+          height: 44px;
+          font-weight: 600;
+          text-transform: uppercase;
+          border-radius: 4px;
+          width: 100%;
+          cursor: pointer;
+          transition: all 200ms linear;
+      }
+      .btn-gold:hover {
+          background-color: #fff;
+          color: #2a2b38;
+          box-shadow: 0 8px 24px rgba(255,235,167,.2);
+      }
+      .link-back { color: #c4c3ca; text-decoration: none; font-size: 0.9rem; }
+      .link-back:hover { color: #ffeba7; }
+    </style>
+</head>
+<body>
+
+    <div class="signup-card">
+        <div class="text-center mb-4">
+            <h3 style="color: #ffeba7;">Solicitud de Prescriptor</h3>
+            <p style="color: #c4c3ca; font-size: 0.9rem;">Únete a Sports Data Campus</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} text-center" style="font-size: 0.9rem;">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            {{ form.csrf_token }}
+
+            <div class="form-group position-relative">
+                {{ form.name(class="form-style", placeholder="Nombre y Apellido", autocomplete="off") }}
+                <i class="uil uil-user input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
+            </div>
+
+            <div class="form-group position-relative">
+                {{ form.email(class="form-style", placeholder="Tu Email", autocomplete="off") }}
+                <i class="uil uil-at input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
+            </div>
+
+            <div class="form-group position-relative">
+                {{ form.cellular(class="form-style", placeholder="Celular / WhatsApp (+54 9...)", autocomplete="off") }}
+                <i class="uil uil-phone input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
+            </div>
+
+            <div class="mb-3 mt-2">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" name="is_student" value="y" checked class="hidden-input">
+                    <span class="custom-checkmark"></span>
+                    <span style="color: #fff; user-select: none;">Soy alumno de Sports Data Campus</span>
+                </label>
+            </div>
+
+            <div class="form-group position-relative">
+                {{ form.observations(class="form-style", style="height: auto;", rows="3", placeholder="¿Por qué quieres ser prescriptor?") }}
+                <i class="uil uil-comment-alt-lines input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
+            </div>
+
+            <button type="submit" class="btn-gold mt-3">Enviar Solicitud</button>
+            
+            <div class="text-center mt-4">
+                <a href="{{ url_for('auth.login_get') }}" class="link-back">
+                    <i class="uil uil-arrow-left"></i> Volver al Login
+                </a>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

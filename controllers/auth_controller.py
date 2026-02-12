@@ -177,15 +177,29 @@ def login_get():
     form = LoginForm()
     return render_template("layouts/login.html", form=form)
 
-# Busca la función signup_post y reemplázala por esta corregida:
+# ---------------------------------------------------------------------------
+# Rutas de Registro (Signup) Independiente
+# ---------------------------------------------------------------------------
+
+@auth_bp.get("/signup")
+def signup_get():
+    # Si ya está logueado, lo mandamos al dashboard
+    if current_user.is_authenticated:
+        return redirect("/")
+    
+    form = SignupForm()
+    return render_template("layouts/signup.html", form=form)
+
 @auth_bp.post("/signup")
 def signup_post():
     form = SignupForm(request.form)
     
+    # Si falla la validación, volvemos a mostrar el template de signup con los errores
     if not form.validate_on_submit():
         flash("Por favor verifica los datos ingresados.", "warning")
-        return redirect(url_for('auth.login_get'))
+        return render_template("layouts/signup.html", form=form)
 
+    # 1. Verificar si el email ya existe en Usuarios
     User = getattr(Base.classes, "users", None)
     if not User:
         flash("Error interno: Modelo User no disponible", "danger")
@@ -194,23 +208,20 @@ def signup_post():
     email_val = form.email.data.strip().lower()
     existing = db.session.query(User).filter_by(email=email_val).first()
     if existing:
-        flash("Ese correo ya está registrado en el sistema.", "warning")
+        flash("Ese correo ya está registrado en el sistema. Intenta iniciar sesión.", "warning")
         return redirect(url_for('auth.login_get'))
 
     try:
         # --- LÓGICA DE ALUMNO VS EXTERNO ---
-        # Si el check está marcado (True):
         if form.is_student.data:
-            target_type = 5      # Tipo Alumno
+            target_type = 5      # Alumno
             target_conf = 10     # Confianza Alta
             obs_prefix = "[ALUMNO] "
         else:
-            target_type = 6      # Tipo Externo/Otro
-            target_conf = 11     # Confianza Media/Baja (id 11)
+            target_type = 6      # Externo
+            target_conf = 11     # Confianza Media/Baja
             obs_prefix = "[EXTERNO] "
         
-        # -----------------------------------
-
         # 2. Crear USUARIO
         PRESCRIPTOR_ROLE_ID = "5e6e517e-584b-42be-a7a3-564ee14e8723" 
         new_user = User(id=str(uuid.uuid4()))
@@ -235,15 +246,10 @@ def signup_post():
             id=str(uuid.uuid4()),
             user_id=new_user.id,
             squeeze_page_name=form.name.data,
-            # Agregamos el prefijo para identificar rápido visualmente
             observations=f"{obs_prefix}{form.observations.data}", 
-            
-            # --- VALORES VARIABLES SEGÚN CHECK ---
             proposed_type_id=target_type,
             type_id=target_type,
             confidence_level_id=target_conf,
-            
-            # --- VALORES FIJOS ---
             user_getter_id=CAPTADOR_ID,
             state_id=1,
             sub_state_id=1,
@@ -268,7 +274,6 @@ def signup_post():
                 edit_url = f"{base_url}{url_for('prescriptors.edit_prescriptor', prescriptor_id=new_presc.id)}"
                 from sigp.common.email_utils import send_simple_mail
 
-                # Determinamos etiqueta para el mail
                 label_alumno = "SÍ" if form.is_student.data else "NO"
 
                 html_body = render_template(
@@ -277,9 +282,8 @@ def signup_post():
                     email=new_user.email,
                     cellular=new_user.cellular,
                     prescriptor_id=new_presc.id,
-                    created_by="SOLICITUD WEB",
+                    created_by="SOLICITUD WEB (QR/Link)",
                     edit_url=edit_url,
-                    # Pasamos info extra en observaciones
                     observations=f"Es Alumno: {label_alumno} | Motivo: {form.observations.data}" 
                 )
                 
@@ -295,14 +299,15 @@ def signup_post():
         except Exception as exc:
             current_app.logger.exception("Error notif: %s", exc)
 
-        flash("¡Solicitud enviada con éxito! Te contactaremos pronto.", "success")
+        flash("¡Solicitud recibida! Te contactaremos pronto.", "success")
+        # Al finalizar con éxito, SÍ mandamos al login
+        return redirect(url_for('auth.login_get'))
 
     except Exception as e:
         db.session.rollback()
         current_app.logger.exception("Error signup: %s", e)
         flash("Ocurrió un error al procesar tu solicitud.", "danger")
-
-    return redirect(url_for('auth.login_get'))
+        return render_template("layouts/signup.html", form=form)
 
 def _client_ip():
     fwd = request.headers.get("X-Forwarded-For")
