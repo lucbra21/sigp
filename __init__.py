@@ -18,7 +18,7 @@ bcrypt = Bcrypt()
 @login_manager.user_loader
 def load_user(user_id):
     """Carga un usuario por ID para Flask-Login (usa tabla `users`)."""
-    from .models import Base  # import tardío para evitar circular
+    from .models import Base
     User = getattr(Base.classes, "users", None)
     if User:
         return db.session.get(User, user_id)
@@ -52,11 +52,10 @@ def create_app(config_class=Config):
     @app.context_processor
     def _inject_can():
         from flask_login import current_user
-        from sigp.common.security import _perm_set
-        #print(">>> PERMISOS DEL USUARIO", getattr(current_user, 'email', None) or getattr(current_user, 'id', 'anon'), _perm_set(current_user))
+        # from sigp.common.security import _perm_set # (comentado si no se usa)
         return dict(can=lambda p: has_perm(current_user, p), can_mod=lambda m: has_any_prefix(current_user, m))
 
-    # prescriptor del usuario conectado (si corresponde)
+    # prescriptor del usuario conectado
     @app.context_processor
     def _inject_prescriptor():
         from flask_login import current_user
@@ -66,24 +65,21 @@ def create_app(config_class=Config):
         if Prescriptor is None or not (current_user and current_user.is_authenticated):
             return dict(current_prescriptor=None)
         try:
-            # intentar por columna user_id si existe, sino por PK
             if hasattr(Prescriptor, "user_id"):
                 presc = db.session.query(Prescriptor).filter_by(user_id=current_user.id).first()
             else:
-                # fallback: asumir pk = user.id
                 try:
                     presc = db.session.get(Prescriptor, current_user.id)
                 except Exception:
                     presc = None
         except Exception:
             presc = None
-        from flask import url_for
-        from pathlib import Path
+        
         photo_url=getattr(presc,'photo_url',None) if presc else None
         contract_url=getattr(presc,'contract_url',None) if presc else None
         return dict(current_prescriptor=presc, presc_photo_url=photo_url, presc_contract_url=contract_url)
 
-    # Import blueprints here to avoid circular dependencies
+    # Import blueprints
     from .controllers.auth_controller import auth_bp
     from .controllers.prescriptor_controller import prescriptors_bp
     from .controllers.dashboard_controller import dashboard_bp
@@ -108,10 +104,12 @@ def create_app(config_class=Config):
     from sigp.controllers.contracts_controller import contracts_bp
     from sigp.controllers.adjustments_controller import adjustments_bp
     from sigp.controllers.dashboard_directive_controller import bp as dashboard_directive_bp
-    # --- formulario de registro público ---
+    
+    # --- IMPORTANTE: Aquí importamos y registramos el público ---
     from sigp.controllers.public_controller import public_bp
     app.register_blueprint(public_bp)
-    # ------------------------
+    # ------------------------------------------------------------
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(prescriptors_bp)
     app.register_blueprint(dashboard_bp)
@@ -139,14 +137,20 @@ def create_app(config_class=Config):
     app.register_blueprint(adjustments_bp)
     app.register_blueprint(dashboard_directive_bp)
 
-    # ---- error handlers ----
+    # ---- error handlers (CORREGIDO PARA FAVICON PNG) ----
+    
     @app.errorhandler(403)
     def _forbidden(_):
         flash("URL inexistente o sesión expirada", "warning")
         return redirect(url_for("auth.login_get", next=request.full_path))
 
     @app.errorhandler(404)
-    def _not_found(_):
+    def _not_found(e):
+        # Ignorar errores de estáticos y favicons (cualquier extensión)
+        path = request.path
+        if path.startswith('/static/') or 'favicon' in path:
+            return "No encontrado", 404
+            
         flash("URL inexistente o sesión expirada", "warning")
         return redirect(url_for("auth.login_get"))
 
@@ -164,15 +168,6 @@ def create_app(config_class=Config):
             except Exception:
                 return 0
         return dict(unread_count=_unread_count)
-
-    # ---- manejador 403 ----
-    from flask import render_template, request
-    @app.errorhandler(403)
-    def _forbidden(err):
-        from flask_login import current_user
-        if not current_user.is_authenticated:
-            return redirect(url_for('auth.login_get', next=request.path))
-        return render_template('errors/403.html'), 403
 
     @app.route("/")
     def index():
