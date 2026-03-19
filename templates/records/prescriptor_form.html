@@ -151,6 +151,15 @@
         {{ form.x_url(class="form-control") }}
     </div>
 
+    <div class="col-md-6">
+        {{ form.language.label(class="form-label") }}
+        {{ form.language(class="form-select") }}
+    </div>
+    <div class="col-md-6">
+        {{ form.agreement_category.label(class="form-label") }}
+        {{ form.agreement_category(class="form-select") }}
+    </div>
+
 {% if form.contract_file is defined %}
     <div class="col-md-12 ">
         {{ form.contract_file.label(class="form-label") }}

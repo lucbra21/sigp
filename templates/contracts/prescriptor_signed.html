@@ -1,23 +1,26 @@
 {% extends "layouts/base.html" %}
-{% block title %}Contrato enviado al presidente{% endblock %}
+{% block title %}Convenio Firmado Exitosamente{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 720px">
-  <div class="card mt-4 shadow-sm">
-    <div class="card-body py-4">
-      <h3 class="mb-3">¡Tu firma fue aplicada!</h3>
-      <p class="lead mb-3">Notificamos al presidente para que complete su firma.</p>
-      <div class="alert alert-info">
-        <strong>¿Qué sigue?</strong>
-        <ul class="mb-0 mt-2">
-          <li>El presidente recibirá un correo para firmar el contrato.</li>
-          <li>Cuando el presidente firme, te llegará un email y una notificación en la plataforma.</li>
-          <li>Luego podrás continuar con la capacitación.</li>
+  <div class="card mt-4 shadow-sm" style="border-top: 4px solid #c8a145;">
+    <div class="card-body py-5 text-center">
+      <i class="uil uil-check-circle mb-3" style="font-size: 60px; color: #2e7d32;"></i>
+      <h3 class="mb-3">¡Gracias por tu firma!</h3>
+      <p class="lead mb-4">Hemos procesado y sellado tu convenio exitosamente.</p>
+      
+      <div class="alert alert-success text-start" style="background-color: #e8f5e9; border-color: #c8e6c9; color: #2e7d32;">
+        <h5 class="alert-heading"><i class="uil uil-rocket"></i> ¡Tu cuenta ya está ACTIVA!</h5>
+        <p class="mb-2"><strong>¿Qué sigue ahora?</strong></p>
+        <ul class="mb-0">
+          <li class="mb-2"><strong>Revisa tu bandeja de entrada:</strong> Te hemos enviado un correo electrónico con tu convenio finalizado y el enlace oficial de tu nueva Squeeze Page.</li>
+          <li class="mb-2"><strong>Actualiza tu perfil:</strong> Entra a la plataforma, sube tu foto y agrega tus redes sociales para generar más confianza en tus futuros referidos.</li>
+          <li><strong>¡Empieza a referir!:</strong> Ya puedes compartir tu enlace y comenzar a generar beneficios de inmediato.</li>
         </ul>
       </div>
-      <div class="d-flex gap-2 mt-3">
-        <a href="/" class="btn btn-primary">Ir al inicio</a>
-        <a href="{{ notifications_url }}" class="btn btn-outline-secondary">Ver mis notificaciones</a>
+
+      <div class="d-flex justify-content-center gap-3 mt-4">
+        <a href="/" class="btn btn-primary" style="background-color: #c8a145; border-color: #c8a145; padding: 10px 30px; font-weight: bold;">Ir a mi panel</a>
       </div>
     </div>
   </div>

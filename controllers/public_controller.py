@@ -1,11 +1,13 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
 from flask_wtf import FlaskForm
-from wtforms import StringField, BooleanField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Email, Length
+from wtforms import StringField, BooleanField, SubmitField, TextAreaField, SelectField
+from wtforms.validators import DataRequired, Email, Length, Optional
 from sigp import db
 from sigp.models import Base
 import uuid
 import hashlib
+import os
+from datetime import datetime
 
 # Creamos el Blueprint 'public'
 public_bp = Blueprint("public", __name__, url_prefix="/public")
@@ -16,12 +18,17 @@ class PublicSignupForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email(), Length(max=255)])
     cellular = StringField("Celular / WhatsApp", validators=[DataRequired(), Length(max=50)])
     is_student = BooleanField("Soy alumno de Sports Data Campus", default=True)
+    
+    # NUEVOS CAMPOS (Son opcionales para WTForms, los validamos a mano si tilda "Soy Alumno")
+    document_type = SelectField("Tipo de Documento", choices=[("", "Tipo de Documento..."), ("DNI", "DNI"), ("NIE", "NIE"), ("Pasaporte", "Pasaporte"), ("Otro", "Otro")], validators=[Optional()])
+    document_number = StringField("Número de Documento", validators=[Optional(), Length(max=50)])
+    domicile = StringField("Domicilio Completo", validators=[Optional(), Length(max=255)])
+    
     observations = TextAreaField("Observaciones", validators=[DataRequired(), Length(max=1000)])
     submit = SubmitField("Enviar Solicitud")
 
 @public_bp.get("/inscription")
 def signup_get():
-    # Renderizamos el mismo formulario que ya tenías
     form = PublicSignupForm()
     return render_template("layouts/signup.html", form=form)
 
@@ -29,75 +36,186 @@ def signup_get():
 def signup_post():
     form = PublicSignupForm(request.form)
     
+    # 1. Validación Condicional: Si es alumno, exigir datos legales
+    if form.is_student.data:
+        if not form.document_type.data or not form.document_number.data or not form.domicile.data:
+            flash("Como eres alumno, el Tipo de Documento, Número y Domicilio son obligatorios para prepararte el convenio automáticamente.", "warning")
+            return render_template("layouts/signup.html", form=form)
+
     if not form.validate_on_submit():
         flash("Por favor verifica los datos ingresados.", "warning")
         return render_template("layouts/signup.html", form=form)
-
-    # Lógica de guardado (Copiada y limpia)
-    User = getattr(Base.classes, "users", None)
-    if not User:
-        flash("Error interno del sistema.", "danger")
-        return render_template("layouts/signup.html", form=form)
-
-    email_val = form.email.data.strip().lower()
-    existing = db.session.query(User).filter_by(email=email_val).first()
-    if existing:
-        flash("Este correo ya está registrado. Por favor inicia sesión.", "warning")
-        return redirect(url_for('auth.login_get'))
-
+    
     try:
-        # 1. Definir IDs y Tipos
-        PRESCRIPTOR_ROLE_ID = "5e6e517e-584b-42be-a7a3-564ee14e8723"
-        CAPTADOR_ID = "828f0ff2-c863-4dcf-b6b9-7b0baea68c72"
-        
-        if form.is_student.data:
-            target_type = 5      # Alumno
-            target_conf = 10     # Alta
-            obs_prefix = "[ALUMNO] "
-        else:
-            target_type = 6      # Externo
-            target_conf = 11     # Media
-            obs_prefix = "[EXTERNO] "
+        # 1. Verificar si el email ya existe
+        User = getattr(Base.classes, "users", None)
+        if not User:
+            flash("Error interno del sistema (users no disponible).", "danger")
+            return render_template("layouts/signup.html", form=form)
 
-        # 2. Crear Usuario
+        email_val = form.email.data.strip().lower()
+        existing_user = db.session.query(User).filter(User.email == email_val).first()
+        if existing_user:
+            flash("El email ingresado ya se encuentra registrado. Por favor, inicia sesión.", "warning")
+            return redirect(url_for("auth.login_get"))
+
+        # 2. Crear el Usuario base (Inactivo por defecto)
         new_user = User(id=str(uuid.uuid4()))
-        new_user.name = form.name.data
+        new_user.name = form.name.data.strip()
         new_user.email = email_val
-        new_user.cellular = form.cellular.data
-        new_user.role_id = PRESCRIPTOR_ROLE_ID
-        new_user.state_id = 1 
-        new_user.password_hash = hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()
+        new_user.cellular = form.cellular.data.strip()
+        # Asignamos Rol Prescriptor (Ajusta este UUID si en tu BD es distinto)
+        new_user.role_id = "5e6e517e-584b-42be-a7a3-564ee14e8723"
+        new_user.state_id = 1  
         
+        temp_pass = str(uuid.uuid4())
+        new_user.password_hash = hashlib.sha256(temp_pass.encode()).hexdigest()
         db.session.add(new_user)
         db.session.flush()
 
-        # 3. Crear Prescriptor
+        # 3. Crear el Registro de Prescriptor
         Prescriptor = getattr(Base.classes, "prescriptors", None)
-        new_presc = Prescriptor(
-            id=str(uuid.uuid4()),
-            user_id=new_user.id,
-            squeeze_page_name=form.name.data,
-            observations=f"{obs_prefix}{form.observations.data}",
-            proposed_type_id=target_type,
-            type_id=target_type,
-            confidence_level_id=target_conf,
-            user_getter_id=CAPTADOR_ID,
-            state_id=1,
-            sub_state_id=1,
-            squeeze_page_status="TEST",
-            created_at=db.func.now()
-        )
+        if not Prescriptor:
+            flash("Error interno (prescriptors no disponible).", "danger")
+            return render_template("layouts/signup.html", form=form)
+
+        new_presc = Prescriptor(id=str(uuid.uuid4()))
+        new_presc.user_id = new_user.id
+        new_presc.squeeze_page_name = form.name.data.strip()
+        new_presc.observations = form.observations.data.strip()
+        
+        # --- NUEVO: VALORES POR DEFECTO OBLIGATORIOS PARA LA BD ---
+        new_presc.state_id = 1  # Estado: Activo / Candidato inicial
+        new_presc.squeeze_page_status = "TEST"
+        
+        # Buscar dinámicamente el 'type_id' para que nunca sea Null
+        TypeModel = getattr(Base.classes, "prescriptor_types", None)
+        default_type_id = 1
+        if TypeModel:
+            tipo_buscado = "%alumno%" if form.is_student.data else "%externo%"
+            t_row = db.session.query(TypeModel).filter(TypeModel.name.ilike(tipo_buscado)).first()
+            if not t_row:
+                t_row = db.session.query(TypeModel).first() # Fallback al primer tipo que exista
+            if t_row:
+                default_type_id = t_row.id
+                
+        new_presc.type_id = default_type_id
+        new_presc.proposed_type_id = default_type_id
+        # ----------------------------------------------------------
+
+        # Guardar datos legales recogidos
+        new_presc.document_type = form.document_type.data
+        new_presc.document_number = form.document_number.data
+        new_presc.domicile = form.domicile.data
+
+        # --- LÓGICA DE ALUMNO ---
+        if form.is_student.data:
+            new_presc.agreement_category = "Persona Alumno"
+            new_presc.language = "Español"
+            
+            # Buscar el subestado "Firma de contrato"
+            Substate = getattr(Base.classes, "substate_prescriptor", None)
+            firma_id = 3 # ID por defecto como fallback
+            if Substate:
+                firma_row = db.session.query(Substate).filter(Substate.name.ilike("%firma%")).first()
+                if firma_row:
+                    firma_id = firma_row.id
+            new_presc.sub_state_id = firma_id
+        else:
+            # Si NO es alumno, entra normal como Candidato
+            new_presc.sub_state_id = 1
+
         db.session.add(new_presc)
         db.session.commit()
 
-        # 4. Notificar Admin
+        # ---------------------------------------------------------------------
+        # 4. GENERACIÓN DE CONTRATO Y ENVÍO DE EMAIL AUTOMÁTICO (SOLO ALUMNOS)
+        # ---------------------------------------------------------------------
+        if form.is_student.data:
+            from itsdangerous import URLSafeTimedSerializer
+            from sigp.services.contract_service import generate_contract_pdf
+            from sigp.common.email_utils import send_simple_mail
+            from sigp.controllers.auth_controller import _generate_token
+
+            try:
+                # A) Generar PDF Base
+                pdf_path = generate_contract_pdf(new_presc, filename=f"contract_{new_presc.id}.pdf")
+                base_rel_url = url_for("static", filename=f"contracts/{os.path.basename(pdf_path)}")
+                new_presc.contract_url = base_rel_url
+                db.session.commit()
+
+                # B) Generar Token y Enlaces
+                rel_url = getattr(new_presc, "contract_url", None)
+                abs_url = url_for("static", filename=f"contracts/{os.path.basename(rel_url)}", _external=True) if rel_url else ""
+                
+                secret = current_app.config.get("SIGN_TOKEN_SECRET")
+                serializer = URLSafeTimedSerializer(secret_key=secret, salt="sigp.contracts")
+                token_p = serializer.dumps({"c": str(new_presc.id), "r": "prescriptor"})
+                link = url_for("contracts.sign_prescriptor", token=token_p, _external=True)
+
+                platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
+                login_url = f"{platform_base}{url_for('auth.login_get')}"
+                token_reset = _generate_token(email_val)
+                reset_url = f"{platform_base}{url_for('auth.reset_password', token=token_reset)}"
+                logo_url = "https://i.ibb.co/cXKzBGPd/logo-innova.png"
+
+                # C) Enviar Email Automático para firmar
+                html_body = render_template(
+                    "emails/contract_link.html",
+                    prescriptor=new_presc,
+                    sign_link=link,
+                    contract_url=abs_url,
+                    logo_url=logo_url,
+                    platform_url=platform_base + "/",
+                    email=email_val,
+                    login_url=login_url,
+                    reset_url=reset_url,
+                )
+                plain_body = (
+                    f"Hola {new_presc.squeeze_page_name},\n\n"
+                    "¡Te damos la bienvenida al Programa de Prescriptores!\n\n"
+                    "Paso 1: Accedé a tu cuenta\n"
+                    f"- URL: {platform_base}/\n"
+                    f"- Usuario: {email_val}\n\n"
+                    "Paso 2: Establecé tu contraseña\n"
+                    f"- Restablecer contraseña: {reset_url}\n\n"
+                    "Paso 3: Firmá tu convenio de prescriptor\n"
+                    f"- Enlace para firmar: {link}\n"
+                    + (f"- Descargar convenio: {abs_url}\n\n" if abs_url else "\n\n") +
+                    "IMPORTANTE:\n"
+                    "Te recomendamos leer atentamente el convenio antes de firmarlo. Si tienes alguna duda, por favor ponte en contacto con el responsable de prescripción escribiendo a sigp@sportsdatacampus.com antes de proceder con la firma.\n\n"
+                    "Una vez que hayas firmado el convenio, recibirás un nuevo correo electrónico con los siguientes pasos para iniciar como prescriptor activo.\n\n"
+                    "¿Necesitas ayuda adicional? Responde este correo y te asistiremos.\n"
+                )
+                send_simple_mail([email_val], "¡Bienvenido al Programa de Prescriptores! Demos los primeros pasos.", html_body, html=True, text_body=plain_body)
+
+                # D) Notificación In-App al candidato
+                Notification = getattr(Base.classes, "notifications", None)
+                if Notification:
+                    notif = Notification(
+                        id=str(uuid.uuid4()),
+                        user_id=new_presc.user_id,
+                        title="Contrato disponible para firma",
+                        body=f"Firmá tu contrato: {link}",
+                        link_url=link,
+                        notif_type="ACTION",
+                        is_read=0,
+                        created_at=datetime.utcnow(),
+                    )
+                    db.session.add(notif)
+                    db.session.commit()
+            except Exception as e:
+                current_app.logger.error(f"Error generando contrato público para {email_val}: {e}")
+
+        # 5. Notificar a los administradores que alguien se registró (Aplica para ambos casos)
         try:
-            admin_emails = current_app.config.get("ADMIN_EMAILS")
+            admin_emails = current_app.config.get("ADMIN_EMAILS") or []
             if isinstance(admin_emails, str):
                 admin_emails = [e.strip() for e in admin_emails.split(",") if e.strip()]
+            
             if not admin_emails:
-                fallback = current_app.config.get("MAIL_DEFAULT_SENDER")
-                if fallback: admin_emails = [fallback]
+                fallback = current_app.config.get("MAIL_DEFAULT_SENDER") or current_app.config.get("MAIL_USERNAME")
+                admin_emails = [fallback] if fallback else []
 
             if admin_emails:
                 base_url = (current_app.config.get('BASE_URL') or request.host_url).rstrip('/')
@@ -106,7 +224,6 @@ def signup_post():
 
                 label_alumno = "SÍ" if form.is_student.data else "NO"
                 
-                # Reutilizamos tu template de notificación existente
                 html_body = render_template(
                     'emails/new_prescriptor_created.html',
                     name=new_presc.squeeze_page_name,
@@ -121,7 +238,7 @@ def signup_post():
         except Exception as e:
             current_app.logger.error(f"Error notificando admin: {e}")
 
-        # 5. ÉXITO: Redirigir a la pantalla de agradecimiento
+        # 6. ÉXITO: Redirigir a la pantalla de agradecimiento
         return render_template("layouts/signup_success.html")
 
     except Exception as e:

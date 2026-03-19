@@ -1,63 +1,67 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>¡Convenio aprobado! Bienvenido a la fase de capacitación</title>
-  <style>
-    body{font-family:Arial,Helvetica,sans-serif;color:#333;margin:0;padding:0;background:#f7f7f9}
-    .container{max-width:640px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:24px}
-    .btn{display:inline-block;background:#0d6efd;color:#fff;text-decoration:none;padding:12px 20px;border-radius:6px}
-    .btn-secondary{background:#6b7280;color:#fff}
-    .muted{font-size:12px;color:#9ca3af}
-    .list{margin:0 0 16px 18px;padding:0;color:#374151}
-  </style>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header img { max-width: 200px; }
+        .content { color: #333333; line-height: 1.6; font-size: 16px; }
+        .btn { display: inline-block; padding: 12px 24px; margin: 20px 0; background-color: #c8a145; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; text-align: center; }
+        .btn-green { background-color: #2e7d32; }
+        .footer { margin-top: 30px; font-size: 12px; color: #777777; text-align: center; border-top: 1px solid #dddddd; padding-top: 15px; }
+        .steps-box { margin-top: 25px; padding: 20px; background-color: #f8f9fa; border-left: 4px solid #c8a145; border-radius: 4px; }
+        .steps-box h3 { margin-top: 0; color: #333; font-size: 18px; }
+        .steps-box ol { padding-left: 20px; margin-bottom: 0; }
+        .steps-box li { margin-bottom: 12px; }
+        .highlight-box { background-color: #e8f5e9; border: 1px solid #c8e6c9; padding: 20px; border-radius: 4px; margin: 20px 0; text-align: center; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    {% if logo_url %}
-    <div style="text-align:center;margin-bottom:12px;">
-      <img src="{{ logo_url }}" alt="Logo" style="height:32px;max-width:180px;display:inline-block;opacity:0.9;"/>
+    <div class="container">
+        <div class="header">
+            <img src="{{ logo_url }}" alt="Logo Innova Training">
+        </div>
+        <div class="content">
+            <p>Hola <strong>{{ prescriptor.squeeze_page_name if prescriptor else 'Colaborador' }}</strong>,</p>
+            <p>¡Excelentes noticias! Tu convenio ha sido firmado por la Dirección y tu cuenta ya está oficialmente <strong>ACTIVA</strong> en el Programa de Prescriptores.</p>
+            
+            <p>Puedes descargar tu convenio finalizado y sellado en el siguiente enlace:</p>
+            <div style="text-align: center;">
+                <a href="{{ contract_url }}" class="btn">Descargar Convenio Firmado</a>
+            </div>
+
+            <div class="highlight-box">
+                <p style="margin: 0 0 15px 0; color: #2e7d32; font-size: 16px;">
+                    🚀 <strong>¡Tu Squeeze Page ya está en Producción!</strong><br><br>
+                    Copia este enlace para compartirlo con tus interesados:<br>
+                    <a href="{{ sq_url }}" style="color: #c8a145; font-weight: bold; word-break: break-all;">{{ sq_url }}</a>
+                </p>
+                <a href="{{ sq_url }}" class="btn btn-green" style="margin: 0;">Ver mi Squeeze Page</a>
+            </div>
+
+            <div class="steps-box">
+                <h3>Próximos Pasos Recomendados:</h3>
+                <ol>
+                    <li><strong>Actualiza tu Perfil:</strong> Te recomendamos encarecidamente que ingreses a <a href="{{ platform_url }}" style="color: #c8a145; font-weight: bold;">la plataforma</a>, vayas a la sección "Mi Perfil" y actualices tu foto junto con tus enlaces a redes sociales. ¡Estos datos se mostrarán en tu Squeeze Page y te ayudarán a generar muchísima más confianza en tus referidos!</li>
+                    <li><strong>Capacitación:</strong> Ingresa a la sección <em>Multimedia &gt; Mis Archivos</em> en la plataforma para realizar tu capacitación sobre el proceso de prescripción.</li>
+                    <li><strong>¡A generar interesados!:</strong> Si ya tienes todo claro, no hace falta esperar. Puedes empezar a registrar interesados inmediatamente compartiendo el enlace de tu Squeeze Page.</li>
+                </ol>
+            </div>
+
+            <p style="margin-top: 25px;"><strong>Tus datos de acceso a la plataforma:</strong></p>
+            <ul>
+                <li><strong>Usuario:</strong> {{ email }}</li>
+                <li><strong>Cambio de clave:</strong> Si deseas actualizar o restablecer tu contraseña en el futuro, <a href="{{ reset_url }}" style="color: #c8a145;">haz clic aquí</a>.</li>
+            </ul>
+            
+            <p>¡Te deseamos mucho éxito en esta nueva etapa!</p>
+        </div>
+        <div class="footer">
+            <p>Este es un correo automático generado por el Sistema Integral de Gestión de Prescriptores (SIGP).</p>
+            <p>INNOVA TRAINING CONSULTORIA Y FORMACION S.L. | Sports Data Campus</p>
+        </div>
     </div>
-    {% endif %}
-    <h2 style="margin:0 0 12px 0;color:#111827;">¡Convenio aprobado! Bienvenido a la fase de capacitación</h2>
-    <p style="margin:0 0 12px 0;color:#374151;">¡Hola {{ (prescriptor.squeeze_page_name or prescriptor.name) if prescriptor else '' }}!</p>
-    <p style="margin:0 0 16px 0;color:#374151;">🎉 ¡Excelentes noticias! Nuestro presidente Jesús ha firmado tu convenio y ahora oficialmente formas parte del equipo de prescriptores.</p>
-
-    {% if contract_url %}
-    <h3 style="margin:16px 0 8px 0;color:#111827;font-size:16px;">📜 Tu convenio está listo</h3>
-    <p style="margin:0 0 8px 0;color:#374151;">El proceso de firma ha sido completado exitosamente. Podés descargar tu convenio firmado por ambas partes:</p>
-    <p style="margin:0 0 16px 0;"><a href="{{ contract_url }}" class="btn" style="color:#ffffff !important;">Descargar contrato firmado</a></p>
-    {% endif %}
-
-    <h3 style="margin:16px 0 8px 0;color:#111827;font-size:16px;">🎓 ¡Comenzamos con tu capacitación!</h3>
-    <p style="margin:0 0 8px 0;color:#374151;">Ahora que eres oficialmente parte del equipo, es momento de profundizar en tu formación como prescriptor.</p>
-
-    <h4 style="margin:12px 0 8px 0;color:#111827;font-size:15px;">🔗 Recordatorio de acceso a la plataforma</h4>
-    <p style="margin:0 0 8px 0;color:#374151;">
-      <strong>URL:</strong> <a href="{{ platform_url }}">{{ platform_url }}</a><br/>
-      <strong>Tu usuario:</strong> {{ email }}
-    </p>
-    <p style="margin:0 0 16px 0;color:#374151;">(Si necesitás restablecer tu contraseña, hacé clic aquí)</p>
-    <p style="margin:0 0 16px 0;"><a href="{{ reset_url }}" class="btn btn-secondary" style="color:#ffffff !important;">Restablecer contraseña</a></p>
-
-    <h4 style="margin:12px 0 8px 0;color:#111827;font-size:15px;">📚 Recursos de capacitación disponibles</h4>
-    <ol class="list" style="list-style: decimal;">
-      <li>Video tutorial introductorio: <a href="https://www.youtube.com/watch?v=QwaQiqBHbZM" target="_blank">Ver tutorial en YouTube</a></li>
-      <li>Materiales de capacitación en la plataforma: Una vez dentro, encontrarás en el menú <strong>Multimedia &gt; Mis archivos</strong> todos los videos, enlaces y archivos que necesitás.</li>
-    </ol>
-
-    <h4 style="margin:12px 0 8px 0;color:#111827;font-size:15px;">🚀 Próximos pasos</h4>
-    <ul class="list" style="list-style: disc;">
-      <li>📥 Descargar y guardar tu convenio con las dos firmas para tus registros</li>
-      <li>📖 Completar la capacitación inicial usando los materiales disponibles en la plataforma</li>
-      <li>✉️ Informar al equipo de referentes del programa de prescriptores cuando hayas finalizado la capacitación</li>
-      <li>📅 Coordinar una meet para hacer un checklist y verificar que todo esté listo para el éxito de la generación de leads</li>
-      <li>🎯 Activación: Una vez completado el checklist, el equipo referente te pasará de estado "capacitación" a "activo"</li>
-    </ul>
-
-    <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;"/>
-    <p class="muted">Estamos emocionados de tenerte en el equipo. Si tenés dudas durante tu capacitación, no dudes en contactarnos.</p>
-    <p style="margin:0;color:#374151;">¡Éxitos en tu formación!</p>
-  </div>
 </body>
 </html>

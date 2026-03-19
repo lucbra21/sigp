@@ -61,6 +61,15 @@ def prescriptor_form_factory(is_create=True):
     # Helper to safely convert blank values to None
     int_or_none = lambda v: int(v) if v not in (None, "", "None") else None
 
+    language_choices = [('Español', 'Español'), ('Inglés', 'Inglés')]
+    category_choices = [
+        ('Persona juridica - institucional', 'Persona jurídica - institucional'),
+        ('Persona Tutor', 'Persona Tutor'),
+        ('Persona Alumno', 'Persona Alumno'),
+        ('Prescriptor Externo', 'Prescriptor Externo'),
+        ('Persona Hibrida', 'Persona Hibrida')
+    ]
+
     class _PrescriptorForm(FlaskForm):
         user_id = StringField("Usuario", render_kw={"readonly": True})
         type_id = SelectField("Tipo", choices=type_choices, coerce=int, validators=[DataRequired()])
@@ -91,6 +100,8 @@ def prescriptor_form_factory(is_create=True):
         billing_data = TextAreaField("Datos de facturación", validators=[Optional(), Length(max=1000)])
         contract_file = FileField("Contrato (PDF)", validators=[FileAllowed(["pdf"], "Solo PDF")])
         submit = SubmitField("Guardar")
+        language = SelectField("Idioma de Convenio", choices=language_choices, default='Español')
+        agreement_category = SelectField("Categoría de Convenio", choices=category_choices, default='Persona Hibrida')
 
         class Meta:
             csrf = True
@@ -610,6 +621,9 @@ def create_prescriptor():
             form.contract_file.data.save(path)
             obj_kwargs["contract_url"] = url_for("static", filename=f"contracts/{filename}")
 
+        obj_kwargs["language"] = form.language.data
+        obj_kwargs["agreement_category"] = form.agreement_category.data
+
         # Validación de email: si ya existe en users, impedir alta y avisar
         UserModel = getattr(Base.classes, "users", None)
         if not UserModel:
@@ -900,6 +914,11 @@ def update_prescriptor(prescriptor_id):
         if hasattr(obj, "billing_data") and hasattr(form, "billing_data"):
             obj.billing_data = form.billing_data.data or None
 
+        if hasattr(form, "language"):
+            obj.language = form.language.data
+        if hasattr(form, "agreement_category"):
+            obj.agreement_category = form.agreement_category.data
+
         # Validación condicional: requerir datos de documento y domicilio cuando el subestado es de firma
         try:
             SubModel = getattr(Base.classes, "substate_prescriptor", None)
@@ -1027,79 +1046,17 @@ def update_prescriptor(prescriptor_id):
                             except Exception:
                                 pass
                 if should_trigger:
-                    # Necesario para la fecha de la firma
-                    from datetime import datetime 
+                    from itsdangerous import URLSafeTimedSerializer
                     
                     # 1) Generar (o regenerar) el PDF base limpio
                     pdf_path = generate_contract_pdf(obj, filename=f"contract_{obj.id}.pdf")
                     
-                    # --- SEGURIDAD: Guardamos la URL base por si falla la firma de Jesús ---
-                    # Así el usuario siempre tiene ALGO que ver
+                    # Guardamos la URL base limpia
                     base_rel_url = url_for("static", filename=f"contracts/{os.path.basename(pdf_path)}")
                     obj.contract_url = base_rel_url
-                    # -----------------------------------------------------------------------
-
-                    # -------------------------------------------------------------------------
-                    # LOGICA DE PRE-FIRMA DE JESÚS (AUTOMÁTICA)
-                    # -------------------------------------------------------------------------
-                    try:
-                        from sigp.services.contract_service import stamp_signature_image, stamp_text_overlay
-                        from pathlib import Path
-                        
-                        # Rutas
-                        base_pdf = Path(pdf_path)
-                        jesus_sig_path = Path(current_app.root_path) / "static" / "contracts" / "signatures" / "firma_jesus_base.png"
-                        presigned_pdf_name = f"contract_{obj.id}_presigned.pdf"
-                        presigned_pdf_path = Path(current_app.root_path) / "static" / "contracts" / presigned_pdf_name
-                        
-                        if jesus_sig_path.exists():
-                            # A) Estampar imagen de firma de Jesús (Derecha: x=320, y=160)
-                            stamp_signature_image(
-                                base_pdf, 
-                                jesus_sig_path, 
-                                presigned_pdf_path, 
-                                page=6, x=320, y=160, w=200, h=40
-                            )
-                            
-                            # B) Estampar sello de texto de Jesús (Debajo de la firma)
-                            ts_jesus = datetime.utcnow().strftime("%Y-%m-%d") # AHORA SÍ VA A FUNCIONAR
-                            pres_name = current_app.config.get("PRESIDENT_DISPLAY_NAME", "Jesús Serrano Sanz")
-                            
-                            temp_text_path = Path(current_app.root_path) / "static" / "contracts" / f"temp_text_{obj.id}.pdf"
-                            
-                            stamp_text_overlay(
-                                presigned_pdf_path,
-                                temp_text_path,
-                                [f"Firmado por {pres_name}", f"Fecha: {ts_jesus}", "Firma Digital Autorizada SIGP"],
-                                page=6, x=320, y=112, w=220, h=28
-                            )
-                            
-                            # Reemplazar el archivo presigned con el que tiene texto
-                            if temp_text_path.exists():
-                                import shutil
-                                shutil.move(str(temp_text_path), str(presigned_pdf_path))
-
-                            # Actualizar la URL del contrato para que apunte al PRE-FIRMADO
-                            obj.contract_url = url_for("static", filename=f"contracts/{presigned_pdf_name}")
-                            pdf_path = str(presigned_pdf_path) 
-                            
-                            current_app.logger.info(f"Contrato pre-firmado por Jesús para prescriptor {obj.id}")
-                        else:
-                            current_app.logger.warning("No se encontró firma_jesus_base.png. Se usa contrato sin firma.")
-
-                    except Exception as e:
-                        current_app.logger.error(f"Error en pre-firma automática de Jesús: {e}")
-                        # No pasa nada, obj.contract_url ya tiene el valor del PDF limpio gracias al paso de seguridad
-
-                    # Guardar cambios de URL en BD
                     db.session.commit()
 
-                    # -------------------------------------------------------------------------
-                    # FIN LOGICA PRE-FIRMA
-                    # -------------------------------------------------------------------------
-
                     # 2) Construir token de firma para el prescriptor
-                    # Usamos la URL que haya quedado (la pre-firmada o la base si falló)
                     rel_url = getattr(obj, "contract_url", None)
                     abs_url = url_for("static", filename=f"contracts/{os.path.basename(rel_url)}", _external=True) if rel_url else ""
                     
@@ -1108,7 +1065,7 @@ def update_prescriptor(prescriptor_id):
                     token_p = serializer.dumps({"c": str(obj.id), "r": "prescriptor"})
                     link = url_for("contracts.sign_prescriptor", token=token_p, _external=True)
 
-                    # 3) Enviar email con el enlace (CÓDIGO ORIGINAL MANTENIDO)
+                    # 3) Enviar email con el enlace
                     presc_email = None
                     # priorizar email del formulario si cambió
                     if hasattr(form, "email") and getattr(form, "email").data:
@@ -1125,7 +1082,7 @@ def update_prescriptor(prescriptor_id):
                     if presc_email:
                         try:
                             from sigp.controllers.auth_controller import _generate_token
-                            logo_url = "https://i.ibb.co/cXKzBGPd/logo-innova.png"
+                            logo_url = "https://i.ibb.co/SXrCfwyt/inova-removebg-preview.png"
                             platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
                             login_path = url_for("auth.login_get")
                             login_url = f"{platform_base}{login_path}"
@@ -1154,8 +1111,11 @@ def update_prescriptor(prescriptor_id):
                                 f"- Restablecer contraseña: {reset_url or '(no disponible)'}\n\n"
                                 "Paso 3: Firmá tu convenio de prescriptor\n"
                                 f"- Enlace para firmar: {link}\n"
-                                + (f"- Descargar convenio: {abs_url}\n" if abs_url else "") +
-                                "\n¿Necesitás ayuda? Respondé este correo y te asistimos.\n"
+                                + (f"- Descargar convenio: {abs_url}\n\n" if abs_url else "\n\n") +
+                                "IMPORTANTE:\n"
+                                "Te recomendamos leer atentamente el convenio antes de firmarlo. Si tienes alguna duda, por favor ponte en contacto con el responsable de prescripción escribiendo a sigp@sportsdatacampus.com antes de proceder con la firma.\n\n"
+                                "Una vez que hayas firmado el convenio, recibirás un nuevo correo electrónico con los siguientes pasos para iniciar como prescriptor activo.\n\n"
+                                "¿Necesitas ayuda adicional? Responde este correo y te asistiremos.\n"
                                 "Los enlaces pueden expirar por motivos de seguridad."
                             )
                             send_simple_mail([presc_email], "¡Bienvenido al Programa de Prescriptores - Demos los primeros pasos.", html_body, html=True, text_body=plain_body)
@@ -1164,7 +1124,7 @@ def update_prescriptor(prescriptor_id):
                             current_app.logger.exception("Error enviando correo de contrato auto: %s", exc)
                             flash("No se pudo enviar el email de contrato al prescriptor", "warning")
 
-                    # 4) Notificación in-app (MANTENIDO)
+                    # 4) Notificación in-app
                     try:
                         Notification = getattr(Base.classes, "notifications", None)
                         if Notification is not None and getattr(obj, "user_id", None):
@@ -1185,6 +1145,7 @@ def update_prescriptor(prescriptor_id):
                         current_app.logger.error("Error creando notificación de contrato: %s", exc)
             except Exception as exc:
                 current_app.logger.error("Error en auto-disparo de contrato por subestado: %s", exc)
+            
             # ---- Enviar correo si el estado cambió a EN CAPACITACION ----
             try:
                 StateModel = getattr(Base.classes, "state_prescriptor", None)
@@ -1255,7 +1216,6 @@ def update_prescriptor(prescriptor_id):
         edit=True,
         obj=obj,
     )
-
 
 @prescriptors_bp.route("/my-commissions", methods=["GET"])
 @login_required

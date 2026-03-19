@@ -162,7 +162,7 @@ def generate_for_prescriptor(prescriptor_id):
             # Cuerpo HTML usando template (agregamos datos de acceso y reset de contraseña)
             from sigp.controllers.auth_controller import _generate_token
             # Logo para emails
-            logo_url = "https://i.ibb.co/cXKzBGPd/logo-innova.png"
+            logo_url = "https://i.ibb.co/SXrCfwyt/inova-removebg-preview.png"
 
             # Construir URLs de plataforma/login/reset teniendo en cuenta dominio configurable
             platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
@@ -267,7 +267,6 @@ def sign_draw_get():
         return err
     return render_template("contracts/sign_draw.html", token=token, prescriptor=prescriptor)
 
-
 @contracts_bp.post("/sign/draw")
 @login_required
 def sign_draw_post():
@@ -283,9 +282,12 @@ def sign_draw_post():
 
     prescriptor_id = getattr(prescriptor, "id", None)
 
-    # 1. Guardar PNG de firma del Prescriptor en static/contracts/signatures/
+    # 1. Guardar PNG de firma del Prescriptor
     from pathlib import Path
     import base64
+    import os
+    from datetime import datetime
+    
     sig_dir = Path(current_app.root_path) / "static" / "contracts" / "signatures"
     sig_dir.mkdir(parents=True, exist_ok=True)
     sig_name = f"sig_prescriptor_{prescriptor_id}.png"
@@ -294,96 +296,324 @@ def sign_draw_post():
     png_bytes = base64.b64decode(img_b64.split(",", 1)[1])
     sig_path.write_bytes(png_bytes)
 
-    # 2. Tomar contrato actual (que ya debería venir pre-firmado por Jesús desde el paso anterior)
+    # 2. Tomar contrato base limpio generado previamente
     rel_url = getattr(prescriptor, "contract_url", None)
     if not rel_url:
         flash("No hay contrato base para firmar", "warning")
         return redirect("/")
+    
     fname = os.path.basename(rel_url)
     input_pdf = Path(current_app.root_path) / "static" / "contracts" / fname
     if not input_pdf.exists():
         flash("Archivo de contrato no encontrado", "danger")
         return redirect("/")
 
-    # 3. Estampar firma manuscrita del Prescriptor (Izquierda: x=80, y=160)
-    stamped_name = f"presc_signed_{fname}"
-    stamped_pdf = Path(current_app.root_path) / "static" / "contracts" / stamped_name
+    # 3. Preparar archivos temporales y finales
+    presc_stamped_pdf = Path(current_app.root_path) / "static" / "contracts" / f"temp1_{fname}"
+    jesus_stamped_pdf = Path(current_app.root_path) / "static" / "contracts" / f"temp2_{fname}"
+    visible_1_pdf = Path(current_app.root_path) / "static" / "contracts" / f"temp3_{fname}"
+    visible_2_pdf = Path(current_app.root_path) / "static" / "contracts" / f"temp4_{fname}"
+    
+    final_fname = f"contract_final_{prescriptor_id}.pdf"
+    output_pdf = Path(current_app.root_path) / "static" / "contracts" / final_fname
+    
+    jesus_sig_path = sig_dir / "firma_jesus_base.png"
+    ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    presc_name = getattr(prescriptor, "squeeze_page_name", "") or getattr(prescriptor, "name", "Prescriptor")
+    pres_name = current_app.config.get("PRESIDENT_DISPLAY_NAME", "Jesús Serrano Sanz")
+
+    # ==============================================================
+    # FLUJO AUTOMÁTICO DE FIRMAS (Prescriptor + Jesús + PAdES)
+    # ==============================================================
     try:
-        stamp_signature_image(input_pdf, sig_path, stamped_pdf, page=6, x=80, y=160, w=200, h=40)
+        # A. Estampar firma Prescriptor (Izquierda) en última página
+        stamp_signature_image(input_pdf, sig_path, presc_stamped_pdf, page=9999, x=80, y=160, w=200, h=40)
+        
+        # B. Estampar firma Jesús (Derecha) automáticamente
+        if jesus_sig_path.exists():
+            stamp_signature_image(presc_stamped_pdf, jesus_sig_path, jesus_stamped_pdf, page=9999, x=330, y=155, w=180, h=40)
+        else:
+            import shutil
+            shutil.copy(str(presc_stamped_pdf), str(jesus_stamped_pdf))
+            current_app.logger.warning("No se encontró firma_jesus_base.png, se omite firma de Jesús.")
+
+        # C. Sello visible Prescriptor
+        stamp_text_overlay(
+            jesus_stamped_pdf, visible_1_pdf,
+            [f"Firmado por {presc_name}", f"Fecha: {ts}", "Aceptado digitalmente en SIGP"],
+            page=9999, x=80, y=112, w=220, h=28
+        )
+        
+        # D. Sello visible Jesús
+        stamp_text_overlay(
+            visible_1_pdf, visible_2_pdf,
+            [f"Firmado por {pres_name}", f"Fecha: {ts}", "Firma Digital Autorizada SIGP"],
+            page=9999, x=320, y=112, w=220, h=28
+        )
+
+        # E. Inyectar Metadatos y Aplicar Certificado PAdES
+        cert_path_cfg = current_app.config.get("PRESIDENT_CERT_PATH")
+        if cert_path_cfg:
+            try:
+                # Intentamos poner metadatos (si falta pikepdf, saltará al except)
+                embed_pdf_metadata_xmp(
+                    visible_2_pdf,
+                    title=f"Contrato de Prescripción - {presc_name} - {ts[:10]}",
+                    author=pres_name,
+                    subject="Contrato de Prescripción Comercial",
+                    keywords="contrato, prescripción, firma digital, PAdES",
+                    creator="SIGP",
+                    producer="SIGP (INNOVA TRAINING CYF SL)"
+                )
+            except Exception as meta_exc:
+                current_app.logger.warning("Aviso: Se omitieron los metadatos XMP (posible falta de pikepdf).")
+
+            # La firma PAdES se ejecuta SIEMPRE, haya metadatos o no
+            sign_pades(visible_2_pdf, output_pdf)
+        else:
+            import shutil
+            shutil.copy(str(visible_2_pdf), str(output_pdf))
+            current_app.logger.warning("No hay certificado configurado, se guardó sin PAdES.")
+
     except Exception as exc:
-        current_app.logger.exception("Error estampando firma manuscrita: %s", exc)
-        flash("No se pudo estampar la firma", "danger")
+        current_app.logger.exception("Error en el flujo automático de firmas: %s", exc)
+        flash("Error procesando la firma final del contrato", "danger")
         return redirect("/")
 
-    # 4. Sello visible informativo del Prescriptor
-    visible_name = f"visible_full_{fname}"
+    # ==============================================================
+    # ACTUALIZAR ESTADO, GUARDAR Y NOTIFICAR
+    # ==============================================================
+    final_url = url_for("static", filename=f"contracts/{final_fname}")
+    final_url_abs = url_for("static", filename=f"contracts/{final_fname}", _external=True)
+    prescriptor.contract_url = final_url
+
+    try:
+        # 1. Pasar automáticamente a ACTIVO (Estado 1 general)
+        prescriptor.state_id = 1
+        
+        # 2. Pasar Squeeze Page a PRODUCCIÓN
+        prescriptor.squeeze_page_status = "PRODUCCION"
+        
+        Substate = getattr(Base.classes, "substate_prescriptor", None)
+        if Substate and hasattr(prescriptor, "sub_state_id"):
+            row_sub = db.session.query(Substate).filter(
+                getattr(Substate, "name").ilike("%ACTIV%")
+            ).first()
+            prescriptor.sub_state_id = row_sub.id if row_sub else None
+
+        db.session.commit()
+        _audit("contract_fully_signed_auto", prescriptor.id, {"output": str(output_pdf)})
+        
+        # MENSAJE EN PANTALLA ACTUALIZADO
+        flash("¡Convenio firmado exitosamente! Por favor, revisa tu correo electrónico para ver los siguientes pasos.", "success")
+        
+        # Enviar Email de Bienvenida a ACTIVO
+        presc_email = getattr(prescriptor, "email", None) or getattr(prescriptor, "squeeze_page_email", None)
+        if not presc_email and getattr(prescriptor, "user_id", None):
+            UserModel = getattr(Base.classes, "users", None)
+            if UserModel:
+                u = db.session.get(UserModel, prescriptor.user_id)
+                if u: presc_email = getattr(u, "email", None)
+
+        if presc_email:
+            try:
+                from sigp.controllers.auth_controller import _generate_token
+                import uuid as _uuid
+                
+                # Crear notificación in-app (Cambiado Contrato por Convenio)
+                Notification = getattr(Base.classes, "notifications", None)
+                if Notification and getattr(prescriptor, "user_id", None):
+                    notif = Notification(
+                        id=str(_uuid.uuid4()), user_id=prescriptor.user_id,
+                        title="¡Convenio aprobado y cuenta ACTIVA!",
+                        body="Tu convenio ha sido sellado por la Dirección. Ya puedes comenzar a referir.",
+                        link_url=final_url_abs, notif_type="INFO", is_read=0, created_at=datetime.utcnow()
+                    )
+                    db.session.add(notif)
+                    db.session.commit()
+
+                # Enviar correo
+                platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
+                token_email = _generate_token(presc_email)
+                reset_url = f"{platform_base}{url_for('auth.reset_password', token=token_email)}"
+                logo_url = "https://i.ibb.co/cXKzBGPd/logo-innova.png"
+                
+                # NUEVO: Generar link dinámico de la Squeeze Page (/p/id)
+                sq_url = f"{platform_base}/p/{prescriptor.id}"
+
+                html_body = render_template(
+                    "emails/prescriptor_training.html",
+                    prescriptor=prescriptor, platform_url=platform_base + "/",
+                    email=presc_email, reset_url=reset_url,
+                    contract_url=final_url_abs, logo_url=logo_url,
+                    sq_url=sq_url
+                )
+                
+                # TEXTO PLANO ACTUALIZADO
+                plain_body = (
+                    f"Hola {presc_name},\n\n"
+                    "¡Excelentes noticias! Tu convenio ha sido firmado por la Dirección y tu cuenta ya está oficialmente ACTIVA.\n\n"
+                    f"- Descargar convenio: {final_url_abs}\n"
+                    f"- Tu Squeeze Page (En Producción): {sq_url}\n"
+                    f"- Plataforma: {platform_base}/\n"
+                    f"- Usuario: {presc_email}\n"
+                    f"- Si deseas cambiar o restablecer tu clave: {reset_url}\n\n"
+                    "PRÓXIMOS PASOS RECOMENDADOS:\n"
+                    "1. Actualiza tu Perfil: Te recomendamos encarecidamente que ingreses a 'Mi Perfil' y actualices tu foto y tus enlaces a redes sociales. Estos datos se mostrarán en tu Squeeze Page pública y te ayudarán a dar mayor confianza a tus referidos.\n"
+                    "2. Capacitación: Ingresa a la sección 'Multimedia' > 'Mis Archivos' para realizar tu capacitación de prescripción.\n"
+                    "3. ¡A generar interesados!: Si ya tienes todo claro, puedes empezar a registrar interesados inmediatamente compartiendo el enlace de tu Squeeze Page.\n\n"
+                    "¡Mucho éxito en esta nueva etapa!"
+                )
+                send_simple_mail([presc_email], "¡Convenio aprobado! Tu cuenta ya está Activa", html_body, html=True, text_body=plain_body)
+            except Exception as exc:
+                current_app.logger.exception("Error notificando activación: %s", exc)
+
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.exception("Error guardando convenio auto-firmado en BD: %s", exc)
+        flash("Error guardando el estado final del convenio.", "warning")
+
+    return redirect(url_for("contracts.prescriptor_signed_confirmation"))
+
+@contracts_bp.post("/sign/president")
+@login_required
+def sign_president_post():
+    token = request.form.get("token", "")
+    data = _read_token(token, current_app.config.get("SIGN_LINK_EXP_MINUTES", 60))
+    if not data or data.get("r") != "president":
+        flash("Enlace inválido o expirado", "warning")
+        return redirect("/")
+
+    prescriptor_id = data.get("c")
+    Prescriptor = getattr(Base.classes, "prescriptors", None)
+    if not Prescriptor:
+        flash("Modelo prescriptors no disponible", "danger")
+        return redirect("/")
+    prescriptor = db.session.get(Prescriptor, prescriptor_id)
+    if not prescriptor:
+        flash("Prescriptor no encontrado", "warning")
+        return redirect("/")
+
+    # Determinar PDF base a firmar: usar contract_url actual (que YA tiene la firma del prescriptor)
+    rel_url = getattr(prescriptor, "contract_url", None)
+    if not rel_url:
+        flash("No hay contrato base para firmar", "warning")
+        return redirect("/")
+    
+    import os
+    from pathlib import Path
+    fname = os.path.basename(rel_url)
+    input_pdf = Path(current_app.root_path) / "static" / "contracts" / fname
+    if not input_pdf.exists():
+        flash("Archivo de contrato no encontrado", "danger")
+        return redirect("/")
+
+    # =========================================================
+    # NUEVO: Usar la firma PNG oficial de Jesús automáticamente
+    # =========================================================
+    jesus_sig_path = Path(current_app.root_path) / "static" / "contracts" / "signatures" / "firma_jesus_base.png"
+    
+    if not jesus_sig_path.exists():
+        flash("Falta el archivo de firma oficial de Jesús (firma_jesus_base.png) en el servidor.", "danger")
+        return redirect(url_for("contracts.sign_president_get", token=token))
+
+    # Estampar la firma oficial del presidente (Derecha: x=330, y=155) en la ÚLTIMA página (page=9999)
+    stamped_img_name = f"president_img_signed_{fname}"
+    stamped_img_pdf = Path(current_app.root_path) / "static" / "contracts" / stamped_img_name
+    try:
+        stamp_signature_image(input_pdf, jesus_sig_path, stamped_img_pdf, page=9999, x=330, y=155, w=180, h=40)
+    except Exception as exc:
+        current_app.logger.exception("Error estampando firma del presidente: %s", exc)
+        flash("No se pudo estampar la firma oficial del presidente", "warning")
+        return redirect(url_for("contracts.sign_president_get", token=token))
+
+    # Sello visible informativo del presidente en la ÚLTIMA página (page=9999)
+    visible_name = f"visible_final_{fname}"
     visible_pdf = Path(current_app.root_path) / "static" / "contracts" / visible_name
     try:
+        from datetime import datetime
         ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-        presc_name = getattr(prescriptor, "squeeze_page_name", "") or getattr(prescriptor, "name", "Prescriptor")
+        pres_name = current_app.config.get("PRESIDENT_DISPLAY_NAME", "Jesús Serrano Sanz")
         stamp_text_overlay(
-            stamped_pdf,
+            stamped_img_pdf,
             visible_pdf,
-            [
-                f"Firmado por {presc_name}",
-                f"Fecha: {ts}",
-                "Aceptado digitalmente en SIGP",
-            ],
-            page=6, x=80, y=112, w=220, h=28,
+            [f"Firmado por {pres_name}", f"Fecha: {ts}", "Firma Digital Autorizada SIGP"],
+            page=9999, x=320, y=112, w=220, h=28,
         )
     except Exception as exc:
         current_app.logger.exception("Error creando sello visible: %s", exc)
-        visible_pdf = stamped_pdf
+        flash("No se pudo crear el sello visible de la firma del presidente", "warning")
+        return redirect(url_for("contracts.sign_president_get", token=token))
 
-    # -------------------------------------------------------------------------
-    # 5. FASE FINAL AUTOMÁTICA (PAdES + CAMBIO A CAPACITACIÓN)
-    # Antes esto lo hacía el Presidente, ahora es automático tras la firma del Prescriptor
-    # -------------------------------------------------------------------------
-    
-    final_pades_name = f"contract_final_{prescriptor.id}.pdf"
-    output_pdf = Path(current_app.root_path) / "static" / "contracts" / final_pades_name
-    
-    # Validar certificado digital del servidor
+    # Sello visible informativo del presidente en la ÚLTIMA página (page=9999)
+    visible_name = f"visible_final_{fname}"
+    visible_pdf = Path(current_app.root_path) / "static" / "contracts" / visible_name
+    try:
+        from datetime import datetime
+        ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+        pres_name = current_app.config.get("PRESIDENT_DISPLAY_NAME", "Jesús Serrano Sanz")
+        stamp_text_overlay(
+            stamped_img_pdf,
+            visible_pdf,
+            [f"Firmado por {pres_name}", f"Fecha: {ts}", "con un certificado emitido por el SIGP"],
+            page=9999, x=320, y=112, w=220, h=28,
+        )
+    except Exception as exc:
+        current_app.logger.exception("Error creando sello visible: %s", exc)
+        flash("No se pudo crear el sello visible de la firma del presidente", "warning")
+        return redirect(url_for("contracts.sign_president_get", token=token))
+
+    # ==========================================
+    # APLICAR FIRMA PAdES Y CERRAR EL CONTRATO
+    # ==========================================
+    signed_name = f"contract_final_{prescriptor.id}.pdf"
+    output_pdf = Path(current_app.root_path) / "static" / "contracts" / signed_name
+
     cert_path_cfg = current_app.config.get("PRESIDENT_CERT_PATH")
-    has_cert = False
-    if cert_path_cfg:
-        cert_path = Path(cert_path_cfg if cert_path_cfg.startswith("/") else str(Path(current_app.root_path) / cert_path_cfg))
-        if cert_path.exists():
-            has_cert = True
-    
-    if not has_cert:
-        current_app.logger.warning("No se encontró certificado PAdES. Se guarda el PDF sin firma criptográfica.")
-        # Si no hay cert, copiamos el visible_pdf como final para no romper flujo
-        import shutil
-        shutil.copy(visible_pdf, output_pdf)
-    else:
-        # Aplicar Firma Digital PAdES
+    if not cert_path_cfg:
+        flash("Falta configurar PRESIDENT_CERT_PATH para firma PAdES", "danger")
+        return redirect(url_for("contracts.sign_president_get", token=token))
+        
+    cert_path = Path(cert_path_cfg if cert_path_cfg.startswith("/") else str(Path(current_app.root_path) / cert_path_cfg))
+    if not cert_path.exists():
+        flash("El certificado configurado no existe en la ruta indicada (PRESIDENT_CERT_PATH)", "danger")
+        return redirect(url_for("contracts.sign_president_get", token=token))
+
+    try:
         try:
+            from datetime import datetime
+            pres_name = current_app.config.get("PRESIDENT_DISPLAY_NAME", "SIGP")
+            presc_name = getattr(prescriptor, "squeeze_page_name", "") or getattr(prescriptor, "name", "Prescriptor")
             today = datetime.utcnow().strftime("%Y-%m-%d")
-            presc_name = getattr(prescriptor, "squeeze_page_name", "") or "Prescriptor"
+            title = f"Contrato de Prescripción - {presc_name} - {today}"
+            subject = "Contrato de Prescripción"
+            keywords = "contrato, prescripción, firma digital, PAdES"
             embed_pdf_metadata_xmp(
                 visible_pdf,
-                title=f"Contrato de Prescripción - {presc_name} - {today}",
-                author="Sports Data Campus",
-                subject="Contrato de Colaboración",
-                keywords="contrato, prescripción, firma digital",
+                title=title,
+                author=pres_name,
+                subject=subject,
+                keywords=keywords,
+                creator="SIGP",
+                producer="SIGP (INNOVA TRAINING CONSULTORIA Y FORMACION S.L.)",
             )
-            sign_pades(visible_pdf, output_pdf)
-        except Exception as exc:
-            current_app.logger.error(f"Fallo firma PAdES: {exc}")
-            # Fallback a PDF visual si falla PAdES
-            import shutil
-            shutil.copy(visible_pdf, output_pdf)
+        except Exception:
+            pass
+        
+        sign_pades(visible_pdf, output_pdf)
+    except Exception as exc:
+        current_app.logger.exception("Error firmando PAdES: %s", exc)
+        flash(f"Error firmando el contrato con certificado (PAdES): {exc}", "danger")
+        return redirect(url_for("contracts.sign_president_get", token=token))
 
-    # Actualizar URL final
-    final_url_static = url_for("static", filename=f"contracts/{final_pades_name}")
-    final_url_abs = url_for("static", filename=f"contracts/{final_pades_name}", _external=True)
-    prescriptor.contract_url = final_url_static
+    final_url = url_for("static", filename=f"contracts/{signed_name}")
+    final_url_abs = url_for("static", filename=f"contracts/{signed_name}", _external=True)
+    prescriptor.contract_url = final_url
 
-    # 6. Cambiar estado a CAPACITACIÓN
+    # Cambiar subestado a CAPACITACIÓN
     try:
         Substate = getattr(Base.classes, "substate_prescriptor", None)
-        if Substate:
+        if Substate and hasattr(prescriptor, "sub_state_id"):
             row = (
                 db.session.query(Substate)
                 .filter((getattr(Substate, "name").ilike("%CAPAC%")) | (getattr(Substate, "code", getattr(Substate, "name")).ilike("%CAPAC%")))
@@ -391,80 +621,95 @@ def sign_draw_post():
             )
             if row:
                 prescriptor.sub_state_id = row.id
-    except Exception as exc:
-        current_app.logger.error(f"Error cambiando subestado: {exc}")
+    except Exception:
+        pass
 
     try:
         db.session.commit()
+        flash("Contrato finalizado y firmado por Jesús Serrano Sanz", "success")
+        
+        # Enviar Email y Notificación al Prescriptor
+        presc_email = getattr(prescriptor, "email", None) or getattr(prescriptor, "squeeze_page_email", None)
+        if not presc_email:
+            try:
+                UserModel = getattr(Base.classes, "users", None)
+                if UserModel and getattr(prescriptor, "user_id", None):
+                    u = db.session.get(UserModel, prescriptor.user_id)
+                    if u: presc_email = getattr(u, "email", None)
+            except: pass
+
+        # Notificación en la campana
+        try:
+            Notification = getattr(Base.classes, "notifications", None)
+            if Notification is not None and getattr(prescriptor, "user_id", None):
+                import uuid as _uuid
+                from datetime import datetime
+                notif = Notification(
+                    id=str(_uuid.uuid4()),
+                    user_id=prescriptor.user_id,
+                    title="Contrato completado y firmado",
+                    body=f"Tu contrato ha sido firmado por la Dirección. Ya estás en fase de capacitación.",
+                    link_url=final_url_abs,
+                    notif_type="INFO",
+                    is_read=0,
+                    created_at=datetime.utcnow(),
+                )
+                db.session.add(notif)
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
+            pass
+
+        # Email final
+        if presc_email:
+            try:
+                from sigp.controllers.auth_controller import _generate_token
+                platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
+                token = _generate_token(presc_email)
+                reset_path = url_for("auth.reset_password", token=token)
+                reset_url = f"{platform_base}{reset_path}"
+                platform_url = platform_base + "/"
+                logo_url = "https://i.ibb.co/SXrCfwyt/inova-removebg-preview.png"
+
+                html_body = render_template(
+                    "emails/prescriptor_training.html",
+                    prescriptor=prescriptor,
+                    platform_url=platform_url,
+                    email=presc_email,
+                    reset_url=reset_url,
+                    contract_url=final_url_abs,
+                    logo_url=logo_url,
+                )
+                plain_body = (
+                    f"Hola {(getattr(prescriptor, 'squeeze_page_name', None) or 'Colaborador').strip()}!\n\n"
+                    "Excelentes noticias: nuestro presidente ha firmado tu convenio y ahora oficialmente formas parte del equipo de prescriptores.\n\n"
+                    "Tu convenio está listo:\n"
+                    f"- Descargar contrato firmado: {final_url_abs}\n\n"
+                    "Acceso a la plataforma:\n"
+                    f"- URL: {platform_url}\n- Usuario: {presc_email}\n- Restablecer contraseña: {reset_url}\n\n"
+                    "¡Éxitos en tu formación!"
+                )
+                mail_server = current_app.config.get("MAIL_SERVER")
+                send_simple_mail(
+                    [presc_email],
+                    "¡Convenio aprobado! Bienvenido a la fase de capacitación",
+                    html_body,
+                    html=True,
+                    text_body=plain_body,
+                )
+                if mail_server:
+                    flash(f"Email de bienvenida enviado a {presc_email}", "info")
+            except Exception as exc:
+                current_app.logger.exception("Error enviando correo de capacitación: %s", exc)
+        
+        _audit("president_signed", prescriptor.id, {"output": str(output_pdf)})
+        return redirect(url_for("prescriptors.edit_prescriptor", prescriptor_id=prescriptor_id))
+        
     except Exception as exc:
         db.session.rollback()
-        current_app.logger.exception("Error guardando contrato final: %s", exc)
-        flash("Contrato firmado, pero hubo un error guardando el estado.", "warning")
+        current_app.logger.exception("Error guardando contrato firmado por presidente: %s", exc)
+        flash("Contrato firmado pero ocurrió un error al guardar en BD", "warning")
         return redirect("/")
-
-    # 7. ENVIAR EMAIL DE BIENVENIDA A CAPACITACIÓN (Importante: mantener esto)
-    # Esto reemplaza al antiguo correo que se enviaba tras la firma de Jesús
-    presc_email = getattr(prescriptor, "email", None) or getattr(prescriptor, "squeeze_page_email", None)
-    
-    # Fallback para obtener email desde usuario asociado
-    if not presc_email:
-        try:
-            UserModel = getattr(Base.classes, "users", None)
-            if UserModel and getattr(prescriptor, "user_id", None):
-                u = db.session.get(UserModel, prescriptor.user_id)
-                if u: presc_email = getattr(u, "email", None)
-        except: pass
-
-    if presc_email:
-        try:
-            from sigp.controllers.auth_controller import _generate_token
-            platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
-            token = _generate_token(presc_email)
-            reset_path = url_for("auth.reset_password", token=token)
-            reset_url = f"{platform_base}{reset_path}"
-            platform_url = platform_base + "/"
-            logo_url = "https://i.ibb.co/cXKzBGPd/logo-innova.png"
-
-            html_body = render_template(
-                "emails/prescriptor_training.html",
-                prescriptor=prescriptor,
-                platform_url=platform_url,
-                email=presc_email,
-                reset_url=reset_url,
-                contract_url=final_url_abs,
-                logo_url=logo_url,
-            )
-            plain_body = (
-                f"Hola {(getattr(prescriptor, 'squeeze_page_name', None) or 'Colaborador').strip()}!\n\n"
-                "¡Felicitaciones! Tu contrato ha sido completado y firmado digitalmente.\n\n"
-                "Ya tienes acceso oficial a la fase de capacitación.\n\n"
-                f"- Descargar contrato: {final_url_abs}\n"
-                f"- Plataforma: {platform_url}\n"
-                f"- Usuario: {presc_email}\n"
-                f"- Restablecer contraseña: {reset_url}\n\n"
-                "¡Éxitos en tu formación!"
-            )
-            
-            mail_server = current_app.config.get("MAIL_SERVER")
-            send_simple_mail(
-                [presc_email],
-                "¡Contrato Completado! Bienvenido a la fase de capacitación",
-                html_body,
-                html=True,
-                text_body=plain_body,
-            )
-            if mail_server:
-                flash(f"Contrato completado. Email de bienvenida enviado a {presc_email}", "success")
-        except Exception as exc:
-            current_app.logger.exception("Error enviando correo de capacitación: %s", exc)
-            flash("Contrato completado, pero no se pudo enviar el email de bienvenida.", "warning")
-    else:
-        flash("Contrato completado. No se envió email porque el usuario no tiene correo.", "info")
-
-    _audit("contract_completed_auto", prescriptor.id, {"output": str(output_pdf)})
-    
-    # Redirigir a la pantalla de confirmación
-    return redirect(url_for("contracts.prescriptor_signed_confirmation"))
 
 @contracts_bp.get("/sign/president")
 @login_required
@@ -498,253 +743,6 @@ def prescriptor_signed_confirmation():
     except Exception:
         notifications_url = "/"
     return render_template("contracts/prescriptor_signed.html", notifications_url=notifications_url)
-
-
-@contracts_bp.post("/sign/president")
-@login_required
-def sign_president_post():
-    token = request.form.get("token", "")
-    img_b64 = request.form.get("signature_data", "")
-    data = _read_token(token, current_app.config.get("SIGN_LINK_EXP_MINUTES", 60))
-    if not data or data.get("r") != "president":
-        flash("Enlace inválido o expirado", "warning")
-        return redirect("/")
-
-    prescriptor_id = data.get("c")
-    Prescriptor = getattr(Base.classes, "prescriptors", None)
-    if not Prescriptor:
-        flash("Modelo prescriptors no disponible", "danger")
-        return redirect("/")
-    prescriptor = db.session.get(Prescriptor, prescriptor_id)
-    if not prescriptor:
-        flash("Prescriptor no encontrado", "warning")
-        return redirect("/")
-
-    # Determinar PDF base a firmar: usar contract_url actual
-    rel_url = getattr(prescriptor, "contract_url", None)
-    if not rel_url:
-        flash("No hay contrato base para firmar", "warning")
-        return redirect("/")
-    # convertir URL estática a ruta absoluta
-    # contract_url suele ser "/static/contracts/<file>" o "static/contracts/<file>"
-    from pathlib import Path
-    fname = os.path.basename(rel_url)
-    input_pdf = Path(current_app.root_path) / "static" / "contracts" / fname
-    if not input_pdf.exists():
-        flash("Archivo de contrato no encontrado", "danger")
-        return redirect("/")
-
-    # Requiere dibujo del presidente y estampado + sello visible, luego PAdES
-    if not img_b64.startswith("data:image/png;base64,"):
-        flash("Firma inválida: por favor dibujá tu firma.", "warning")
-        return redirect(url_for("contracts.sign_president_get", token=token))
-
-    # Guardar PNG del presidente
-    from pathlib import Path as _P
-    import base64 as _b64
-    sig_dir = _P(current_app.root_path) / "static" / "contracts" / "signatures"
-    sig_dir.mkdir(parents=True, exist_ok=True)
-    sig_path = sig_dir / f"sig_president_{prescriptor.id}.png"
-    png_bytes = _b64.b64decode(img_b64.split(",", 1)[1])
-    sig_path.write_bytes(png_bytes)
-
-    # Estampar la firma dibujada en el recuadro del presidente
-    stamped_img_name = f"president_img_signed_{fname}"
-    stamped_img_pdf = Path(current_app.root_path) / "static" / "contracts" / stamped_img_name
-    try:
-        # Estampar en la última página (6) - recuadro derecho (Presidente): x=320,y=160, w=200,h=40
-        stamp_signature_image(input_pdf, sig_path, stamped_img_pdf, page=6, x=320, y=160, w=200, h=40)
-    except Exception as exc:
-        current_app.logger.exception("Error estampando firma del presidente: %s", exc)
-        flash("No se pudo estampar la firma dibujada del presidente", "warning")
-        return redirect(url_for("contracts.sign_president_get", token=token))
-
-    # Sello visible informativo encima del recuadro del presidente
-    visible_name = f"visible_{fname}"
-    visible_pdf = Path(current_app.root_path) / "static" / "contracts" / visible_name
-    try:
-        ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-        pres_name = current_app.config.get("PRESIDENT_DISPLAY_NAME", "Jesús Serrano Sanz")
-        # Colocar el sello de texto por DEBAJO del recuadro del presidente
-        stamp_text_overlay(
-            stamped_img_pdf,
-            visible_pdf,
-            [f"Firmado por {pres_name}", f"Fecha: {ts}", "con un certificado emitido por el SIGP",],
-            page=6,
-            x=320,
-            y=112,
-            w=220,
-            h=28,
-        )
-    except Exception as exc:
-        current_app.logger.exception("Error creando sello visible: %s", exc)
-        flash("No se pudo crear el sello visible de la firma del presidente", "warning")
-        return redirect(url_for("contracts.sign_president_get", token=token))
-
-    # Luego, firmar con PAdES el PDF con sello visible
-    signed_name = f"signed_{fname}"
-    output_pdf = Path(current_app.root_path) / "static" / "contracts" / signed_name
-
-    # Validaciones previas de cert
-    cert_path_cfg = current_app.config.get("PRESIDENT_CERT_PATH")
-    if not cert_path_cfg:
-        flash("Falta configurar PRESIDENT_CERT_PATH para firma PAdES", "danger")
-        return redirect(url_for("contracts.sign_president_get", token=token))
-    from pathlib import Path as _P
-    cert_path = _P(cert_path_cfg if cert_path_cfg.startswith("/") else str(_P(current_app.root_path) / cert_path_cfg))
-    if not cert_path.exists():
-        flash("El certificado configurado no existe en la ruta indicada (PRESIDENT_CERT_PATH)", "danger")
-        return redirect(url_for("contracts.sign_president_get", token=token))
-
-    try:
-        # Asegurar XMP/Info en el PDF visible antes de firmar
-        try:
-            pres_name = current_app.config.get("PRESIDENT_DISPLAY_NAME", "SIGP")
-            presc_name = getattr(prescriptor, "squeeze_page_name", "") or getattr(prescriptor, "name", "Prescriptor")
-            today = datetime.utcnow().strftime("%Y-%m-%d")
-            title = f"Contrato de Prescripción - {presc_name} - {today}"
-            subject = "Contrato de Prescripción"
-            keywords = "contrato, prescripción, firma digital, PAdES"
-            embed_pdf_metadata_xmp(
-                visible_pdf,
-                title=title,
-                author=pres_name,
-                subject=subject,
-                keywords=keywords,
-                creator="SIGP",
-                producer="SIGP (INNOVA TRAINING CONSULTORIA Y FORMACION S.L.)",
-            )
-        except Exception:
-            pass
-        sign_pades(visible_pdf, output_pdf)
-    except Exception as exc:  # noqa
-        # Log detallado con traceback
-        current_app.logger.exception("Error firmando PAdES: %s", exc)
-        # Mensaje más informativo en UI: clase + mensaje y causa si existe
-        err_cls = exc.__class__.__name__
-        cause = getattr(exc, "__cause__", None) or getattr(exc, "__context__", None)
-        ui_msg = f"{err_cls}: {exc}"
-        if cause:
-            ui_msg += f" | causa: {cause.__class__.__name__}: {cause}"
-        flash(f"Error firmando el contrato (PAdES): {ui_msg}", "danger")
-        return redirect(url_for("contracts.sign_president_get", token=token))
-
-    final_url = url_for("static", filename=f"contracts/{signed_name}")
-    final_url_abs = url_for("static", filename=f"contracts/{signed_name}", _external=True)
-    prescriptor.contract_url = final_url
-
-    # Intentar mover subestado a CAPACITACIÓN si existe
-    try:
-        Substate = getattr(Base.classes, "substate_prescriptor", None)
-        if Substate and hasattr(prescriptor, "sub_state_id"):
-            row = (
-                db.session.query(Substate)
-                .filter((getattr(Substate, "name").ilike("%CAPAC%")) | (getattr(Substate, "code", getattr(Substate, "name")).ilike("%CAPAC%")))
-                .first()
-            )
-            if row:
-                prescriptor.sub_state_id = row.id
-    except Exception:
-        pass
-
-    try:
-        db.session.commit()
-        flash("Contrato firmado por Jesús Serrano Sanz (Presidente y Administrador Único)", "success")
-        # Notificar al prescriptor (email HTML y notificación in-app)
-        presc_email = getattr(prescriptor, "email", None) or getattr(prescriptor, "squeeze_page_email", None)
-        # Fallback: usar email del usuario asociado si no hay email en el prescriptor
-        if not presc_email:
-            try:
-                UserModel = getattr(Base.classes, "users", None)
-            except Exception:
-                UserModel = None
-            if UserModel is not None and getattr(prescriptor, "user_id", None):
-                u = db.session.get(UserModel, prescriptor.user_id)
-                if u and getattr(u, "email", None):
-                    presc_email = u.email
-        try:
-            # In-app notification (usar campos válidos)
-            Notification = getattr(Base.classes, "notifications", None)
-            if Notification is not None and getattr(prescriptor, "user_id", None):
-                import uuid as _uuid
-                notif = Notification(
-                    id=str(_uuid.uuid4()),
-                    user_id=prescriptor.user_id,
-                    title="Contrato firmado por Jesús Serrano Sanz (Presidente y Administrador Único)",
-                    body=f"Tu contrato ya fue firmado por Jesús Serrano Sanz (Presidente y Administrador Único).",
-                    link_url=final_url_abs,
-                    notif_type="INFO",
-                    is_read=0,
-                    created_at=datetime.utcnow(),
-                )
-                db.session.add(notif)
-                db.session.commit()
-        except Exception:
-            db.session.rollback()
-            pass
-        if presc_email:
-            try:
-                # Email de capacitación al prescriptor (nuevo copy)
-                from sigp.controllers.auth_controller import _generate_token
-                platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
-                token = _generate_token(presc_email)
-                reset_path = url_for("auth.reset_password", token=token)
-                reset_url = f"{platform_base}{reset_path}"
-                platform_url = platform_base + "/"
-                # Logo externo sutil
-                logo_url = "https://i.ibb.co/cXKzBGPd/logo-innova.png"
-
-                html_body = render_template(
-                    "emails/prescriptor_training.html",
-                    prescriptor=prescriptor,
-                    platform_url=platform_url,
-                    email=presc_email,
-                    reset_url=reset_url,
-                    contract_url=final_url_abs,
-                    logo_url=logo_url,
-                )
-                plain_body = (
-                    f"Hola {(getattr(prescriptor, 'squeeze_page_name', None) or getattr(prescriptor, 'name', '') or '').strip()}!\n\n"
-                    "Excelentes noticias: nuestro presidente Jesús ha firmado tu convenio y ahora oficialmente formas parte del equipo de prescriptores.\n\n"
-                    "Tu convenio está listo:\n"
-                    f"- Descargar contrato firmado: {final_url_abs}\n\n"
-                    "Acceso a la plataforma:\n"
-                    f"- URL: {platform_url}\n- Usuario: {presc_email}\n- Restablecer contraseña: {reset_url}\n\n"
-                    "Recursos de capacitación:\n"
-                    "- Video tutorial introductorio: https://www.youtube.com/watch?v=QwaQiqBHbZM\n"
-                    "- En la plataforma: Multimedia > Mis archivos (videos, enlaces y archivos)\n\n"
-                    "Próximos pasos:\n"
-                    "- Descargar y guardar tu convenio con las dos firmas\n"
-                    "- Completar la capacitación inicial en la plataforma\n"
-                    "- Informar al equipo referente cuando finalices\n"
-                    "- Coordinar una meet para checklist previo a generación de leads\n"
-                    "- Activación: al completar el checklist, pasarás de 'capacitación' a 'activo'\n\n"
-                    "¡Éxitos en tu formación!"
-                )
-                mail_server = current_app.config.get("MAIL_SERVER")
-                if not mail_server:
-                    flash("Email NO enviado: MAIL_SERVER no está configurado", "warning")
-                send_simple_mail(
-                    [presc_email],
-                    "¡Convenio aprobado! Bienvenido a la fase de capacitación",
-                    html_body,
-                    html=True,
-                    text_body=plain_body,
-                )
-                if mail_server:
-                    flash(f"Email enviado a {presc_email}", "info")
-            except Exception as exc:
-                current_app.logger.exception("Error enviando correo de notificación de firma del presidente: %s", exc)
-                flash("No se pudo enviar el email al prescriptor", "warning")
-        else:
-            flash("No se envió email: el prescriptor no tiene email cargado", "warning")
-        _audit("president_signed", prescriptor.id, {"output": str(output_pdf)})
-        return redirect(url_for("prescriptors.edit_prescriptor", prescriptor_id=prescriptor_id))
-    except Exception as exc:
-        db.session.rollback()
-        current_app.logger.exception("Error guardando contrato firmado: %s", exc)
-        flash("Contrato firmado pero ocurrió un error al guardar", "warning")
-        return redirect("/")
 
 
 @contracts_bp.get("/pades/diagnostic")

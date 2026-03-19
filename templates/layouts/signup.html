@@ -129,13 +129,28 @@
 
             <div class="mb-3 mt-2">
                 <label style="display: flex; align-items: center; cursor: pointer;">
-                    <input type="checkbox" name="is_student" value="y" checked class="hidden-input">
+                    <input type="checkbox" name="is_student" id="is_student_checkbox" value="y" checked class="hidden-input">
                     <span class="custom-checkmark"></span>
                     <span style="color: #fff; user-select: none;">Soy alumno de Sports Data Campus</span>
                 </label>
             </div>
 
-            <div class="form-group position-relative">
+            <div id="contract-fields">
+                <div class="form-group position-relative mt-2">
+                    {{ form.document_type(class="form-style", id="document_type") }}
+                    <i class="uil uil-card-atm input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
+                </div>
+                <div class="form-group position-relative mt-2">
+                    {{ form.document_number(class="form-style", placeholder="Número de Documento (DNI/NIE/Pasaporte)", id="document_number", autocomplete="off") }}
+                    <i class="uil uil-postcard input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
+                </div>
+                <div class="form-group position-relative mt-2">
+                    {{ form.domicile(class="form-style", placeholder="Domicilio Completo (Calle, Ciudad, País)", id="domicile", autocomplete="off") }}
+                    <i class="uil uil-map-marker input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
+                </div>
+            </div>
+
+            <div class="form-group position-relative mt-2">
                 {{ form.observations(class="form-style", style="height: auto;", rows="3", placeholder="¿Por qué quieres ser prescriptor?") }}
                 <i class="uil uil-comment-alt-lines input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
             </div>
@@ -149,6 +164,28 @@
             </div>
         </form>
     </div>
+<script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const checkbox = document.getElementById('is_student_checkbox');
+            const contractFields = document.getElementById('contract-fields');
+            
+            function toggleFields() {
+                if (checkbox.checked) {
+                    contractFields.style.display = 'block';
+                    document.getElementById('document_type').required = true;
+                    document.getElementById('document_number').required = true;
+                    document.getElementById('domicile').required = true;
+                } else {
+                    contractFields.style.display = 'none';
+                    document.getElementById('document_type').required = false;
+                    document.getElementById('document_number').required = false;
+                    document.getElementById('domicile').required = false;
+                }
+            }
 
+            checkbox.addEventListener('change', toggleFields);
+            toggleFields(); // Ejecutar al cargar la página
+        });
+    </script>
 </body>
 </html>
