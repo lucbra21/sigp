@@ -161,8 +161,8 @@ def generate_for_prescriptor(prescriptor_id):
         try:
             # Cuerpo HTML usando template (agregamos datos de acceso y reset de contraseña)
             from sigp.controllers.auth_controller import _generate_token
-            # Logo para emails
-            logo_url = "https://i.ibb.co/SXrCfwyt/inova-removebg-preview.png"
+            # Logo para emails 
+            logo_url = "https://sportsdatacampus.com/wp-content/uploads/2021/07/SDC_Logo.png"
 
             # Construir URLs de plataforma/login/reset teniendo en cuenta dominio configurable
             platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
@@ -198,15 +198,15 @@ def generate_for_prescriptor(prescriptor_id):
             plain_body = (
                 f"Hola{',' if not prescriptor else ' ' + (getattr(prescriptor, 'squeeze_page_name', None) or getattr(prescriptor, 'name', '') ) + ','}\n\n"
                 "¡Te damos la bienvenida al Programa de Prescriptores!\n\n"
-                "Paso 1: Accedé a tu cuenta\n"
+                "Paso 1: Establece tu contraseña\n"
+                f"- Enlace para establecer contraseña: {reset_url or '(no disponible)'}\n\n"
+                "Paso 2: Accede a tu cuenta\n"
                 f"- URL: {platform_base}/\n"
                 f"- Usuario: {presc_email}\n\n"
-                "Paso 2: Establecé tu contraseña\n"
-                f"- Restablecer contraseña: {reset_url or '(no disponible)'}\n\n"
-                "Paso 3: Firmá tu convenio de prescriptor\n"
+                "Paso 3: Firma tu convenio de prescriptor\n"
                 f"- Enlace para firmar: {link}\n"
                 + (f"- Descargar convenio: {abs_url}\n" if abs_url else "") +
-                "\n¿Necesitás ayuda? Respondé este correo y te asistimos.\n"
+                "\n¿Necesitas ayuda? Responde este correo y te asistimos.\n"
                 "Los enlaces pueden expirar por motivos de seguridad."
             )
             send_simple_mail(
@@ -436,7 +436,7 @@ def sign_draw_post():
                 platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
                 token_email = _generate_token(presc_email)
                 reset_url = f"{platform_base}{url_for('auth.reset_password', token=token_email)}"
-                logo_url = "https://i.ibb.co/cXKzBGPd/logo-innova.png"
+                logo_url = "https://sportsdatacampus.com/wp-content/uploads/2021/07/SDC_Logo.png"
                 
                 # NUEVO: Generar link dinámico de la Squeeze Page (/p/id)
                 sq_url = f"{platform_base}/p/{prescriptor.id}"
@@ -669,7 +669,7 @@ def sign_president_post():
                 reset_path = url_for("auth.reset_password", token=token)
                 reset_url = f"{platform_base}{reset_path}"
                 platform_url = platform_base + "/"
-                logo_url = "https://i.ibb.co/SXrCfwyt/inova-removebg-preview.png"
+                logo_url = "https://sportsdatacampus.com/wp-content/uploads/2021/07/SDC_Logo.png"
 
                 html_body = render_template(
                     "emails/prescriptor_training.html",

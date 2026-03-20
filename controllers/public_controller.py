@@ -157,7 +157,7 @@ def signup_post():
                 login_url = f"{platform_base}{url_for('auth.login_get')}"
                 token_reset = _generate_token(email_val)
                 reset_url = f"{platform_base}{url_for('auth.reset_password', token=token_reset)}"
-                logo_url = "https://i.ibb.co/cXKzBGPd/logo-innova.png"
+                logo_url = "https://sportsdatacampus.com/wp-content/uploads/2021/07/SDC_Logo.png"
 
                 # C) Enviar Email Automático para firmar
                 html_body = render_template(
@@ -174,17 +174,17 @@ def signup_post():
                 plain_body = (
                     f"Hola {new_presc.squeeze_page_name},\n\n"
                     "¡Te damos la bienvenida al Programa de Prescriptores!\n\n"
-                    "Paso 1: Accedé a tu cuenta\n"
+                    "Paso 1: Establece tu contraseña\n"
+                    f"- Enlace para establecer contraseña: {reset_url}\n\n"
+                    "Paso 2: Accede a tu cuenta\n"
                     f"- URL: {platform_base}/\n"
                     f"- Usuario: {email_val}\n\n"
-                    "Paso 2: Establecé tu contraseña\n"
-                    f"- Restablecer contraseña: {reset_url}\n\n"
-                    "Paso 3: Firmá tu convenio de prescriptor\n"
+                    "Paso 3: Firma tu convenio de prescriptor\n"
                     f"- Enlace para firmar: {link}\n"
                     + (f"- Descargar convenio: {abs_url}\n\n" if abs_url else "\n\n") +
                     "IMPORTANTE:\n"
                     "Te recomendamos leer atentamente el convenio antes de firmarlo. Si tienes alguna duda, por favor ponte en contacto con el responsable de prescripción escribiendo a sigp@sportsdatacampus.com antes de proceder con la firma.\n\n"
-                    "Una vez que hayas firmado el convenio, recibirás un nuevo correo electrónico con los siguientes pasos para iniciar como prescriptor activo.\n\n"
+                    "Una vez que hayas firmado el convenio, recibirás un nuevo correo electrónico con los siguientes pasos para iniciar tu capacitación.\n\n"
                     "¿Necesitas ayuda adicional? Responde este correo y te asistiremos.\n"
                 )
                 send_simple_mail([email_val], "¡Bienvenido al Programa de Prescriptores! Demos los primeros pasos.", html_body, html=True, text_body=plain_body)

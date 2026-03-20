@@ -1082,7 +1082,7 @@ def update_prescriptor(prescriptor_id):
                     if presc_email:
                         try:
                             from sigp.controllers.auth_controller import _generate_token
-                            logo_url = "https://i.ibb.co/SXrCfwyt/inova-removebg-preview.png"
+                            logo_url = "https://sportsdatacampus.com/wp-content/uploads/2021/07/SDC_Logo.png"
                             platform_base = (current_app.config.get("BASE_URL") or request.host_url).rstrip("/")
                             login_path = url_for("auth.login_get")
                             login_url = f"{platform_base}{login_path}"
@@ -1104,19 +1104,18 @@ def update_prescriptor(prescriptor_id):
                             plain_body = (
                                 f"Hola{',' if not obj else ' ' + (getattr(obj, 'squeeze_page_name', None) or getattr(obj, 'name', '') ) + ','}\n\n"
                                 "¡Te damos la bienvenida al Programa de Prescriptores!\n\n"
-                                "Paso 1: Accedé a tu cuenta\n"
+                                "Paso 1: Establece tu contraseña\n"
+                                f"- Enlace para establecer contraseña: {reset_url or '(no disponible)'}\n\n"
+                                "Paso 2: Accede a tu cuenta\n"
                                 f"- URL: {platform_base}/\n"
                                 f"- Usuario: {presc_email}\n\n"
-                                "Paso 2: Establecé tu contraseña\n"
-                                f"- Restablecer contraseña: {reset_url or '(no disponible)'}\n\n"
-                                "Paso 3: Firmá tu convenio de prescriptor\n"
+                                "Paso 3: Firma tu convenio de prescriptor\n"
                                 f"- Enlace para firmar: {link}\n"
                                 + (f"- Descargar convenio: {abs_url}\n\n" if abs_url else "\n\n") +
                                 "IMPORTANTE:\n"
                                 "Te recomendamos leer atentamente el convenio antes de firmarlo. Si tienes alguna duda, por favor ponte en contacto con el responsable de prescripción escribiendo a sigp@sportsdatacampus.com antes de proceder con la firma.\n\n"
-                                "Una vez que hayas firmado el convenio, recibirás un nuevo correo electrónico con los siguientes pasos para iniciar como prescriptor activo.\n\n"
+                                "Una vez que hayas firmado el convenio, recibirás un nuevo correo electrónico con los siguientes pasos para iniciar tu capacitación.\n\n"
                                 "¿Necesitas ayuda adicional? Responde este correo y te asistiremos.\n"
-                                "Los enlaces pueden expirar por motivos de seguridad."
                             )
                             send_simple_mail([presc_email], "¡Bienvenido al Programa de Prescriptores - Demos los primeros pasos.", html_body, html=True, text_body=plain_body)
                             flash(f"Email de firma enviado a {presc_email}", "info")
@@ -1177,7 +1176,7 @@ def update_prescriptor(prescriptor_id):
                     plain_body = (
                         "Hola!\n\n"
                         "Tu cuenta ya está habilitada para la fase de capacitación.\n\n"
-                        f"Plataforma: {platform_url}\nUsuario: {presc_email}\nRestablecer contraseña: {reset_url}\n\n"+
+                        f"Plataforma: {platform_url}\nUsuario: {presc_email}\nEstablece contraseña: {reset_url}\n\n"+
                         (f"Descargar contrato firmado: {contract_url}\n\n" if contract_url else "")+
                         "En el menú verás el módulo Multimedia > Mis archivos con los recursos de capacitación (videos, links y archivos).\n\n"
                         "¡Éxitos en tu formación!"
