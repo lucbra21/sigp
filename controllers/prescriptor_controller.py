@@ -879,6 +879,8 @@ def update_prescriptor(prescriptor_id):
         if hasattr(obj, "sub_state") and hasattr(form, "sub_state") and not hasattr(obj, "sub_state_id"):
             # fallback a campo de texto
             obj.sub_state = form.sub_state.data or None
+        if hasattr(obj, "confidence_level_id") and hasattr(form, "confidence_level_id"):
+            obj.confidence_level_id = form.confidence_level_id.data
         # actualizar campos simples
         # actualizar nombre
         if hasattr(obj, "squeeze_page_name") and hasattr(form, "squeeze_page_name"):

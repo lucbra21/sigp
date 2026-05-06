@@ -20,63 +20,63 @@ def build(c, prescriptor, datos):
     draw_header(c, width, height)
     y = height - 120
     
-    draw_centered(c, "ACUERDO DE COLABORACIÓN COMERCIAL - PROGRAMA DE PRESCRIPTORES", width, y, size=13) [cite: 5]
+    draw_centered(c, "ACUERDO DE COLABORACIÓN COMERCIAL - PROGRAMA DE PRESCRIPTORES", width, y, size=13)
     y -= 20
-    draw_centered(c, "entre", width, y, font="Helvetica", size=11) [cite: 6]
+    draw_centered(c, "entre", width, y, font="Helvetica", size=11)
     y -= 20
-    draw_centered(c, "INNOVA TRAINING CONSULTORIA Y FORMACION S.L.\nSPORTS DATA CAMPUS", width, y, size=12) [cite: 7]
+    draw_centered(c, "INNOVA TRAINING CONSULTORIA Y FORMACION S.L.\nSPORTS DATA CAMPUS", width, y, size=12)
     y -= 20
-    draw_centered(c, "y", width, y, font="Helvetica", size=11) [cite: 8]
+    draw_centered(c, "y", width, y, font="Helvetica", size=11)
     y -= 20
-    draw_centered(c, nombre_entidad.upper(), width, y, size=12) [cite: 9]
+    draw_centered(c, nombre_entidad.upper(), width, y, size=12)
 
     y -= 40
     fecha_larga = spanish_long_date()
-    draw_right(c, f"En Valladolid, a {fecha_larga}.", width, y) [cite: 11]
+    draw_right(c, f"En Valladolid, a {fecha_larga}.", width, y)
 
     y -= 40
-    draw_centered(c, "REUNIDOS", width, y, size=12) [cite: 10]
+    draw_centered(c, "REUNIDOS", width, y, size=12)
     y -= 30
 
-    y = draw_paragraph(c, "De una parte,", margin_x, y, width - 2*margin_x, height, font="Helvetica-Oblique") [cite: 12]
-    y = draw_paragraph(c, "Don Jesús Serrano Sanz, con D.N.I. nº 09.303.401-Q, actuando en su condición de Administrador Único y en nombre y representación de INNOVA TRAINING CONSULTORIA Y FORMACION S.L., propietaria de la marca comercial “Sports Data Campus”, con C.I.F. nº B19456128 y domicilio social en C/ del Campo de Gomara, 4, CP 47008, Valladolid, España (en adelante, LA EMPRESA).", margin_x, y, width - 2*margin_x, height) [cite: 13, 14]
+    y = draw_paragraph(c, "De una parte,", margin_x, y, width - 2*margin_x, height, font="Helvetica-Oblique")
+    y = draw_paragraph(c, "Don Jesús Serrano Sanz, con D.N.I. nº 09.303.401-Q, actuando en su condición de Administrador Único y en nombre y representación de INNOVA TRAINING CONSULTORIA Y FORMACION S.L., propietaria de la marca comercial “Sports Data Campus”, con C.I.F. nº B19456128 y domicilio social en C/ del Campo de Gomara, 4, CP 47008, Valladolid, España (en adelante, LA EMPRESA).", margin_x, y, width - 2*margin_x, height)
     
     y -= 10
-    y = draw_paragraph(c, "Y de otra parte,", margin_x, y, width - 2*margin_x, height, font="Helvetica-Oblique") [cite: 15]
-    y = draw_paragraph(c, f"Don/Doña {nombre_representante.upper()}, con {doc_type} nº {doc_num}, con domicilio en {domicile}, quien actúa en su propio nombre y derecho, y que participa o ha participado como alumno en uno de los programas formativos impartidos por Sports Data Campus (en adelante, EL COLABORADOR).", margin_x, y, width - 2*margin_x, height) [cite: 16, 17]
+    y = draw_paragraph(c, "Y de otra parte,", margin_x, y, width - 2*margin_x, height, font="Helvetica-Oblique")
+    y = draw_paragraph(c, f"Don/Doña {nombre_representante.upper()}, con {doc_type} nº {doc_num}, con domicilio en {domicile}, quien actúa en su propio nombre y derecho, y que participa o ha participado como alumno en uno de los programas formativos impartidos por Sports Data Campus (en adelante, EL COLABORADOR).", margin_x, y, width - 2*margin_x, height)
 
     y -= 10
-    y = draw_paragraph(c, "Ambas partes, reconociéndose mutuamente la capacidad legal necesaria para obligarse en el presente acuerdo,", margin_x, y, width - 2*margin_x, height) [cite: 18]
+    y = draw_paragraph(c, "Ambas partes, reconociéndose mutuamente la capacidad legal necesaria para obligarse en el presente acuerdo,", margin_x, y, width - 2*margin_x, height)
 
     y -= 20
-    draw_centered(c, "EXPONEN", width, y, size=12) [cite: 19]
+    draw_centered(c, "EXPONEN", width, y, size=12)
     y -= 30
     
-    y = draw_paragraph(c, "Que dicho programa tiene como objetivo fomentar la participación de la comunidad académica de Sports Data Campus en la difusión de sus programas formativos, reconociendo dicha colaboración mediante un sistema de bonificaciones formativas o beneficios equivalentes.", margin_x, y, width - 2*margin_x, height) [cite: 20]
-    y = draw_paragraph(c, "En virtud de lo anterior, las partes acuerdan formalizar el presente Acuerdo de Colaboración dentro del Programa de Prescriptores, que se regirá por las siguientes:", margin_x, y, width - 2*margin_x, height) [cite: 21]
+    y = draw_paragraph(c, "Que dicho programa tiene como objetivo fomentar la participación de la comunidad académica de Sports Data Campus en la difusión de sus programas formativos, reconociendo dicha colaboración mediante un sistema de bonificaciones formativas o beneficios equivalentes.", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "En virtud de lo anterior, las partes acuerdan formalizar el presente Acuerdo de Colaboración dentro del Programa de Prescriptores, que se regirá por las siguientes:", margin_x, y, width - 2*margin_x, height)
 
     y -= 20
-    draw_centered(c, "CLÁUSULAS", width, y, size=12) [cite: 23]
+    draw_centered(c, "CLÁUSULAS", width, y, size=12)
     y -= 30
 
     # CLÁUSULA 1 - OBJETO DEL ACUERDO
     y = draw_paragraph(c, "PRIMERA.- OBJETO DEL ACUERDO", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold")
     
-    y = draw_paragraph(c, "El presente acuerdo tiene por objeto regular la participación de EL COLABORADOR en el Programa de Prescriptores de Sports Data Campus, mediante el cual, en su condición de alumno, podrá recomendar y difundir los programas formativos impartidos por LA EMPRESA entre potenciales interesados, contribuyendo al crecimiento y fortalecimiento de la comunidad académica de Sports Data Campus.", margin_x, y, width - 2*margin_x, height) [cite: 27]
+    y = draw_paragraph(c, "El presente acuerdo tiene por objeto regular la participación de EL COLABORADOR en el Programa de Prescriptores de Sports Data Campus, mediante el cual, en su condición de alumno, podrá recomendar y difundir los programas formativos impartidos por LA EMPRESA entre potenciales interesados, contribuyendo al crecimiento y fortalecimiento de la comunidad académica de Sports Data Campus.", margin_x, y, width - 2*margin_x, height)
 
-    y = draw_paragraph(c, "En el marco de este acuerdo, EL COLABORADOR podrá identificar y referir potenciales interesados (en adelante, leads), que serán gestionados y registrados a través del SIGP (Sistema Integral de Gestión de Prescriptores) o de las plataformas oficiales que LA EMPRESA determine.", margin_x, y, width - 2*margin_x, height) [cite: 28]
+    y = draw_paragraph(c, "En el marco de este acuerdo, EL COLABORADOR podrá identificar y referir potenciales interesados (en adelante, leads), que serán gestionados y registrados a través del SIGP (Sistema Integral de Gestión de Prescriptores) o de las plataformas oficiales que LA EMPRESA determine.", margin_x, y, width - 2*margin_x, height)
 
-    y = draw_paragraph(c, "El presente acuerdo regula exclusivamente la participación de EL COLABORADOR en el Programa de Prescriptores de Sports Data Campus y es independiente de cualquier otra relación académica, profesional o institucional que pudiera existir entre las partes.", margin_x, y, width - 2*margin_x, height) [cite: 29]
+    y = draw_paragraph(c, "El presente acuerdo regula exclusivamente la participación de EL COLABORADOR en el Programa de Prescriptores de Sports Data Campus y es independiente de cualquier otra relación académica, profesional o institucional que pudiera existir entre las partes.", margin_x, y, width - 2*margin_x, height)
 
-    y = draw_paragraph(c, "La actividad desarrollada por EL COLABORADOR se realizará de forma voluntaria y con plena autonomía, sin que exista en ningún caso relación laboral, mercantil o de dependencia entre las partes.", margin_x, y, width - 2*margin_x, height) [cite: 30]
+    y = draw_paragraph(c, "La actividad desarrollada por EL COLABORADOR se realizará de forma voluntaria y con plena autonomía, sin que exista en ningún caso relación laboral, mercantil o de dependencia entre las partes.", margin_x, y, width - 2*margin_x, height)
 
-    y = draw_paragraph(c, "En ningún caso EL COLABORADOR estará facultado para actuar en nombre o representación de LA EMPRESA, ni para asumir compromisos, formalizar acuerdos o modificar condiciones comerciales en nombre de Sports Data Campus frente a terceros.", margin_x, y, width - 2*margin_x, height) [cite: 31]
+    y = draw_paragraph(c, "En ningún caso EL COLABORADOR estará facultado para actuar en nombre o representación de LA EMPRESA, ni para asumir compromisos, formalizar acuerdos o modificar condiciones comerciales en nombre de Sports Data Campus frente a terceros.", margin_x, y, width - 2*margin_x, height)
 
-    y = draw_paragraph(c, "La participación de EL COLABORADOR en el Programa de Prescriptores se limita exclusivamente a la identificación, recomendación y derivación cualificada de potenciales interesados en los programas formativos de LA EMPRESA.", margin_x, y, width - 2*margin_x, height) [cite: 32]
+    y = draw_paragraph(c, "La participación de EL COLABORADOR en el Programa de Prescriptores se limita exclusivamente a la identificación, recomendación y derivación cualificada de potenciales interesados en los programas formativos de LA EMPRESA.", margin_x, y, width - 2*margin_x, height)
 
-    y = draw_paragraph(c, "En ningún caso EL COLABORADOR realizará actividades de venta, negociación, cierre comercial o formalización de matrículas, funciones que corresponden de forma exclusiva al Departamento Comercial de LA EMPRESA.", margin_x, y, width - 2*margin_x, height) [cite: 33]
+    y = draw_paragraph(c, "En ningún caso EL COLABORADOR realizará actividades de venta, negociación, cierre comercial o formalización de matrículas, funciones que corresponden de forma exclusiva al Departamento Comercial de LA EMPRESA.", margin_x, y, width - 2*margin_x, height)
 
-    y = draw_paragraph(c, "Asimismo, EL COLABORADOR no estará autorizado a establecer condiciones económicas, ofrecer descuentos, comprometer plazas ni realizar promesas comerciales en nombre de LA EMPRESA frente a terceros.", margin_x, y, width - 2*margin_x, height) [cite: 34]
+    y = draw_paragraph(c, "Asimismo, EL COLABORADOR no estará autorizado a establecer condiciones económicas, ofrecer descuentos, comprometer plazas ni realizar promesas comerciales en nombre de LA EMPRESA frente a terceros.", margin_x, y, width - 2*margin_x, height)
 
     y -= 10
 
@@ -224,48 +224,48 @@ def build(c, prescriptor, datos):
     y = draw_paragraph(c, "A efectos del presente acuerdo, se considerará lead válido aquel prospecto que cumpla simultáneamente con las siguientes condiciones:", margin_x, y, width - 2*margin_x, height)
     
     condiciones_lead = [
-        "a) Proporcione datos de contacto completos, veraces y verificables. [cite: 113]",
-        "b) Manifieste un interés real en los programas formativos de LA EMPRESA. [cite: 114]",
-        "c) Cumpla con los requisitos mínimos de acceso al programa formativo correspondiente. [cite: 115]",
-        "d) No constituya información duplicada, fraudulenta o previamente registrada en el SIGP por otro prescriptor dentro del período de asignación vigente. [cite: 116]"
+        "a) Proporcione datos de contacto completos, veraces y verificables.",
+        "b) Manifieste un interés real en los programas formativos de LA EMPRESA.",
+        "c) Cumpla con los requisitos mínimos de acceso al programa formativo correspondiente.",
+        "d) No constituya información duplicada, fraudulenta o previamente registrada en el SIGP por otro prescriptor dentro del período de asignación vigente."
     ]
     y = draw_bullets(c, condiciones_lead, margin_x, y, width - 2*margin_x, height)
     
-    y = draw_paragraph(c, "LA EMPRESA se reserva el derecho de validar la condición de lead válido conforme a los criterios internos establecidos en el SIGP. [cite: 117]", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "LA EMPRESA se reserva el derecho de validar la condición de lead válido conforme a los criterios internos establecidos en el SIGP.", margin_x, y, width - 2*margin_x, height)
 
     y = draw_paragraph(c, "\n5.2 Registro y Asignación de Leads", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
-    y = draw_paragraph(c, "Para que un lead pueda generar derecho a bonificación dentro del Programa de Prescriptores, deberá ser registrado previamente en el SIGP (Sistema Integral de Gestión de Prescriptores) o en las plataformas oficiales que LA EMPRESA determine. [cite: 119]", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "Para que un lead pueda generar derecho a bonificación dentro del Programa de Prescriptores, deberá ser registrado previamente en el SIGP (Sistema Integral de Gestión de Prescriptores) o en las plataformas oficiales que LA EMPRESA determine.", margin_x, y, width - 2*margin_x, height)
     
-    y = draw_paragraph(c, "La asignación del lead corresponderá al prescriptor que lo haya registrado correctamente en el SIGP en primer lugar. [cite: 120] Dicha asignación permanecerá vigente durante un período de seis (6) meses desde la fecha de registro. [cite: 121]", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "La asignación del lead corresponderá al prescriptor que lo haya registrado correctamente en el SIGP en primer lugar. Dicha asignación permanecerá vigente durante un período de seis (6) meses desde la fecha de registro.", margin_x, y, width - 2*margin_x, height)
     
-    y = draw_paragraph(c, "Transcurrido dicho plazo sin que se haya producido una matrícula convertida, el lead podrá ser trabajado por otros prescriptores, perdiendo el primero la exclusividad sobre el mismo. [cite: 122]", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "Transcurrido dicho plazo sin que se haya producido una matrícula convertida, el lead podrá ser trabajado por otros prescriptores, perdiendo el primero la exclusividad sobre el mismo.", margin_x, y, width - 2*margin_x, height)
 
     y = draw_paragraph(c, "\n5.3 Trazabilidad y Determinación de la Titularidad", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
-    y = draw_paragraph(c, "La antigüedad, titularidad y estado de los leads se determinarán exclusivamente mediante el registro efectuado en el SIGP, el cual dispone de sistema de auditoría y registro interno de actividad. [cite: 124]", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "La antigüedad, titularidad y estado de los leads se determinarán exclusivamente mediante el registro efectuado en el SIGP, el cual dispone de sistema de auditoría y registro interno de actividad.", margin_x, y, width - 2*margin_x, height)
     
-    y = draw_paragraph(c, "El SIGP constituirá la única fuente válida y vinculante para la determinación de: [cite: 125]", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "El SIGP constituirá la única fuente válida y vinculante para la determinación de:", margin_x, y, width - 2*margin_x, height)
     
     puntos_sigp = [
-        "La titularidad del lead [cite: 127]",
-        "La fecha de registro [cite: 128]",
-        "La conversión en matrícula [cite: 129]",
-        "El reconocimiento y estado de la bonificación correspondiente. [cite: 132]"
+        "La titularidad del lead",
+        "La fecha de registro",
+        "La conversión en matrícula",
+        "El reconocimiento y estado de la bonificación correspondiente."
     ]
     y = draw_bullets(c, puntos_sigp, margin_x, y, width - 2*margin_x, height)
 
     y = draw_paragraph(c, "\n5.4 Territorialidad y Exclusividad", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
-    y = draw_paragraph(c, "Dado que la actividad formativa de LA EMPRESA se desarrolla principalmente en modalidad online, el presente acuerdo no establece exclusividad territorial. [cite: 134]", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "Dado que la actividad formativa de LA EMPRESA se desarrolla principalmente en modalidad online, el presente acuerdo no establece exclusividad territorial.", margin_x, y, width - 2*margin_x, height)
     
-    y = draw_paragraph(c, "EL COLABORADOR podrá promover los programas formativos en cualquier ámbito geográfico. [cite: 135]", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "EL COLABORADOR podrá promover los programas formativos en cualquier ámbito geográfico.", margin_x, y, width - 2*margin_x, height)
     
-    y = draw_paragraph(c, "La bonificación corresponderá exclusivamente al prescriptor que haya registrado válidamente el lead en el SIGP dentro del período de asignación establecido. [cite: 136]", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "La bonificación corresponderá exclusivamente al prescriptor que haya registrado válidamente el lead en el SIGP dentro del período de asignación establecido.", margin_x, y, width - 2*margin_x, height)
 
     y = draw_paragraph(c, "\n5.5 Resolución de Controversias", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
-    y = draw_paragraph(c, "En caso de controversia sobre la titularidad de un lead o sobre la asignación de una matrícula convertida, LA EMPRESA resolverá la incidencia tomando como referencia la información registrada en el SIGP y los criterios internos de validación del Programa de Prescriptores. [cite: 138]", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "En caso de controversia sobre la titularidad de un lead o sobre la asignación de una matrícula convertida, LA EMPRESA resolverá la incidencia tomando como referencia la información registrada en el SIGP y los criterios internos de validación del Programa de Prescriptores.", margin_x, y, width - 2*margin_x, height)
 
     y -= 10
 
@@ -274,35 +274,35 @@ def build(c, prescriptor, datos):
     
     y = draw_paragraph(c, "\n6.1 Titularidad de los Datos", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
-    y = draw_paragraph(c, "Todos los leads, datos de contacto, información comercial y cualquier otro dato generado, captado o gestionado en el marco del presente acuerdo serán propiedad exclusiva de LA EMPRESA[cite: 141]. Dicha información será gestionada a través del SIGP (Sistema Integral de Gestión de Prescriptores) o de las plataformas oficiales que LA EMPRESA determine[cite: 142].", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "Todos los leads, datos de contacto, información comercial y cualquier otro dato generado, captado o gestionado en el marco del presente acuerdo serán propiedad exclusiva de LA EMPRESA. Dicha información será gestionada a través del SIGP (Sistema Integral de Gestión de Prescriptores) o de las plataformas oficiales que LA EMPRESA determine.", margin_x, y, width - 2*margin_x, height)
 
     y = draw_paragraph(c, "\n6.2 Limitación de Uso", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
     limitaciones_uso = [
-        "EL COLABORADOR no adquiere ningún derecho de propiedad, titularidad o explotación sobre los datos generados en el marco del presente acuerdo[cite: 145].",
-        "EL COLABORADOR se compromete a utilizar dicha información exclusivamente para los fines establecidos en el presente acuerdo y conforme a las instrucciones y directrices de LA EMPRESA, respetando en todo momento la legislación vigente de Protección de Datos de cada territorio[cite: 146]."
+        "EL COLABORADOR no adquiere ningún derecho de propiedad, titularidad o explotación sobre los datos generados en el marco del presente acuerdo.",
+        "EL COLABORADOR se compromete a utilizar dicha información exclusivamente para los fines establecidos en el presente acuerdo y conforme a las instrucciones y directrices de LA EMPRESA, respetando en todo momento la legislación vigente de Protección de Datos de cada territorio."
     ]
     y = draw_bullets(c, limitaciones_uso, margin_x, y, width - 2*margin_x, height)
 
     y = draw_paragraph(c, "\n6.3 Prohibición de Uso Externo", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
-    y = draw_paragraph(c, "Queda expresamente prohibido que EL COLABORADOR[cite: 148]:", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "Queda expresamente prohibido que EL COLABORADOR:", margin_x, y, width - 2*margin_x, height)
     
     prohibiciones_ext = [
-        "Utilice los datos obtenidos en el marco del presente acuerdo para fines distintos a la promoción de los programas formativos de LA EMPRESA[cite: 149];",
-        "Incorpore los datos a bases de datos propias o de terceros[cite: 150];",
-        "Comercialice productos o servicios ajenos a LA EMPRESA utilizando la información obtenida durante la vigencia del presente acuerdo[cite: 151]."
+        "Utilice los datos obtenidos en el marco del presente acuerdo para fines distintos a la promoción de los programas formativos de LA EMPRESA;",
+        "Incorpore los datos a bases de datos propias o de terceros;",
+        "Comercialice productos o servicios ajenos a LA EMPRESA utilizando la información obtenida durante la vigencia del presente acuerdo."
     ]
     y = draw_bullets(c, prohibiciones_ext, margin_x, y, width - 2*margin_x, height)
 
     y = draw_paragraph(c, "\n6.4 Finalización del Acuerdo", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
-    y = draw_paragraph(c, "A la finalización del presente acuerdo, cualquiera que sea la causa, EL COLABORADOR deberá[cite: 153, 156]:", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "A la finalización del presente acuerdo, cualquiera que sea la causa, EL COLABORADOR deberá:", margin_x, y, width - 2*margin_x, height)
     
     obligaciones_fin = [
-        "Cesar inmediatamente en el uso de los datos y de cualquier información obtenida a través del Programa de Prescriptores[cite: 157];",
-        "Eliminar o destruir cualquier copia o registro de datos que obre en su poder[cite: 158];",
-        "Abstenerse de contactar nuevamente a los leads generados en el marco del presente acuerdo, salvo autorización expresa y por escrito de LA EMPRESA[cite: 159]."
+        "Cesar inmediatamente en el uso de los datos y de cualquier información obtenida a través del Programa de Prescriptores;",
+        "Eliminar o destruir cualquier copia o registro de datos que obre en su poder;",
+        "Abstenerse de contactar nuevamente a los leads generados en el marco del presente acuerdo, salvo autorización expresa y por escrito de LA EMPRESA."
     ]
     y = draw_bullets(c, obligaciones_fin, margin_x, y, width - 2*margin_x, height)
 
@@ -345,31 +345,31 @@ def build(c, prescriptor, datos):
     
     y = draw_paragraph(c, "\n8.1 Duración", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
-    y = draw_paragraph(c, "El presente acuerdo tendrá una duración inicial de un (1) año a contar desde la fecha de su firma[cite: 184]. Finalizado dicho período, el acuerdo se renovará automáticamente por períodos sucesivos de un (1) año, salvo que cualquiera de las partes notifique por escrito su voluntad de no renovación con una antelación mínima de treinta (30) días naturales a la fecha de vencimiento[cite: 185].", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "El presente acuerdo tendrá una duración inicial de un (1) año a contar desde la fecha de su firma. Finalizado dicho período, el acuerdo se renovará automáticamente por períodos sucesivos de un (1) año, salvo que cualquiera de las partes notifique por escrito su voluntad de no renovación con una antelación mínima de treinta (30) días naturales a la fecha de vencimiento.", margin_x, y, width - 2*margin_x, height)
     
     y = draw_paragraph(c, "\n8.2 Resolución Anticipada", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
     y = draw_paragraph(c, "El presente acuerdo podrá resolverse anticipadamente en los siguientes supuestos:", margin_x, y, width - 2*margin_x, height)
     
     supuestos_resolucion = [
-        "a) Por incumplimiento grave de cualquiera de las obligaciones establecidas en el presente acuerdo[cite: 188].",
-        "b) Por mutuo acuerdo entre las partes, formalizado por escrito[cite: 189].",
-        "c) Por decisión unilateral de cualquiera de las partes, mediante preaviso escrito con al menos treinta (30) días naturales de antelación[cite: 190]."
+        "a) Por incumplimiento grave de cualquiera de las obligaciones establecidas en el presente acuerdo.",
+        "b) Por mutuo acuerdo entre las partes, formalizado por escrito.",
+        "c) Por decisión unilateral de cualquiera de las partes, mediante preaviso escrito con al menos treinta (30) días naturales de antelación."
     ]
     y = draw_bullets(c, supuestos_resolucion, margin_x, y, width - 2*margin_x, height)
 
     y = draw_paragraph(c, "\n8.3 Inactividad del Prescriptor", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
-    y = draw_paragraph(c, "A efectos del presente acuerdo, se considerará que EL COLABORADOR se encuentra en situación de inactividad cuando no haya registrado ningún lead válido en el SIGP durante un período continuado de tres (3) meses[cite: 192]. En tales casos, LA EMPRESA podrá considerar finalizada la participación de EL COLABORADOR en el Programa de Prescriptores o invitarle a adherirse a las condiciones vigentes del programa en ese momento[cite: 193].", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "A efectos del presente acuerdo, se considerará que EL COLABORADOR se encuentra en situación de inactividad cuando no haya registrado ningún lead válido en el SIGP durante un período continuado de tres (3) meses. En tales casos, LA EMPRESA podrá considerar finalizada la participación de EL COLABORADOR en el Programa de Prescriptores o invitarle a adherirse a las condiciones vigentes del programa en ese momento.", margin_x, y, width - 2*margin_x, height)
 
     y = draw_paragraph(c, "\n8.4 Efectos de la Resolución", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
     y = draw_paragraph(c, "En caso de resolución del presente acuerdo:", margin_x, y, width - 2*margin_x, height)
     
     efectos_resolucion = [
-        "EL COLABORADOR dejará de tener derecho a registrar nuevos leads desde la fecha efectiva de finalización[cite: 196].",
+        "EL COLABORADOR dejará de tener derecho a registrar nuevos leads desde la fecha efectiva de finalización.",
         "Se liquidarán exclusivamente las bonificaciones reconocidas conforme a lo establecido en el presente acuerdo y que no estén sujetas a regularización conforme a las cláusulas anteriores.",
-        "Las obligaciones relativas a confidencialidad, protección de datos y uso de la información permanecerán vigentes tras la finalización del acuerdo[cite: 198]."
+        "Las obligaciones relativas a confidencialidad, protección de datos y uso de la información permanecerán vigentes tras la finalización del acuerdo."
     ]
     y = draw_bullets(c, efectos_resolucion, margin_x, y, width - 2*margin_x, height)
 
@@ -380,25 +380,25 @@ def build(c, prescriptor, datos):
     
     y = draw_paragraph(c, "\n9.1 Información Confidencial", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
-    y = draw_paragraph(c, "EL COLABORADOR se compromete a mantener la más estricta confidencialidad respecto de toda la información a la que tenga acceso como consecuencia de la ejecución del presente acuerdo[cite: 201]. A efectos del presente acuerdo, se considerará información confidencial toda aquella información técnica, comercial, estratégica, financiera o de cualquier otra naturaleza perteneciente a LA EMPRESA, incluyendo, entre otros[cite: 205, 206]:", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "EL COLABORADOR se compromete a mantener la más estricta confidencialidad respecto de toda la información a la que tenga acceso como consecuencia de la ejecución del presente acuerdo. A efectos del presente acuerdo, se considerará información confidencial toda aquella información técnica, comercial, estratégica, financiera o de cualquier otra naturaleza perteneciente a LA EMPRESA, incluyendo, entre otros:", margin_x, y, width - 2*margin_x, height)
     
     items_confidenciales = [
-        "Información comercial o estratégica de Sports Data Campus; [cite: 208]",
-        "Datos económicos, financieros o de facturación; [cite: 209]",
-        "Condiciones comerciales o contractuales aplicables a los programas formativos; [cite: 210]",
-        "Información relativa a alumnos, leads o clientes; [cite: 210]",
-        "Funcionamiento interno del SIGP u otras herramientas tecnológicas utilizadas por LA EMPRESA. [cite: 211]"
+        "Información comercial o estratégica de Sports Data Campus;",
+        "Datos económicos, financieros o de facturación;",
+        "Condiciones comerciales o contractuales aplicables a los programas formativos;",
+        "Información relativa a alumnos, leads o clientes;",
+        "Funcionamiento interno del SIGP u otras herramientas tecnológicas utilizadas por LA EMPRESA."
     ]
     y = draw_bullets(c, items_confidenciales, margin_x, y, width - 2*margin_x, height)
 
-    y = draw_paragraph(c, "La información será considerada confidencial incluso cuando no esté expresamente identificada como tal, siempre que por su naturaleza razonablemente deba ser tratada como información reservada. [cite: 212]", margin_x, y, width - 2*margin_x, height)
+    y = draw_paragraph(c, "La información será considerada confidencial incluso cuando no esté expresamente identificada como tal, siempre que por su naturaleza razonablemente deba ser tratada como información reservada.", margin_x, y, width - 2*margin_x, height)
 
     y = draw_paragraph(c, "\n9.2 Alcance de la Obligación", margin_x, y, width - 2*margin_x, height, font="Helvetica-Bold", size=10)
     
     alcance_conf = [
-        "No divulgar información confidencial a terceros sin autorización previa y por escrito de LA EMPRESA; [cite: 215]",
-        "No utilizar la información confidencial para fines distintos a los derivados de la ejecución del presente acuerdo; [cite: 216]",
-        "Adoptar las medidas necesarias para evitar el acceso no autorizado a dicha información. [cite: 217]"
+        "No divulgar información confidencial a terceros sin autorización previa y por escrito de LA EMPRESA;",
+        "No utilizar la información confidencial para fines distintos a los derivados de la ejecución del presente acuerdo;",
+        "Adoptar las medidas necesarias para evitar el acceso no autorizado a dicha información."
     ]
     y = draw_bullets(c, alcance_conf, margin_x, y, width - 2*margin_x, height)
 
