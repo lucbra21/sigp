@@ -1,9 +1,40 @@
+{% set lang = language|default('Español') %}
+{% set is_en = lang in ['Inglés', 'Ingles', 'English'] %}
+{% set is_pt = lang in ['Portugués', 'Portugues', 'Portuguese'] %}
+{% if is_en %}
+  {% set page_lang = 'en' %}
+  {% set title = 'Application Received!' %}
+  {% set heading = 'Congratulations!' %}
+  {% set sent = 'Your application has been submitted successfully.' %}
+  {% set next_steps = 'You will receive an email with the next steps to continue the process.' %}
+  {% set spam = 'If you do not see it in your inbox, please check your spam or junk folder.' %}
+  {% set contact = 'If you do not receive any message, contact us at sigp@sportsdatacampus.com or through your usual Sports Data Campus contact.' %}
+  {% set button = 'Go to SIGP' %}
+{% elif is_pt %}
+  {% set page_lang = 'pt' %}
+  {% set title = 'Solicitação Recebida!' %}
+  {% set heading = 'Parabéns!' %}
+  {% set sent = 'Sua solicitação foi enviada com sucesso.' %}
+  {% set next_steps = 'Você receberá um email com os próximos passos para continuar o processo.' %}
+  {% set spam = 'Se não encontrá-lo na caixa de entrada, verifique a pasta de spam ou lixo eletrônico.' %}
+  {% set contact = 'Se não receber nenhuma mensagem, entre em contato pelo email sigp@sportsdatacampus.com ou com o contato que você tiver na Sports Data Campus.' %}
+  {% set button = 'Ir para o SIGP' %}
+{% else %}
+  {% set page_lang = 'es' %}
+  {% set title = '¡Solicitud Recibida!' %}
+  {% set heading = '¡Felicitaciones!' %}
+  {% set sent = 'Tu solicitud ha sido enviada con éxito.' %}
+  {% set next_steps = 'Te llegará un email con los siguientes pasos para continuar el proceso.' %}
+  {% set spam = 'Si no lo ves en tu bandeja de entrada, revisa spam o correo no deseado.' %}
+  {% set contact = 'Si no recibes ningún mensaje, ponte en contacto escribiendo a sigp@sportsdatacampus.com o con el contacto que tengas de Sports Data Campus.' %}
+  {% set button = 'Ir al SIGP' %}
+{% endif %}
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ page_lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¡Solicitud Recibida!</title>
+    <title>{{ title }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/unicons/4.0.0/css/line.css">
     <style>
@@ -61,16 +92,14 @@
         <div class="icon-circle">
             <i class="uil uil-check"></i>
         </div>
-        <h2>¡Felicitaciones!</h2>
-        <p>Tu solicitud ha sido enviada con éxito.</p>
-        <p class="mt-4">
-            Pronto, los responsables de gestionar la prescripción de 
-            <strong style="color: #fff;">Sports Data Campus</strong> 
-            se pondrán en contacto contigo.
-        </p>
+        <h2>{{ heading }}</h2>
+        <p>{{ sent }}</p>
+        <p class="mt-4">{{ next_steps }}</p>
+        <p>{{ spam }}</p>
+        <p>{{ contact }}</p>
         
         <a href="{{ url_for('auth.login_get') }}" class="btn-home">
-            <i class="uil uil-arrow-left"></i> Ir al SIGP
+            <i class="uil uil-arrow-left"></i> {{ button }}
         </a>
     </div>
 </body>

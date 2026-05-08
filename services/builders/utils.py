@@ -89,9 +89,17 @@ def draw_signatures(c, width, height, datos, current_y):
         
     idioma = datos.get("idioma", "Español")
     is_english = (idioma == "Inglés")
+    is_portuguese = (idioma or "").strip().lower() in {"portugués", "portugues"}
 
-    txt_firma_prescriptor = "Prescriber's Signature:" if is_english else "Firma del Prescriptor:"
-    txt_por_innova = "For Innova Training:" if is_english else "Por Innova Training:"
+    if is_english:
+        txt_firma_prescriptor = "Prescriber's Signature:"
+        txt_por_innova = "For Innova Training:"
+    elif is_portuguese:
+        txt_firma_prescriptor = "Assinatura do Prescritor:"
+        txt_por_innova = "Por Innova Training:"
+    else:
+        txt_firma_prescriptor = "Firma del Prescriptor:"
+        txt_por_innova = "Por Innova Training:"
     # txt_cargo = "President and Sole Administrator" if is_english else "Presidente y Administrador Único"
 
     y_sig_base = 150

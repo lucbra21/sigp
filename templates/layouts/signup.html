@@ -83,22 +83,78 @@
           width: 100%;
           cursor: pointer;
           transition: all 200ms linear;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
       }
       .btn-gold:hover {
           background-color: #fff;
           color: #2a2b38;
           box-shadow: 0 8px 24px rgba(255,235,167,.2);
       }
+      .btn-gold:disabled {
+          opacity: .85;
+          cursor: wait;
+      }
+      .btn-spinner {
+          width: 18px;
+          height: 18px;
+          border: 2px solid rgba(42,43,56,.35);
+          border-top-color: #2a2b38;
+          border-radius: 50%;
+          display: none;
+          flex-shrink: 0;
+          animation: spin 800ms linear infinite;
+      }
+      .btn-gold.is-loading .btn-spinner {
+          display: inline-block;
+      }
+      @keyframes spin {
+          to { transform: rotate(360deg); }
+      }
       .link-back { color: #c4c3ca; text-decoration: none; font-size: 0.9rem; }
       .link-back:hover { color: #ffeba7; }
+      .language-switcher {
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+          margin-bottom: 18px;
+      }
+      .language-btn {
+          width: 44px;
+          height: 36px;
+          border: 1px solid rgba(255,235,167,.45);
+          border-radius: 4px;
+          background: #1f2029;
+          color: #fff;
+          font-size: 22px;
+          line-height: 1;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 180ms linear;
+      }
+      .language-btn:hover,
+      .language-btn.active {
+          border-color: #ffeba7;
+          box-shadow: 0 6px 18px rgba(255,235,167,.16);
+          transform: translateY(-1px);
+      }
     </style>
 </head>
 <body>
 
     <div class="signup-card">
+        <div class="language-switcher" aria-label="Idioma del formulario">
+            <button type="button" class="language-btn active" data-lang="es" title="Español" aria-label="Español">🇪🇸</button>
+            <button type="button" class="language-btn" data-lang="en" title="English" aria-label="English">🇬🇧</button>
+            <button type="button" class="language-btn" data-lang="pt" title="Português" aria-label="Português">🇵🇹</button>
+        </div>
         <div class="text-center mb-4">
-            <h3 style="color: #ffeba7;">Solicitud de Prescriptor</h3>
-            <p style="color: #c4c3ca; font-size: 0.9rem;">Únete a Sports Data Campus</p>
+            <h3 style="color: #ffeba7;" data-i18n="title">Solicitud de Prescriptor</h3>
+            <p style="color: #c4c3ca; font-size: 0.9rem;" data-i18n="subtitle">Únete a Sports Data Campus</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -111,19 +167,20 @@
 
         <form method="POST">
             {{ form.csrf_token }}
+            {{ form.language(id="language", class="d-none") }}
 
             <div class="form-group position-relative">
-                {{ form.name(class="form-style", placeholder="Nombre y Apellido", autocomplete="off") }}
+                {{ form.name(class="form-style", placeholder="Nombre y Apellido", autocomplete="off", data_i18n_placeholder="namePlaceholder") }}
                 <i class="uil uil-user input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
             </div>
 
             <div class="form-group position-relative">
-                {{ form.email(class="form-style", placeholder="Tu Email", autocomplete="off") }}
+                {{ form.email(class="form-style", placeholder="Tu Email", autocomplete="off", data_i18n_placeholder="emailPlaceholder") }}
                 <i class="uil uil-at input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
             </div>
 
             <div class="form-group position-relative">
-                {{ form.cellular(class="form-style", placeholder="Celular / WhatsApp (+54 9...)", autocomplete="off") }}
+                {{ form.cellular(class="form-style", placeholder="Celular / WhatsApp (+54 9...)", autocomplete="off", data_i18n_placeholder="cellularPlaceholder") }}
                 <i class="uil uil-phone input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
             </div>
 
@@ -131,7 +188,7 @@
                 <label style="display: flex; align-items: center; cursor: pointer;">
                     <input type="checkbox" name="is_student" id="is_student_checkbox" value="y" checked class="hidden-input">
                     <span class="custom-checkmark"></span>
-                    <span style="color: #fff; user-select: none;">Soy alumno de Sports Data Campus</span>
+                    <span style="color: #fff; user-select: none;" data-i18n="studentLabel">Soy alumno de Sports Data Campus</span>
                 </label>
             </div>
 
@@ -141,25 +198,28 @@
                     <i class="uil uil-card-atm input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
                 </div>
                 <div class="form-group position-relative mt-2">
-                    {{ form.document_number(class="form-style", placeholder="Número de Documento (DNI/NIE/Pasaporte)", id="document_number", autocomplete="off") }}
+                    {{ form.document_number(class="form-style", placeholder="Número de Documento (DNI/NIE/Pasaporte)", id="document_number", autocomplete="off", data_i18n_placeholder="documentNumberPlaceholder") }}
                     <i class="uil uil-postcard input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
                 </div>
                 <div class="form-group position-relative mt-2">
-                    {{ form.domicile(class="form-style", placeholder="Domicilio Completo (Calle, Ciudad, País)", id="domicile", autocomplete="off") }}
+                    {{ form.domicile(class="form-style", placeholder="Domicilio Completo (Calle, Ciudad, País)", id="domicile", autocomplete="off", data_i18n_placeholder="domicilePlaceholder") }}
                     <i class="uil uil-map-marker input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
                 </div>
             </div>
 
             <div class="form-group position-relative mt-2">
-                {{ form.observations(class="form-style", style="height: auto;", rows="3", placeholder="¿Por qué quieres ser prescriptor?") }}
+                {{ form.observations(class="form-style", style="height: auto;", rows="3", placeholder="¿Por qué quieres ser prescriptor?", data_i18n_placeholder="observationsPlaceholder") }}
                 <i class="uil uil-comment-alt-lines input-icon" style="position: absolute; top: 12px; left: 20px; font-size: 20px; color: #ffeba7;"></i>
             </div>
 
-            <button type="submit" class="btn-gold mt-3">Enviar Solicitud</button>
+            <button type="submit" class="btn-gold mt-3" id="submitButton">
+                <span class="btn-spinner" aria-hidden="true"></span>
+                <span class="btn-label" data-i18n="submit">Enviar Solicitud</span>
+            </button>
             
             <div class="text-center mt-4">
                 <a href="{{ url_for('auth.login_get') }}" class="link-back">
-                    <i class="uil uil-arrow-left"></i> Volver al Login
+                    <i class="uil uil-arrow-left"></i> <span data-i18n="back">Volver al Login</span>
                 </a>
             </div>
         </form>
@@ -168,6 +228,59 @@
         document.addEventListener("DOMContentLoaded", function() {
             const checkbox = document.getElementById('is_student_checkbox');
             const contractFields = document.getElementById('contract-fields');
+            const languageInput = document.getElementById('language');
+            const languageButtons = document.querySelectorAll('.language-btn');
+            const translations = {
+                es: {
+                    value: 'Español',
+                    title: 'Solicitud de Prescriptor',
+                    subtitle: 'Únete a Sports Data Campus',
+                    namePlaceholder: 'Nombre y Apellido',
+                    emailPlaceholder: 'Tu Email',
+                    cellularPlaceholder: 'Celular / WhatsApp (+54 9...)',
+                    studentLabel: 'Soy alumno de Sports Data Campus',
+                    documentTypePlaceholder: 'Tipo de Documento...',
+                    documentNumberPlaceholder: 'Número de Documento (DNI/NIE/Pasaporte)',
+                    domicilePlaceholder: 'Domicilio Completo (Calle, Ciudad, País)',
+                    observationsPlaceholder: '¿Por qué quieres ser prescriptor?',
+                    submit: 'Enviar Solicitud',
+                    submitLoading: 'Enviando...',
+                    back: 'Volver al Login'
+                },
+                en: {
+                    value: 'Inglés',
+                    title: 'Prescriber Application',
+                    subtitle: 'Join Sports Data Campus',
+                    namePlaceholder: 'Full Name',
+                    emailPlaceholder: 'Your Email',
+                    cellularPlaceholder: 'Mobile / WhatsApp (+54 9...)',
+                    studentLabel: 'I am a Sports Data Campus student',
+                    documentTypePlaceholder: 'Document Type...',
+                    documentNumberPlaceholder: 'Document Number (DNI/NIE/Passport)',
+                    domicilePlaceholder: 'Full Address (Street, City, Country)',
+                    observationsPlaceholder: 'Why do you want to become a prescriber?',
+                    submit: 'Send Application',
+                    submitLoading: 'Sending...',
+                    back: 'Back to Login'
+                },
+                pt: {
+                    value: 'Portugués',
+                    title: 'Solicitação de Prescritor',
+                    subtitle: 'Junte-se ao Sports Data Campus',
+                    namePlaceholder: 'Nome e Sobrenome',
+                    emailPlaceholder: 'Seu Email',
+                    cellularPlaceholder: 'Celular / WhatsApp (+54 9...)',
+                    studentLabel: 'Sou aluno do Sports Data Campus',
+                    documentTypePlaceholder: 'Tipo de Documento...',
+                    documentNumberPlaceholder: 'Número do Documento (DNI/NIE/Passaporte)',
+                    domicilePlaceholder: 'Endereço Completo (Rua, Cidade, País)',
+                    observationsPlaceholder: 'Por que você quer ser prescritor?',
+                    submit: 'Enviar Solicitação',
+                    submitLoading: 'Enviando...',
+                    back: 'Voltar ao Login'
+                }
+            };
+            let currentLang = 'es';
             
             function toggleFields() {
                 if (checkbox.checked) {
@@ -183,7 +296,61 @@
                 }
             }
 
+            function applyLanguage(lang) {
+                const dict = translations[lang] || translations.es;
+                currentLang = translations[lang] ? lang : 'es';
+                if (languageInput) {
+                    languageInput.value = dict.value;
+                }
+                document.documentElement.lang = lang;
+                document.querySelectorAll('[data-i18n]').forEach(function(el) {
+                    const key = el.getAttribute('data-i18n');
+                    if (dict[key]) {
+                        el.textContent = dict[key];
+                    }
+                });
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    if (dict[key]) {
+                        el.setAttribute('placeholder', dict[key]);
+                    }
+                });
+                const documentType = document.getElementById('document_type');
+                if (documentType && documentType.options.length) {
+                    documentType.options[0].textContent = dict.documentTypePlaceholder;
+                }
+                languageButtons.forEach(function(btn) {
+                    btn.classList.toggle('active', btn.dataset.lang === lang);
+                });
+            }
+
+            languageButtons.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    applyLanguage(btn.dataset.lang);
+                });
+            });
             checkbox.addEventListener('change', toggleFields);
+            const form = document.querySelector('form');
+            const submitButton = document.getElementById('submitButton');
+            const submitLabel = submitButton ? submitButton.querySelector('.btn-label') : null;
+            if (form && submitButton && submitLabel) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        return;
+                    }
+                    const dict = translations[currentLang] || translations.es;
+                    submitButton.disabled = true;
+                    submitButton.classList.add('is-loading');
+                    submitButton.setAttribute('aria-busy', 'true');
+                    submitLabel.textContent = dict.submitLoading;
+                });
+            }
+            const languageByValue = {
+                'Español': 'es',
+                'Inglés': 'en',
+                'Portugués': 'pt'
+            };
+            applyLanguage(languageByValue[languageInput ? languageInput.value : 'Español'] || 'es');
             toggleFields(); // Ejecutar al cargar la página
         });
     </script>

@@ -1,8 +1,88 @@
+{% set lang = (prescriptor.language if prescriptor else 'Español')|default('Español') %}
+{% set is_en = lang in ['Inglés', 'Ingles', 'English'] %}
+{% set is_pt = lang in ['Portugués', 'Portugues', 'Portuguese'] %}
+{% set person_name = (prescriptor.squeeze_page_name or prescriptor.name) if prescriptor else '' %}
+{% if is_en %}
+  {% set html_lang = 'en' %}
+  {% set title = 'Welcome to the Prescriber Program!' %}
+  {% set hello = 'Hello' %}
+  {% set intro = 'Welcome to the Prescriber Program. We are pleased that you have decided to join our team. You are now part of a network of professionals who help connect sports talent with academic opportunities.' %}
+  {% set step1 = 'Step 1: Set your password' %}
+  {% set step1_text = 'Before accessing the platform, you need to set your initial password:' %}
+  {% set reset_button = 'Set password' %}
+  {% set reset_fallback = 'If the button does not work, copy and paste this link into your browser:' %}
+  {% set step2 = 'Step 2: Access your account' %}
+  {% set platform_label = 'Platform URL:' %}
+  {% set user_label = 'Your user:' %}
+  {% set login_button = 'Go to platform' %}
+  {% set step3 = 'Step 3: Sign your prescriber agreement' %}
+  {% set step3_text = 'Once you access the platform, you will be able to sign your collaboration agreement:' %}
+  {% set sign_button = 'Sign agreement' %}
+  {% set sign_fallback = 'If the button does not work, copy and paste this link into your browser:' %}
+  {% set download_text = 'You can also download the agreement PDF here:' %}
+  {% set download_button = 'Download agreement' %}
+  {% set important_title = 'Important recommendation:' %}
+  {% set important_text = 'Please read the agreement carefully before signing it. If you have any questions about the clauses, contact the prescription manager at' %}
+  {% set important_suffix = 'before proceeding with the signature.' %}
+  {% set after_sign = 'Once you have completed your signature, you will receive a new email with the instructions and next steps.' %}
+  {% set help_text = 'Need help? If you have any difficulty accessing the platform or signing the agreement, reply to this email and we will assist you.' %}
+  {% set expiry = 'Links may expire for security reasons.' %}
+{% elif is_pt %}
+  {% set html_lang = 'pt' %}
+  {% set title = 'Bem-vindo ao Programa de Prescritores!' %}
+  {% set hello = 'Olá' %}
+  {% set intro = 'Bem-vindo ao Programa de Prescritores. Ficamos felizes que você tenha decidido se juntar à nossa equipe. Agora você faz parte de uma rede de profissionais que ajuda a conectar talento esportivo com oportunidades acadêmicas.' %}
+  {% set step1 = 'Passo 1: Defina sua senha' %}
+  {% set step1_text = 'Antes de acessar a plataforma, você precisa definir sua senha inicial:' %}
+  {% set reset_button = 'Definir senha' %}
+  {% set reset_fallback = 'Se o botão não funcionar, copie e cole este link no navegador:' %}
+  {% set step2 = 'Passo 2: Acesse sua conta' %}
+  {% set platform_label = 'URL da plataforma:' %}
+  {% set user_label = 'Seu usuário:' %}
+  {% set login_button = 'Ir para a plataforma' %}
+  {% set step3 = 'Passo 3: Assine seu acordo de prescritor' %}
+  {% set step3_text = 'Depois de acessar a plataforma, você poderá assinar seu acordo de colaboração:' %}
+  {% set sign_button = 'Assinar acordo' %}
+  {% set sign_fallback = 'Se o botão não funcionar, copie e cole este link no navegador:' %}
+  {% set download_text = 'Você também pode baixar o PDF do acordo aqui:' %}
+  {% set download_button = 'Baixar acordo' %}
+  {% set important_title = 'Recomendação importante:' %}
+  {% set important_text = 'Leia atentamente o acordo antes de assiná-lo. Se tiver alguma dúvida sobre as cláusulas, entre em contato com o responsável pela prescrição pelo email' %}
+  {% set important_suffix = 'antes de prosseguir com a assinatura.' %}
+  {% set after_sign = 'Depois de concluir sua assinatura, você receberá um novo email com as instruções e os próximos passos.' %}
+  {% set help_text = 'Precisa de ajuda? Se tiver qualquer dificuldade com o acesso ou com a assinatura do acordo, responda este email e nós o ajudaremos.' %}
+  {% set expiry = 'Os links podem expirar por motivos de segurança.' %}
+{% else %}
+  {% set html_lang = 'es' %}
+  {% set title = '¡Bienvenido al Programa de Prescriptores!' %}
+  {% set hello = 'Hola' %}
+  {% set intro = '¡Te damos la bienvenida al Programa de Prescriptores! Nos complace que hayas decidido sumarte a nuestro equipo. Ahora formas parte de una red de profesionales que ayudan a conectar talento deportivo con oportunidades académicas.' %}
+  {% set step1 = 'Paso 1: Establece tu contraseña' %}
+  {% set step1_text = 'Antes de acceder, necesitas establecer tu contraseña inicial:' %}
+  {% set reset_button = 'Establecer contraseña' %}
+  {% set reset_fallback = 'Si el botón no funciona, copia y pega este enlace en tu navegador:' %}
+  {% set step2 = 'Paso 2: Accede a tu cuenta' %}
+  {% set platform_label = 'URL de la plataforma:' %}
+  {% set user_label = 'Tu usuario:' %}
+  {% set login_button = 'Ir a la plataforma' %}
+  {% set step3 = 'Paso 3: Firma tu convenio de prescriptor' %}
+  {% set step3_text = 'Una vez que ingreses a la plataforma, ya podrás firmar tu convenio de colaboración:' %}
+  {% set sign_button = 'Firmar convenio' %}
+  {% set sign_fallback = 'Si el botón no funciona, copia y pega este enlace en tu navegador:' %}
+  {% set download_text = 'También puedes descargar el PDF del convenio aquí:' %}
+  {% set download_button = 'Descargar convenio' %}
+  {% set important_title = 'Recomendación importante:' %}
+  {% set important_text = 'Te sugerimos leer atentamente el convenio antes de firmarlo. Si tienes alguna duda sobre las cláusulas, ponte en contacto con el responsable de prescripción escribiendo a' %}
+  {% set important_suffix = 'antes de proceder con la firma.' %}
+  {% set after_sign = 'Una vez que hayas completado tu firma, recibirás un nuevo correo electrónico con las instrucciones y los siguientes pasos.' %}
+  {% set help_text = '¿Necesitas ayuda? Si tienes alguna dificultad con el acceso o la firma del convenio, responde este correo y te asistimos.' %}
+  {% set expiry = 'Los enlaces pueden expirar por motivos de seguridad.' %}
+{% endif %}
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ html_lang }}">
 <head>
   <meta charset="utf-8" />
-  <title>¡Bienvenido al Programa de Prescriptores!</title>
+  <title>{{ title }}</title>
 </head>
 <body style="font-family:Arial,Helvetica,sans-serif;background:#f7f7f9;padding:24px;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;">
@@ -13,54 +93,48 @@
           <img src="{{ logo_url }}" alt="Logo" style="height:40px;max-width:200px;display:inline-block;"/>
         </div>
         {% endif %}
-        <h2 style="margin:0 0 12px 0;color:#111827;">¡Bienvenido al Programa de Prescriptores!</h2>
-        <p style="margin:0 0 12px 0;color:#374151;">
-          Hola{% if prescriptor %} {{ prescriptor.squeeze_page_name or prescriptor.name }}{% endif %},
-        </p>
-        <p style="margin:0 0 16px 0;color:#374151;">
-          ¡Te damos la bienvenida al Programa de Prescriptores! 🎉 Nos complace que hayas decidido sumarte a nuestro equipo. Como conversamos, ahora formas parte de una red de profesionales que ayudan a conectar talento deportivo con oportunidades académicas.
-        </p>
+        <h2 style="margin:0 0 12px 0;color:#111827;">{{ title }}</h2>
+        <p style="margin:0 0 12px 0;color:#374151;">{{ hello }}{% if person_name %} {{ person_name }}{% endif %},</p>
+        <p style="margin:0 0 16px 0;color:#374151;">{{ intro }}</p>
 
-        <h3>Paso 1: Establece tu contraseña</h3>
-            <p>Antes de acceder, necesitas establecer tu contraseña inicial:</p>
-            <div style="margin: 15px 0;">
-                <a href="{{ reset_url }}" style="display: inline-block; padding: 12px 24px; background-color: #f39c12; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold;">Establecer contraseña</a>
-            </div>
-            <p style="font-size: 12px; color: #666;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br>{{ reset_url }}</p>
+        <h3>{{ step1 }}</h3>
+        <p>{{ step1_text }}</p>
+        <div style="margin:15px 0;">
+          <a href="{{ reset_url }}" style="display:inline-block;padding:12px 24px;background-color:#f39c12;color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold;">{{ reset_button }}</a>
+        </div>
+        <p style="font-size:12px;color:#666;">{{ reset_fallback }}<br>{{ reset_url }}</p>
 
-            <h3>Paso 2: Accede a tu cuenta</h3>
-            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 25px;">
-                <p style="margin: 5px 0;">🔗 URL de la plataforma: <a href="{{ platform_url }}" style="color: #0d6efd; text-decoration: none;">{{ platform_url }}</a></p>
-                <p style="margin: 5px 0;">📧 Tu usuario: <strong>{{ email }}</strong></p>
-                <div style="margin-top: 15px;">
-                    <a href="{{ login_url }}" style="display: inline-block; padding: 10px 20px; background-color: #198754; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold;">Ir a la plataforma</a>
-                </div>
-            </div>
+        <h3>{{ step2 }}</h3>
+        <div style="background-color:#f8f9fa;padding:15px;border-radius:6px;border:1px solid #e9ecef;margin-bottom:25px;">
+          <p style="margin:5px 0;">{{ platform_label }} <a href="{{ platform_url }}" style="color:#0d6efd;text-decoration:none;">{{ platform_url }}</a></p>
+          <p style="margin:5px 0;">{{ user_label }} <strong>{{ email }}</strong></p>
+          <div style="margin-top:15px;">
+            <a href="{{ login_url }}" style="display:inline-block;padding:10px 20px;background-color:#198754;color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold;">{{ login_button }}</a>
+          </div>
+        </div>
 
-            <h3>Paso 3: Firma tu convenio de prescriptor</h3>
-            <p>Una vez que ingreses a la plataforma, ya podrás firmar tu convenio de colaboración:</p>
-            <div style="margin: 15px 0;">
-                <a href="{{ sign_link }}" style="display: inline-block; padding: 12px 24px; background-color: #0d6efd; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold;">Firmar convenio</a>
-            </div>
-        <p style="margin:0 0 16px 0;color:#6b7280;font-size:12px;">Si el botón no funciona, copiá y pegá este enlace en tu navegador:<br/>
+        <h3>{{ step3 }}</h3>
+        <p>{{ step3_text }}</p>
+        <div style="margin:15px 0;">
+          <a href="{{ sign_link }}" style="display:inline-block;padding:12px 24px;background-color:#0d6efd;color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold;">{{ sign_button }}</a>
+        </div>
+        <p style="margin:0 0 16px 0;color:#6b7280;font-size:12px;">{{ sign_fallback }}<br>
           <span style="word-break:break-all;">{{ sign_link }}</span>
         </p>
         {% if contract_url %}
-        <p style="margin:0 0 16px 0;color:#374151;">📄 También podés descargar el PDF del convenio aquí: <a href="{{ contract_url }}">Descargar convenio</a></p>
+        <p style="margin:0 0 16px 0;color:#374151;">{{ download_text }} <a href="{{ contract_url }}">{{ download_button }}</a></p>
         {% endif %}
 
-        <div style="margin-top: 30px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #c8a145; border-radius: 4px;">
-          <p style="margin: 0 0 10px 0; font-size: 14px; color: #333; line-height: 1.5;">
-              <strong>Recomendación Importante:</strong> Te sugerimos leer atentamente el convenio antes de firmarlo. Si tienes alguna duda sobre las cláusulas, por favor ponte en contacto con el responsable de prescripción escribiendo a <a href="mailto:sigp@sportsdatacampus.com" style="color: #c8a145; font-weight: bold; text-decoration: none;">sigp@sportsdatacampus.com</a> <strong>antes</strong> de proceder con la firma.
+        <div style="margin-top:30px;padding:15px;background-color:#f8f9fa;border-left:4px solid #c8a145;border-radius:4px;">
+          <p style="margin:0 0 10px 0;font-size:14px;color:#333;line-height:1.5;">
+            <strong>{{ important_title }}</strong> {{ important_text }} <a href="mailto:sigp@sportsdatacampus.com" style="color:#c8a145;font-weight:bold;text-decoration:none;">sigp@sportsdatacampus.com</a> <strong>{{ important_suffix }}</strong>
           </p>
-          <p style="margin: 0; font-size: 14px; color: #333; line-height: 1.5;">
-              Una vez que hayas completado tu firma, recibirás un nuevo correo electrónico con las instrucciones y los siguientes pasos para iniciar formalmente como prescriptor activo.
-          </p>
-      </div>
+          <p style="margin:0;font-size:14px;color:#333;line-height:1.5;">{{ after_sign }}</p>
+        </div>
 
         <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
-        <p style="margin:0 0 8px 0;color:#374151;">¿Necesitás ayuda? Si tenés alguna dificultad con el acceso o la firma del contrato, respondé este correo y te asistimos.</p>
-        <p style="margin:0;color:#9ca3af;font-size:12px;">Los enlaces pueden expirar por motivos de seguridad.</p>
+        <p style="margin:0 0 8px 0;color:#374151;">{{ help_text }}</p>
+        <p style="margin:0;color:#9ca3af;font-size:12px;">{{ expiry }}</p>
       </td>
     </tr>
   </table>

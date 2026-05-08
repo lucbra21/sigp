@@ -17,6 +17,12 @@ class PublicSignupForm(FlaskForm):
     name = StringField("Nombre y Apellido", validators=[DataRequired(), Length(max=255)])
     email = StringField("Email", validators=[DataRequired(), Email(), Length(max=255)])
     cellular = StringField("Celular / WhatsApp", validators=[DataRequired(), Length(max=50)])
+    language = SelectField(
+        "Idioma de Convenio",
+        choices=[("Español", "Español"), ("Inglés", "Inglés"), ("Portugués", "Portugués")],
+        default="Español",
+        validators=[DataRequired()],
+    )
     is_student = BooleanField("Soy alumno de Sports Data Campus", default=True)
     
     # NUEVOS CAMPOS (Son opcionales para WTForms, los validamos a mano si tilda "Soy Alumno")
@@ -59,14 +65,14 @@ def signup_post():
             flash("El email ingresado ya se encuentra registrado. Por favor, inicia sesión.", "warning")
             return redirect(url_for("auth.login_get"))
 
-        # 2. Crear el Usuario base (Inactivo por defecto)
+        # 2. Crear el Usuario base (Activo por defecto)
         new_user = User(id=str(uuid.uuid4()))
         new_user.name = form.name.data.strip()
         new_user.email = email_val
         new_user.cellular = form.cellular.data.strip()
         # Asignamos Rol Prescriptor (Ajusta este UUID si en tu BD es distinto)
         new_user.role_id = "5e6e517e-584b-42be-a7a3-564ee14e8723"
-        new_user.state_id = 1  
+        new_user.state_id = 2
         
         temp_pass = str(uuid.uuid4())
         new_user.password_hash = hashlib.sha256(temp_pass.encode()).hexdigest()
@@ -83,6 +89,7 @@ def signup_post():
         new_presc.user_id = new_user.id
         new_presc.squeeze_page_name = form.name.data.strip()
         new_presc.observations = form.observations.data.strip()
+        new_presc.language = form.language.data or "Español"
         
         # --- NUEVO: VALORES POR DEFECTO OBLIGATORIOS PARA LA BD ---
         new_presc.state_id = 1  # Estado: Activo / Candidato inicial
@@ -111,7 +118,6 @@ def signup_post():
         # --- LÓGICA DE ALUMNO ---
         if form.is_student.data:
             new_presc.agreement_category = "Persona Alumno"
-            new_presc.language = "Español"
             
             # Buscar el subestado "Firma de contrato"
             Substate = getattr(Base.classes, "substate_prescriptor", None)
@@ -134,15 +140,22 @@ def signup_post():
         if form.is_student.data:
             from itsdangerous import URLSafeTimedSerializer
             from sigp.services.contract_service import generate_contract_pdf
-            from sigp.common.email_utils import send_simple_mail
+            from sigp.common.email_utils import build_contract_signing_email_text, send_simple_mail
             from sigp.controllers.auth_controller import _generate_token
 
             try:
+                current_app.logger.info(
+                    "Public signup: generating contract for %s language=%s category=%s",
+                    email_val,
+                    getattr(new_presc, "language", None),
+                    getattr(new_presc, "agreement_category", None),
+                )
                 # A) Generar PDF Base
                 pdf_path = generate_contract_pdf(new_presc, filename=f"contract_{new_presc.id}.pdf")
                 base_rel_url = url_for("static", filename=f"contracts/{os.path.basename(pdf_path)}")
                 new_presc.contract_url = base_rel_url
                 db.session.commit()
+                current_app.logger.info("Public signup: contract generated at %s", pdf_path)
 
                 # B) Generar Token y Enlaces
                 rel_url = getattr(new_presc, "contract_url", None)
@@ -171,23 +184,17 @@ def signup_post():
                     login_url=login_url,
                     reset_url=reset_url,
                 )
-                plain_body = (
-                    f"Hola {new_presc.squeeze_page_name},\n\n"
-                    "¡Te damos la bienvenida al Programa de Prescriptores!\n\n"
-                    "Paso 1: Establece tu contraseña\n"
-                    f"- Enlace para establecer contraseña: {reset_url}\n\n"
-                    "Paso 2: Accede a tu cuenta\n"
-                    f"- URL: {platform_base}/\n"
-                    f"- Usuario: {email_val}\n\n"
-                    "Paso 3: Firma tu convenio de prescriptor\n"
-                    f"- Enlace para firmar: {link}\n"
-                    + (f"- Descargar convenio: {abs_url}\n\n" if abs_url else "\n\n") +
-                    "IMPORTANTE:\n"
-                    "Te recomendamos leer atentamente el convenio antes de firmarlo. Si tienes alguna duda, por favor ponte en contacto con el responsable de prescripción escribiendo a sigp@sportsdatacampus.com antes de proceder con la firma.\n\n"
-                    "Una vez que hayas firmado el convenio, recibirás un nuevo correo electrónico con los siguientes pasos para iniciar tu capacitación.\n\n"
-                    "¿Necesitas ayuda adicional? Responde este correo y te asistiremos.\n"
+                subject, plain_body = build_contract_signing_email_text(
+                    language=getattr(new_presc, "language", None),
+                    name=new_presc.squeeze_page_name,
+                    email=email_val,
+                    platform_base=platform_base,
+                    reset_url=reset_url,
+                    sign_link=link,
+                    contract_url=abs_url,
                 )
-                send_simple_mail([email_val], "¡Bienvenido al Programa de Prescriptores! Demos los primeros pasos.", html_body, html=True, text_body=plain_body)
+                send_simple_mail([email_val], subject, html_body, html=True, text_body=plain_body)
+                current_app.logger.info("Public signup: contract signing email queued/sent to %s", email_val)
 
                 # D) Notificación In-App al candidato
                 Notification = getattr(Base.classes, "notifications", None)
@@ -205,7 +212,7 @@ def signup_post():
                     db.session.add(notif)
                     db.session.commit()
             except Exception as e:
-                current_app.logger.error(f"Error generando contrato público para {email_val}: {e}")
+                current_app.logger.exception("Error generando/enviando contrato público para %s: %s", email_val, e)
 
         # 5. Notificar a los administradores que alguien se registró (Aplica para ambos casos)
         try:
@@ -239,7 +246,7 @@ def signup_post():
             current_app.logger.error(f"Error notificando admin: {e}")
 
         # 6. ÉXITO: Redirigir a la pantalla de agradecimiento
-        return render_template("layouts/signup_success.html")
+        return render_template("layouts/signup_success.html", language=form.language.data or "Español")
 
     except Exception as e:
         db.session.rollback()

@@ -21,7 +21,7 @@ from wtforms.validators import DataRequired, Length, Optional, URL
 
 from sigp import db
 from sigp.services.contract_service import generate_contract_pdf, sha256_file
-from sigp.common.email_utils import send_simple_mail
+from sigp.common.email_utils import build_contract_signing_email_text, send_simple_mail
 from itsdangerous import URLSafeTimedSerializer
 import os
 from werkzeug.utils import secure_filename
@@ -61,7 +61,7 @@ def prescriptor_form_factory(is_create=True):
     # Helper to safely convert blank values to None
     int_or_none = lambda v: int(v) if v not in (None, "", "None") else None
 
-    language_choices = [('Español', 'Español'), ('Inglés', 'Inglés')]
+    language_choices = [('Español', 'Español'), ('Inglés', 'Inglés'), ('Portugués', 'Portugués')]
     category_choices = [
         ('Persona juridica - institucional', 'Persona jurídica - institucional'),
         ('Persona Tutor', 'Persona Tutor'),
@@ -544,7 +544,7 @@ def list_prescriptors():
 def new_prescriptor():
     FormClass = prescriptor_form_factory(is_create=True)
     form = FormClass()
-    current_app.logger.info(">>> creando prescriptor con data %s", form.data)
+    current_app.logger.info(">>> preparando alta de prescriptor con data %s", form.data)
     form.user_id.data = current_user.name
     # valores por defecto para datos de facturación
     default_billing = (
@@ -646,7 +646,7 @@ def create_prescriptor():
         new_user.email = email_val
         new_user.cellular = form.cellular.data
         new_user.role_id = "5e6e517e-584b-42be-a7a3-564ee14e8723"
-        new_user.state_id = 1  # INACTIVO
+        new_user.state_id = 2  # ACTIVO
         temp_pass = str(uuid.uuid4())
         new_user.password_hash = hashlib.sha256(temp_pass.encode()).hexdigest()
         db.session.add(new_user)
@@ -866,7 +866,7 @@ def update_prescriptor(prescriptor_id):
     form = FormClass(obj=obj)
     # modelo users para sincronizar nombre/email
     UserModel = getattr(Base.classes, "users", None)
-    current_app.logger.info(">>> creando prescriptor con data %s", form.data)
+    current_app.logger.info(">>> actualizando prescriptor %s con data %s", prescriptor_id, form.data)
 
     if request.method == "POST":  # self-edit proceeds even if not all fields present
         # precargar y actualizar email/cellular
@@ -1103,23 +1103,16 @@ def update_prescriptor(prescriptor_id):
                                 login_url=login_url,
                                 reset_url=reset_url,
                             )
-                            plain_body = (
-                                f"Hola{',' if not obj else ' ' + (getattr(obj, 'squeeze_page_name', None) or getattr(obj, 'name', '') ) + ','}\n\n"
-                                "¡Te damos la bienvenida al Programa de Prescriptores!\n\n"
-                                "Paso 1: Establece tu contraseña\n"
-                                f"- Enlace para establecer contraseña: {reset_url or '(no disponible)'}\n\n"
-                                "Paso 2: Accede a tu cuenta\n"
-                                f"- URL: {platform_base}/\n"
-                                f"- Usuario: {presc_email}\n\n"
-                                "Paso 3: Firma tu convenio de prescriptor\n"
-                                f"- Enlace para firmar: {link}\n"
-                                + (f"- Descargar convenio: {abs_url}\n\n" if abs_url else "\n\n") +
-                                "IMPORTANTE:\n"
-                                "Te recomendamos leer atentamente el convenio antes de firmarlo. Si tienes alguna duda, por favor ponte en contacto con el responsable de prescripción escribiendo a sigp@sportsdatacampus.com antes de proceder con la firma.\n\n"
-                                "Una vez que hayas firmado el convenio, recibirás un nuevo correo electrónico con los siguientes pasos para iniciar tu capacitación.\n\n"
-                                "¿Necesitas ayuda adicional? Responde este correo y te asistiremos.\n"
+                            subject, plain_body = build_contract_signing_email_text(
+                                language=getattr(obj, "language", None),
+                                name=getattr(obj, "squeeze_page_name", None) or getattr(obj, "name", ""),
+                                email=presc_email,
+                                platform_base=platform_base,
+                                reset_url=reset_url,
+                                sign_link=link,
+                                contract_url=abs_url,
                             )
-                            send_simple_mail([presc_email], "¡Bienvenido al Programa de Prescriptores - Demos los primeros pasos.", html_body, html=True, text_body=plain_body)
+                            send_simple_mail([presc_email], subject, html_body, html=True, text_body=plain_body)
                             flash(f"Email de firma enviado a {presc_email}", "info")
                         except Exception as exc:
                             current_app.logger.exception("Error enviando correo de contrato auto: %s", exc)

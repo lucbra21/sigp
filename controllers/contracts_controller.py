@@ -11,7 +11,7 @@ from sigp.services.contract_service import (
     stamp_text_overlay,
     embed_pdf_metadata_xmp,
 )
-from sigp.common.email_utils import send_simple_mail
+from sigp.common.email_utils import build_contract_signing_email_text, send_simple_mail
 import uuid
 from datetime import datetime
 import os
@@ -195,23 +195,18 @@ def generate_for_prescriptor(prescriptor_id):
                 login_url=login_url,
                 reset_url=reset_url,
             )
-            plain_body = (
-                f"Hola{',' if not prescriptor else ' ' + (getattr(prescriptor, 'squeeze_page_name', None) or getattr(prescriptor, 'name', '') ) + ','}\n\n"
-                "¡Te damos la bienvenida al Programa de Prescriptores!\n\n"
-                "Paso 1: Establece tu contraseña\n"
-                f"- Enlace para establecer contraseña: {reset_url or '(no disponible)'}\n\n"
-                "Paso 2: Accede a tu cuenta\n"
-                f"- URL: {platform_base}/\n"
-                f"- Usuario: {presc_email}\n\n"
-                "Paso 3: Firma tu convenio de prescriptor\n"
-                f"- Enlace para firmar: {link}\n"
-                + (f"- Descargar convenio: {abs_url}\n" if abs_url else "") +
-                "\n¿Necesitas ayuda? Responde este correo y te asistimos.\n"
-                "Los enlaces pueden expirar por motivos de seguridad."
+            subject, plain_body = build_contract_signing_email_text(
+                language=getattr(prescriptor, "language", None),
+                name=getattr(prescriptor, "squeeze_page_name", None) or getattr(prescriptor, "name", ""),
+                email=presc_email,
+                platform_base=platform_base,
+                reset_url=reset_url,
+                sign_link=link,
+                contract_url=abs_url,
             )
             send_simple_mail(
                 [presc_email],
-                "¡Bienvenido al Programa de Prescriptores - Demos los primeros pasos.",
+                subject,
                 html_body,
                 html=True,
                 text_body=plain_body,

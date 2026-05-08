@@ -16,6 +16,7 @@ from sigp.services.builders import tutor_builder_es
 from sigp.services.builders import tutor_builder_en
 from sigp.services.builders import alumno_builder_es
 from sigp.services.builders import alumno_builder_en
+from sigp.services.builders import alumno_builder_pt
 from sigp.services.builders import externo_builder_es
 from sigp.services.builders import externo_builder_en
 
@@ -44,6 +45,7 @@ def generate_contract_pdf(prescriptor, filename: Optional[str] = None) -> Path:
     # 1. Variables de enrutamiento
     idioma = getattr(prescriptor, "language", "Español")
     categoria = getattr(prescriptor, "agreement_category", "Persona Hibrida")
+    idioma_key = (idioma or "Español").strip().lower()
 
     # 2. Datos básicos comunes (SIN lógica de comisiones ni programas)
     datos_contrato = {
@@ -81,8 +83,10 @@ def generate_contract_pdf(prescriptor, filename: Optional[str] = None) -> Path:
         else:
             tutor_builder_es.build(c, prescriptor, datos_contrato)
     elif categoria == 'Persona Alumno':
-        if idioma == 'Inglés':
+        if idioma_key in {'inglés', 'ingles', 'english'}:
             alumno_builder_en.build(c, prescriptor, datos_contrato)
+        elif idioma_key in {'portugués', 'portugues', 'portuguese'}:
+            alumno_builder_pt.build(c, prescriptor, datos_contrato)
         else:
             alumno_builder_es.build(c, prescriptor, datos_contrato)
     elif categoria == 'Prescriptor Externo':
@@ -535,7 +539,7 @@ def embed_pdf_metadata_xmp(pdf_path: Path, *, title: str, author: str, subject: 
         return dt.strftime("D:%Y%m%d%H%M%SZ")
 
     now = _dt.utcnow()
-    with Pdf.open(str(pdf_path)) as pdf:
+    with Pdf.open(str(pdf_path), allow_overwriting_input=True) as pdf:
         info = pdf.docinfo or Dictionary()
         info[Name('/Title')] = _Str(title)
         info[Name('/Author')] = _Str(author)
@@ -767,6 +771,4 @@ def sign_pades(input_pdf: Path, output_pdf: Path) -> None:
                 current_app.logger.error(f"signer __dict__: {signer.__dict__}")
         
         raise RuntimeError(f"Error firmando PDF: {exc}")
-
-
 
