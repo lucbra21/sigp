@@ -240,6 +240,13 @@
                     cellularPlaceholder: 'Celular / WhatsApp (+54 9...)',
                     studentLabel: 'Soy alumno de Sports Data Campus',
                     documentTypePlaceholder: 'Tipo de Documento...',
+                    documentTypeOptions: {
+                        '': 'Tipo de Documento...',
+                        DNI: 'DNI',
+                        NIE: 'NIE',
+                        Pasaporte: 'Pasaporte',
+                        Otro: 'Otro'
+                    },
                     documentNumberPlaceholder: 'Número de Documento (DNI/NIE/Pasaporte)',
                     domicilePlaceholder: 'Domicilio Completo (Calle, Ciudad, País)',
                     observationsPlaceholder: '¿Por qué quieres ser prescriptor?',
@@ -256,6 +263,13 @@
                     cellularPlaceholder: 'Mobile / WhatsApp (+54 9...)',
                     studentLabel: 'I am a Sports Data Campus student',
                     documentTypePlaceholder: 'Document Type...',
+                    documentTypeOptions: {
+                        '': 'Document Type...',
+                        DNI: 'DNI',
+                        NIE: 'NIE',
+                        Pasaporte: 'Passport',
+                        Otro: 'Other'
+                    },
                     documentNumberPlaceholder: 'Document Number (DNI/NIE/Passport)',
                     domicilePlaceholder: 'Full Address (Street, City, Country)',
                     observationsPlaceholder: 'Why do you want to become a prescriber?',
@@ -269,12 +283,19 @@
                     subtitle: 'Junte-se ao Sports Data Campus',
                     namePlaceholder: 'Nome e Sobrenome',
                     emailPlaceholder: 'Seu Email',
-                    cellularPlaceholder: 'Celular / WhatsApp (+54 9...)',
+                    cellularPlaceholder: 'N. Telemóvel',
                     studentLabel: 'Sou aluno do Sports Data Campus',
                     documentTypePlaceholder: 'Tipo de Documento...',
+                    documentTypeOptions: {
+                        '': 'Tipo de Documento...',
+                        DNI: 'DNI',
+                        NIE: 'NIE',
+                        Pasaporte: 'Passaporte',
+                        Otro: 'Outro'
+                    },
                     documentNumberPlaceholder: 'Número do Documento (DNI/NIE/Passaporte)',
                     domicilePlaceholder: 'Endereço Completo (Rua, Cidade, País)',
-                    observationsPlaceholder: 'Por que você quer ser prescritor?',
+                    observationsPlaceholder: 'Diz-nos porque queres ser Prescritor..',
                     submit: 'Enviar Solicitação',
                     submitLoading: 'Enviando...',
                     back: 'Voltar ao Login'
@@ -318,6 +339,13 @@
                 const documentType = document.getElementById('document_type');
                 if (documentType && documentType.options.length) {
                     documentType.options[0].textContent = dict.documentTypePlaceholder;
+                    if (dict.documentTypeOptions) {
+                        Array.from(documentType.options).forEach(function(option) {
+                            if (Object.prototype.hasOwnProperty.call(dict.documentTypeOptions, option.value)) {
+                                option.textContent = dict.documentTypeOptions[option.value];
+                            }
+                        });
+                    }
                 }
                 languageButtons.forEach(function(btn) {
                     btn.classList.toggle('active', btn.dataset.lang === lang);
