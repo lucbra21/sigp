@@ -132,9 +132,9 @@
   document.addEventListener('DOMContentLoaded', function(){
     // i18n translations
     const translations = {
-      es:{headline:'PON TU PASIÓN AL SERVICIO DEL FUTURO',lead:'Déjanos tus datos',name:'Tu nombre',email:'Tu email',cell:'Teléfono',program:'Programa',obs:'Observaciones',submit:'Enviar',btnVer:'Ver programa'},
-      en:{headline:'PUT YOUR PASSION AT THE SERVICE OF THE FUTURE',lead:'Leave us your data',name:'Your name',email:'Your email',cell:'Phone',program:'Program',obs:'Observations',submit:'Send',btnVer:'See program'},
-      pt:{headline:'COLOQUE A SUA PAIXÃO A SERVIÇO DO FUTURO',lead:'Deixe-nos os seus dados',name:'Seu nome',email:'Seu email',cell:'Telefone',program:'Programa',obs:'Observações',submit:'Enviar',btnVer:'Ver programa'}
+      es:{headline:'PON TU PASIÓN AL SERVICIO DEL FUTURO',lead:'Déjanos tus datos',name:'Tu nombre',email:'Tu email',cell:'Teléfono',program:'Programa',obs:'Observaciones',submit:'Enviar',btnVer:'Ver guía PDF'},
+      en:{headline:'PUT YOUR PASSION AT THE SERVICE OF THE FUTURE',lead:'Leave us your data',name:'Your name',email:'Your email',cell:'Phone',program:'Program',obs:'Observations',submit:'Send',btnVer:'See PDF guide'},
+      pt:{headline:'COLOQUE A SUA PAIXÃO A SERVIÇO DO FUTURO',lead:'Deixe-nos os seus dados',name:'Seu nome',email:'Seu email',cell:'Telefone',program:'Programa',obs:'Observações',submit:'Enviar',btnVer:'Ver guia PDF'}
     };
     const applyLang=(l)=>{
       const setText=(id,text)=>{const el=document.getElementById(id);if(el) el.innerText=text;};
@@ -158,7 +158,14 @@
     if(sel && btn){
       const toggleBtn = ()=>{
         const url = programUrls[sel.value];
-        if(url){btn.classList.remove('d-none');btn.href=url;}else{btn.classList.add('d-none');}
+        if(url){
+          btn.classList.remove('d-none');
+          btn.href=url;
+          btn.setAttribute('download', '');
+        }else{
+          btn.classList.add('d-none');
+          btn.removeAttribute('download');
+        }
       };sel.addEventListener('change',toggleBtn);toggleBtn();}
 
     const form = document.getElementById('leadForm');
