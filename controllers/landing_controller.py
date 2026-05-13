@@ -69,14 +69,12 @@ def landing_page(prescriptor_id: str):
         return redirect("/")
 
     form = PublicLeadForm()
-    # Poblar choices de programas
-    # Poblar programas comisionables para este prescriptor (commission_value > 0)
-    PrescComm = getattr(Base.classes, "prescriptor_commission", None)
-    if Program is not None and PrescComm is not None:
+    # Poblar choices con todos los programas activos.
+    if Program is not None:
         prog_rows = (
             db.session.query(Program)
-            .join(PrescComm, PrescComm.program_id == Program.id)
-            .filter(PrescComm.prescriptor_id == prescriptor_id, PrescComm.commission_value > 0)
+            .filter(Program.state == "Activo")
+            .order_by(getattr(Program, "name", Program.id))
             .all()
         )
         prog_choices = [("", "Seleccione programa")] + [
@@ -159,6 +157,11 @@ def landing_page(prescriptor_id: str):
         "public/landing_prescriptor.html",
         prescriptor=prescriptor,
         images=images,
-         program_urls={pid: (prog.program_url if prog else None) for pid,_ in getattr(form.program_info_id,'choices',[]) for prog in [db.session.get(Program, pid)]} if Program else {},
+         program_urls={
+             pid: getattr(prog, "program_url", None)
+             for pid, _ in getattr(form.program_info_id, "choices", [])
+             if pid
+             for prog in [db.session.get(Program, pid)]
+         } if Program else {},
         form=form,
     )
