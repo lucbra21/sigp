@@ -120,8 +120,9 @@ def landing_page(prescriptor_id: str):
         if Program is not None and form.program_info_id.data:
             program = db.session.get(Program, form.program_info_id.data)
             if program and getattr(program, "commercial_emails", None):
-                from sigp.common.email_utils import send_simple_mail  # import aquí para evitar ciclos
+                from sigp.common.email_utils import internal_notification_recipients, send_simple_mail  # import aquí para evitar ciclos
                 emails = [e.strip() for e in program.commercial_emails.split(",") if e.strip()]
+                emails = internal_notification_recipients(emails)
                 if emails:
                     subject = f"Nuevo lead para programa {getattr(program,'name',program.id)}"
                     plain_body=(

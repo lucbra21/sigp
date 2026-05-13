@@ -37,6 +37,7 @@ class Config:
     MAIL_USE_SSL = os.getenv("MAIL_USE_SSL", "True").lower() in {"1", "true", "yes"}
     MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "False").lower() in {"1", "true", "yes"}
     MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", MAIL_USERNAME)
+    INTERNAL_NOTIFICATION_EMAILS = os.getenv("INTERNAL_NOTIFICATION_EMAILS", "nfo@sportsdatacampus.com")
 
     # Carpeta para contratos de prescriptores (dentro de static)
     CONTRACT_UPLOAD_FOLDER = "static/contracts"
@@ -80,4 +81,3 @@ class Config:
 
     # config.py  (modo desarrollo)
     SQLALCHEMY_ECHO = False
-

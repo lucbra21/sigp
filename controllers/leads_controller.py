@@ -269,8 +269,9 @@ def new_lead():
         if Program is not None and form.program_info_id.data:
             program = db.session.get(Program, form.program_info_id.data)
             if program and getattr(program, "commercial_emails", None):
-                from sigp.common.email_utils import send_simple_mail
+                from sigp.common.email_utils import internal_notification_recipients, send_simple_mail
                 emails = [e.strip() for e in program.commercial_emails.split(',') if e.strip()]
+                emails = internal_notification_recipients(emails)
                 if emails:
                     subject = f"Nuevo lead para programa {getattr(program,'name',program.id)}"
                     plain_body=(
@@ -584,8 +585,17 @@ def update_status(lead_id):
                          state_name=state_name,
                          observations=obs) 
                     try:
-                        from sigp.common.email_utils import send_simple_mail
+                        from sigp.common.email_utils import internal_notification_recipients, send_simple_mail
                         send_simple_mail([presc_email], subject, html_body, html=True, text_body=plain_body)
+                        state_name_normalized = (state_name or "").strip().lower()
+                        if new_state == MATRICULADO_ID or "matric" in state_name_normalized:
+                            send_simple_mail(
+                                internal_notification_recipients(),
+                                f"Lead convertido a matrícula: {lead.candidate_name or lead.id}",
+                                html_body,
+                                html=True,
+                                text_body=plain_body,
+                            )
                     except Exception as exc:
                         current_app.logger.exception('Error enviando mail a prescriptor: %s', exc)
                     # notificación interna
@@ -843,8 +853,9 @@ def embed_lead_post():
             if Program is not None and program_id:
                 program = db.session.get(Program, program_id)
                 if program and getattr(program, "commercial_emails", None):
-                    from sigp.common.email_utils import send_simple_mail
+                    from sigp.common.email_utils import internal_notification_recipients, send_simple_mail
                     emails = [e.strip() for e in program.commercial_emails.split(',') if e.strip()]
+                    emails = internal_notification_recipients(emails)
                     if emails:
                         # resolve prescriptor display name similar to landing
                         try:

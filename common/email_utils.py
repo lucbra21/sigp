@@ -10,6 +10,37 @@ from typing import Sequence, Optional
 from flask import current_app
 
 
+def _split_emails(value) -> list[str]:
+    if not value:
+        return []
+    if isinstance(value, str):
+        return [email.strip() for email in value.split(",") if email.strip()]
+    return [str(email).strip() for email in value if str(email).strip()]
+
+
+def unique_emails(emails: Sequence[str]) -> list[str]:
+    seen = set()
+    result = []
+    for email in emails:
+        normalized = (email or "").strip()
+        key = normalized.lower()
+        if normalized and key not in seen:
+            seen.add(key)
+            result.append(normalized)
+    return result
+
+
+def internal_notification_recipients(extra: Sequence[str] | None = None) -> list[str]:
+    cfg = current_app.config
+    recipients = []
+    recipients.extend(_split_emails(cfg.get("ADMIN_EMAILS")))
+    recipients.extend(_split_emails(cfg.get("INTERNAL_NOTIFICATION_EMAILS")))
+    recipients.extend(_split_emails(cfg.get("MAIL_DEFAULT_SENDER") or cfg.get("MAIL_USERNAME")))
+    if extra:
+        recipients.extend(_split_emails(extra))
+    return unique_emails(recipients)
+
+
 def send_simple_mail(to: Sequence[str], subject: str, body: str, *, html: bool=False, text_body: Optional[str]=None) -> None:
     if not to:
         return

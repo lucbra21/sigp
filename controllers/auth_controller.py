@@ -262,12 +262,9 @@ def signup_post():
 
         # 4. Notificar
         try:
-            admin_emails = current_app.config.get("ADMIN_EMAILS") or []
-            if isinstance(admin_emails, str):
-                admin_emails = [e.strip() for e in admin_emails.split(",") if e.strip()]
-            if not admin_emails:
-                fallback = current_app.config.get("MAIL_DEFAULT_SENDER") or current_app.config.get("MAIL_USERNAME")
-                if fallback: admin_emails = [fallback]
+            from sigp.common.email_utils import internal_notification_recipients
+
+            admin_emails = internal_notification_recipients()
 
             if admin_emails:
                 base_url = (current_app.config.get('BASE_URL') or request.host_url).rstrip('/')

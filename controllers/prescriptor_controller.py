@@ -21,7 +21,7 @@ from wtforms.validators import DataRequired, Length, Optional, URL
 
 from sigp import db
 from sigp.services.contract_service import generate_contract_pdf, sha256_file
-from sigp.common.email_utils import build_contract_signing_email_text, send_simple_mail
+from sigp.common.email_utils import build_contract_signing_email_text, internal_notification_recipients, send_simple_mail
 from itsdangerous import URLSafeTimedSerializer
 import os
 from werkzeug.utils import secure_filename
@@ -682,12 +682,7 @@ def create_prescriptor():
             # Enviar notificación a administración (controlado por flag)
             if current_app.config.get("NOTIFY_ON_PRESCRIPTOR_CREATE", True):
                 try:
-                    admin_emails = current_app.config.get("ADMIN_EMAILS") or []
-                    if isinstance(admin_emails, str):
-                        admin_emails = [e.strip() for e in admin_emails.split(",") if e.strip()]
-                    if not admin_emails:
-                        fallback = current_app.config.get("MAIL_DEFAULT_SENDER") or current_app.config.get("MAIL_USERNAME")
-                        admin_emails = [fallback] if fallback else []
+                    admin_emails = internal_notification_recipients()
 
                     if admin_emails:
                         edit_url = (current_app.config.get('BASE_URL') or request.host_url.rstrip('/')) + url_for('prescriptors.edit_prescriptor', prescriptor_id=new_obj.id)
