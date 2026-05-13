@@ -193,8 +193,11 @@ def signup_post():
                     sign_link=link,
                     contract_url=abs_url,
                 )
-                send_simple_mail([email_val], subject, html_body, html=True, text_body=plain_body)
-                current_app.logger.info("Public signup: contract signing email queued/sent to %s", email_val)
+                sent = send_simple_mail([email_val], subject, html_body, html=True, text_body=plain_body)
+                if sent:
+                    current_app.logger.info("Public signup: contract signing email sent to %s", email_val)
+                else:
+                    current_app.logger.warning("Public signup: contract signing email was not accepted by SMTP for %s", email_val)
 
                 # D) Notificación In-App al candidato
                 Notification = getattr(Base.classes, "notifications", None)
@@ -213,6 +216,21 @@ def signup_post():
                     db.session.commit()
             except Exception as e:
                 current_app.logger.exception("Error generando/enviando contrato público para %s: %s", email_val, e)
+        else:
+            try:
+                from sigp.common.email_utils import build_signup_received_email_text, send_simple_mail
+
+                subject, plain_body = build_signup_received_email_text(
+                    language=getattr(new_presc, "language", None),
+                    name=new_presc.squeeze_page_name,
+                )
+                sent = send_simple_mail([email_val], subject, plain_body)
+                if sent:
+                    current_app.logger.info("Public signup: confirmation email sent to %s", email_val)
+                else:
+                    current_app.logger.warning("Public signup: confirmation email was not accepted by SMTP for %s", email_val)
+            except Exception as e:
+                current_app.logger.exception("Error enviando confirmación pública para %s: %s", email_val, e)
 
         # 5. Notificar a los administradores que alguien se registró (Aplica para ambos casos)
         try:

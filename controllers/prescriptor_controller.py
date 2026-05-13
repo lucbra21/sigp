@@ -453,11 +453,17 @@ def list_prescriptors():
     nombre_f = request.args.get("nombre", type=str, default="").strip()
     tipo_f = request.args.get("tipo", type=str, default="")
     estado_f = request.args.get("estado", type=str, default="")
+    sort = request.args.get("sort", type=str, default="creado")
+    direction = request.args.get("dir", type=str, default="desc").lower()
+    if direction not in {"asc", "desc"}:
+        direction = "desc"
 
     # Modelos relacionados
     Types = getattr(Base.classes, "prescriptor_types", None)
     Users = getattr(Base.classes, "users", None)
     States = getattr(Base.classes, "state_prescriptor", None)
+    Substates = getattr(Base.classes, "substate_prescriptor", None)
+    Confidence = getattr(Base.classes, "confidence_level", None)
 
     # Query principal con joins para obtener nombres legibles
     query = (
@@ -468,12 +474,17 @@ def list_prescriptors():
             States.name.label("estado"),
             Users.name.label("usuario"),
             Model.sub_state_id.label("sub_state_id"),
+            Substates.name.label("sub_state_label"),
             Model.confidence_level_id.label("confidence_level_id"),
+            Confidence.name.label("confidence_label"),
             Model.squeeze_page_status.label("squeeze_page_status"),
+            Model.created_at.label("created_at"),
         )
         .outerjoin(Types, Types.id == Model.type_id)
         .outerjoin(States, States.id == Model.state_id)
         .outerjoin(Users, Users.id == Model.user_id)
+        .outerjoin(Substates, Substates.id == Model.sub_state_id)
+        .outerjoin(Confidence, Confidence.id == Model.confidence_level_id)
     )
 
     # Aplicar filtros si vienen
@@ -484,9 +495,20 @@ def list_prescriptors():
     if estado_f:
         query = query.filter(Model.state_id == int(estado_f))
 
+    sort_columns = {
+        "nombre": Model.squeeze_page_name,
+        "tipo": Types.name,
+        "sub_estado": Substates.name,
+        "confianza": Confidence.name,
+        "squeeze": Model.squeeze_page_status,
+        "creado": Model.created_at,
+    }
+    sort_column = sort_columns.get(sort, Model.created_at)
+    order_expr = sort_column.asc() if direction == "asc" else sort_column.desc()
+
     total = query.count()
     items = (
-        query.order_by(Model.created_at.desc())
+        query.order_by(order_expr, Model.created_at.desc())
         .offset((page - 1) * per_page)
         .limit(per_page)
         .all()
@@ -514,10 +536,12 @@ def list_prescriptors():
         except (ValueError, TypeError):
             cid = None
         data = dict(mapping)
-        data['sub_state_name'] = sub_map.get(sid, '')
-        data['confidence_name'] = conf_map.get(cid, '')
+        data['sub_state_name'] = data.get('sub_state_label') or sub_map.get(sid, '')
+        data['confidence_name'] = data.get('confidence_label') or conf_map.get(cid, '')
         # Squeeze page status directo
         data['squeeze_page_status'] = mapping.get('squeeze_page_status', getattr(row, 'squeeze_page_status', ''))
+        created_at = data.get('created_at')
+        data['created_at_fmt'] = created_at.strftime("%d/%m/%Y %H:%M") if created_at else ""
         display_items.append(SimpleNamespace(**data))
 
     # Para selects del filtro
@@ -530,12 +554,14 @@ def list_prescriptors():
         items=display_items,
         page=page,
         per_page=per_page,
-        filters={"nombre": nombre_f, "tipo": tipo_f, "estado": estado_f},
+        filters={"nombre": nombre_f, "tipo": tipo_f, "estado": estado_f, "sort": sort, "dir": direction},
         type_choices=type_choices,
         state_choices=state_choices,
         sub_map=sub_map,
         conf_map=conf_map,
         total=total,
+        sort=sort,
+        direction=direction,
     )
 
 

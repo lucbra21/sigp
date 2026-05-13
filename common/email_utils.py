@@ -41,14 +41,14 @@ def internal_notification_recipients(extra: Sequence[str] | None = None) -> list
     return unique_emails(recipients)
 
 
-def send_simple_mail(to: Sequence[str], subject: str, body: str, *, html: bool=False, text_body: Optional[str]=None) -> None:
+def send_simple_mail(to: Sequence[str], subject: str, body: str, *, html: bool=False, text_body: Optional[str]=None) -> bool:
     if not to:
-        return
+        return False
     cfg = current_app.config
     server = cfg.get("MAIL_SERVER")
     if not server:
         current_app.logger.warning("MAIL_SERVER not configured; email not sent to %s", to)
-        return
+        return False
     port = cfg.get("MAIL_PORT", 587)
     username = cfg.get("MAIL_USERNAME")
     password = cfg.get("MAIL_PASSWORD")
@@ -82,6 +82,7 @@ def send_simple_mail(to: Sequence[str], subject: str, body: str, *, html: bool=F
             refused = s.send_message(msg)
         if refused:
             current_app.logger.warning("SMTP refused recipients for %r: %s", subject, refused)
+            return False
         else:
             current_app.logger.info(
                 "Sent email %r from %s to %s message_id=%s",
@@ -90,8 +91,48 @@ def send_simple_mail(to: Sequence[str], subject: str, body: str, *, html: bool=F
                 to,
                 msg["Message-ID"],
             )
+            return True
     except Exception as exc:  # pylint: disable=broad-except
         current_app.logger.error("Failed to send email to %s: %s", to, exc)
+        return False
+
+
+def build_signup_received_email_text(*, language: str, name: str) -> tuple[str, str]:
+    lang = (language or "Español").strip().lower()
+    is_en = lang in {"inglés", "ingles", "english"}
+    is_pt = lang in {"portugués", "portugues", "portuguese"}
+
+    if is_en:
+        return (
+            "We have received your Prescriber Program request",
+            (
+                f"Hello {name},\n\n"
+                "We have successfully received your request to join the Sports Data Campus Prescriber Program.\n\n"
+                "Our team will review your information and contact you with the next steps.\n\n"
+                "If you need help or have not received further information, please contact sigp@sportsdatacampus.com or your Sports Data Campus contact.\n"
+            ),
+        )
+
+    if is_pt:
+        return (
+            "Recebemos o seu pedido para o Programa de Prescritores",
+            (
+                f"Olá {name},\n\n"
+                "Recebemos com sucesso o seu pedido para participar no Programa de Prescritores da Sports Data Campus.\n\n"
+                "A nossa equipa irá analisar as suas informações e entrará em contacto consigo com os próximos passos.\n\n"
+                "Se precisar de ajuda ou não receber mais informações, entre em contacto através do e-mail sigp@sportsdatacampus.com ou com o contacto que lhe foi fornecido na Sports Data Campus.\n"
+            ),
+        )
+
+    return (
+        "Recibimos tu solicitud para el Programa de Prescriptores",
+        (
+            f"Hola {name},\n\n"
+            "Recibimos correctamente tu solicitud para formar parte del Programa de Prescriptores de Sports Data Campus.\n\n"
+            "Nuestro equipo revisará tu información y se pondrá en contacto contigo con los siguientes pasos.\n\n"
+            "Si necesitas ayuda o no recibes más información, puedes escribir a sigp@sportsdatacampus.com o comunicarte con tu contacto de Sports Data Campus.\n"
+        ),
+    )
 
 
 def build_contract_signing_email_text(

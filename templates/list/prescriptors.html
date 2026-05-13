@@ -1,6 +1,15 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Listado de Prescriptores{% endblock %}
 {% block content %}
+{% macro sort_link(label, key) -%}
+  {% set next_dir = 'desc' if sort == key and direction == 'asc' else 'asc' %}
+  <a class="text-decoration-none text-reset" href="{{ url_for('prescriptors.list_prescriptors', nombre=filters.nombre, tipo=filters.tipo, estado=filters.estado, sort=key, dir=next_dir) }}">
+    {{ label }}
+    {% if sort == key %}
+      <span class="small">{{ '▲' if direction == 'asc' else '▼' }}</span>
+    {% endif %}
+  </a>
+{%- endmacro %}
 <!-- Loading overlay -->
 <div id="prescriptorsLoading" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(255,255,255,.7);z-index:1050;">
   <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="cargando...">
@@ -14,6 +23,8 @@
 <!-- Filtros -->
 <div class="card filter-card p-3 mb-4">
 <form class="row row-cols-lg-auto g-2 align-items-end" method="get" id="filterForm">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <input type="hidden" name="dir" value="{{ direction }}">
     <div class="col-12">
         <label for="fNombre" class="form-label">Nombre</label>
         <input type="text" class="form-control" id="fNombre" name="nombre" value="{{ filters.nombre }}">
@@ -44,11 +55,12 @@
 <div class="card table-card p-0 mb-4"><table class="table table-hover align-middle mb-0">
     <thead>
         <tr>
-            <th>Nombre</th>
-            <th>Tipo</th>
-            <th>Sub&nbsp;Estado</th>
-            <th>Nivel confianza</th>
-            <th>Estado squeeze</th>
+            <th>{{ sort_link('Nombre', 'nombre') }}</th>
+            <th>{{ sort_link('Tipo', 'tipo') }}</th>
+            <th>{{ sort_link('Sub Estado', 'sub_estado') }}</th>
+            <th>{{ sort_link('Nivel confianza', 'confianza') }}</th>
+            <th>{{ sort_link('Estado squeeze', 'squeeze') }}</th>
+            <th>{{ sort_link('Creado', 'creado') }}</th>
             <th>Acciones</th>
         </tr>
     </thead>
@@ -60,6 +72,7 @@
             <td>{{ p.sub_state_name }}</td>
             <td>{{ p.confidence_name }}</td>
             <td>{{ p.squeeze_page_status }}</td>
+            <td>{{ p.created_at_fmt or '-' }}</td>
             <td>
                 <a href="{{ url_for('prescriptors.edit_prescriptor', prescriptor_id=p.id) }}" class="btn btn-sm btn-secondary">Editar</a>
                 {% if can('update_prescriptor_commission') %}
@@ -77,7 +90,9 @@
 <nav class="d-flex justify-content-center mt-4" aria-label="Page navigation">
     <ul class="pagination pagination-sm pagination-glass mb-0">
         {% for p in range(1, pages + 1) %}
-        <li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="?nombre={{ filters.nombre }}&tipo={{ filters.tipo }}&estado={{ filters.estado }}&page={{ p }}">{{ p }}</a></li>
+        <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('prescriptors.list_prescriptors', nombre=filters.nombre, tipo=filters.tipo, estado=filters.estado, sort=sort, dir=direction, page=p) }}">{{ p }}</a>
+        </li>
         {% endfor %}
     </ul>
 </nav>
@@ -90,7 +105,7 @@
     if(filter){filter.addEventListener('submit',show);}    
     const btnNuevo=document.getElementById('btnNuevo');
     if(btnNuevo){btnNuevo.addEventListener('click',show);}    
-    document.querySelectorAll('.pagination a.page-link').forEach(a=>a.addEventListener('click',show));
+    document.querySelectorAll('.pagination a.page-link, thead a').forEach(a=>a.addEventListener('click',show));
     // Editar y Comisiones
     document.querySelectorAll('a.btn-secondary, a.btn-warning').forEach(a=>a.addEventListener('click',show));
   });
