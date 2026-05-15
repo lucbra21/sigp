@@ -10,6 +10,11 @@
   <div class="hero-content col-md-2">
       <div class="w-100" style="max-width: 600px;">
         <div class="text-center">
+          <h1 class="display-5 mb-2" style="color: #ffffff;">{{ prescriptor.squeeze_page_name }}</h1>
+          
+          {% if prescriptor.photo_url %}
+            <img src="{{ prescriptor.photo_url }}" class="rounded-circle mb-3" alt="Foto de {{ prescriptor.squeeze_page_name }}" style="max-width: 200px;">
+          {% endif %}
           <img
             src="{{ url_for('static', filename='img/SDC_Blanco_Vertical.png') }}"
             class="img-fluid mb-3"
@@ -21,11 +26,6 @@
             <button class="btn p-0 fs-2 me-1" onclick="setLang('en')" title="English">&#x1F1EC;&#x1F1E7;</button>
             <button class="btn p-0 fs-2" onclick="setLang('pt')" title="Português">&#x1F1F5;&#x1F1F9;</button>
           </div>
-          <h1 class="display-5 mb-2" style="color: #ffffff;">{{ prescriptor.squeeze_page_name }}</h1>
-          
-          {% if prescriptor.photo_url %}
-            <img src="{{ prescriptor.photo_url }}" class="rounded-circle mb-3" alt="Foto de {{ prescriptor.squeeze_page_name }}" style="max-width: 200px;">
-          {% endif %}
           <!-- social links -->
           <div class="d-flex justify-content-center gap-3 mb-4">
             {% if prescriptor.face_url %}<a href="{{ prescriptor.face_url }}" target="_blank" class="text-white fs-4"><i class="bi bi-facebook"></i></a>{% endif %}
