@@ -7,6 +7,7 @@ from flask import (
     current_app,
     Blueprint,
     Response,
+    send_file,
     render_template,
     request,
     redirect,
@@ -465,6 +466,77 @@ def _format_export_value(value):
     return value
 
 
+def _prescriptor_export_rows(Model):
+    Users = getattr(Base.classes, "users", None)
+    Types = getattr(Base.classes, "prescriptor_types", None)
+    States = getattr(Base.classes, "state_prescriptor", None)
+    Substates = getattr(Base.classes, "substate_prescriptor", None)
+    Confidence = getattr(Base.classes, "confidence_level", None)
+
+    rows = (
+        _filtered_prescriptors_query(Model)
+        .order_by(Model.created_at.desc())
+        .all()
+    )
+
+    user_ids = {getattr(row, "user_id", None) for row in rows if getattr(row, "user_id", None)}
+    type_ids = {getattr(row, "type_id", None) for row in rows if getattr(row, "type_id", None) is not None}
+    proposed_type_ids = {getattr(row, "proposed_type_id", None) for row in rows if getattr(row, "proposed_type_id", None) is not None}
+    state_ids = {getattr(row, "state_id", None) for row in rows if getattr(row, "state_id", None) is not None}
+    substate_ids = {getattr(row, "sub_state_id", None) for row in rows if getattr(row, "sub_state_id", None) is not None}
+    confidence_ids = {getattr(row, "confidence_level_id", None) for row in rows if getattr(row, "confidence_level_id", None) is not None}
+
+    users_map = {}
+    if Users is not None and user_ids:
+        users_map = {u.id: u for u in db.session.query(Users).filter(Users.id.in_(user_ids)).all()}
+
+    type_map = {}
+    if Types is not None and (type_ids or proposed_type_ids):
+        ids = type_ids | proposed_type_ids
+        type_map = {t.id: getattr(t, "name", "") for t in db.session.query(Types).filter(Types.id.in_(ids)).all()}
+
+    state_map = {}
+    if States is not None and state_ids:
+        state_map = {s.id: getattr(s, "name", "") for s in db.session.query(States).filter(States.id.in_(state_ids)).all()}
+
+    substate_map = {}
+    if Substates is not None and substate_ids:
+        substate_map = {s.id: getattr(s, "name", "") for s in db.session.query(Substates).filter(Substates.id.in_(substate_ids)).all()}
+
+    confidence_map = {}
+    if Confidence is not None and confidence_ids:
+        confidence_map = {c.id: getattr(c, "name", "") for c in db.session.query(Confidence).filter(Confidence.id.in_(confidence_ids)).all()}
+
+    prescriptor_columns = [column.name for column in Model.__table__.columns]
+    headers = [
+        "user_name",
+        "user_email",
+        "user_cellular",
+        "type_name",
+        "proposed_type_name",
+        "state_name",
+        "sub_state_name",
+        "confidence_level_name",
+    ] + prescriptor_columns
+
+    export_rows = []
+    for prescriptor in rows:
+        user = users_map.get(getattr(prescriptor, "user_id", None))
+        row = [
+            getattr(user, "name", "") if user else "",
+            getattr(user, "email", "") if user else "",
+            getattr(user, "cellular", "") if user else "",
+            type_map.get(getattr(prescriptor, "type_id", None), ""),
+            type_map.get(getattr(prescriptor, "proposed_type_id", None), ""),
+            state_map.get(getattr(prescriptor, "state_id", None), ""),
+            substate_map.get(getattr(prescriptor, "sub_state_id", None), ""),
+            confidence_map.get(getattr(prescriptor, "confidence_level_id", None), ""),
+        ]
+        row.extend(_format_export_value(getattr(prescriptor, column, "")) for column in prescriptor_columns)
+        export_rows.append(row)
+    return headers, export_rows
+
+
 @prescriptors_bp.get("/")
 @login_required
 def list_prescriptors():
@@ -599,76 +671,12 @@ def export_prescriptors_csv():
         flash("Modelo Prescriptor no disponible", "danger")
         return redirect(url_for("prescriptors.list_prescriptors"))
 
-    Users = getattr(Base.classes, "users", None)
-    Types = getattr(Base.classes, "prescriptor_types", None)
-    States = getattr(Base.classes, "state_prescriptor", None)
-    Substates = getattr(Base.classes, "substate_prescriptor", None)
-    Confidence = getattr(Base.classes, "confidence_level", None)
-
-    rows = (
-        _filtered_prescriptors_query(Model)
-        .order_by(Model.created_at.desc())
-        .all()
-    )
-
-    user_ids = {getattr(row, "user_id", None) for row in rows if getattr(row, "user_id", None)}
-    type_ids = {getattr(row, "type_id", None) for row in rows if getattr(row, "type_id", None) is not None}
-    proposed_type_ids = {getattr(row, "proposed_type_id", None) for row in rows if getattr(row, "proposed_type_id", None) is not None}
-    state_ids = {getattr(row, "state_id", None) for row in rows if getattr(row, "state_id", None) is not None}
-    substate_ids = {getattr(row, "sub_state_id", None) for row in rows if getattr(row, "sub_state_id", None) is not None}
-    confidence_ids = {getattr(row, "confidence_level_id", None) for row in rows if getattr(row, "confidence_level_id", None) is not None}
-
-    users_map = {}
-    if Users is not None and user_ids:
-        users_map = {u.id: u for u in db.session.query(Users).filter(Users.id.in_(user_ids)).all()}
-
-    type_map = {}
-    if Types is not None and (type_ids or proposed_type_ids):
-        ids = type_ids | proposed_type_ids
-        type_map = {t.id: getattr(t, "name", "") for t in db.session.query(Types).filter(Types.id.in_(ids)).all()}
-
-    state_map = {}
-    if States is not None and state_ids:
-        state_map = {s.id: getattr(s, "name", "") for s in db.session.query(States).filter(States.id.in_(state_ids)).all()}
-
-    substate_map = {}
-    if Substates is not None and substate_ids:
-        substate_map = {s.id: getattr(s, "name", "") for s in db.session.query(Substates).filter(Substates.id.in_(substate_ids)).all()}
-
-    confidence_map = {}
-    if Confidence is not None and confidence_ids:
-        confidence_map = {c.id: getattr(c, "name", "") for c in db.session.query(Confidence).filter(Confidence.id.in_(confidence_ids)).all()}
-
-    prescriptor_columns = [column.name for column in Model.__table__.columns]
-    headers = [
-        "user_name",
-        "user_email",
-        "user_cellular",
-        "type_name",
-        "proposed_type_name",
-        "state_name",
-        "sub_state_name",
-        "confidence_level_name",
-    ] + prescriptor_columns
-
+    headers, rows = _prescriptor_export_rows(Model)
     output = io.StringIO()
     output.write("\ufeff")
     writer = csv.writer(output)
     writer.writerow(headers)
-
-    for prescriptor in rows:
-        user = users_map.get(getattr(prescriptor, "user_id", None))
-        row = [
-            getattr(user, "name", "") if user else "",
-            getattr(user, "email", "") if user else "",
-            getattr(user, "cellular", "") if user else "",
-            type_map.get(getattr(prescriptor, "type_id", None), ""),
-            type_map.get(getattr(prescriptor, "proposed_type_id", None), ""),
-            state_map.get(getattr(prescriptor, "state_id", None), ""),
-            substate_map.get(getattr(prescriptor, "sub_state_id", None), ""),
-            confidence_map.get(getattr(prescriptor, "confidence_level_id", None), ""),
-        ]
-        row.extend(_format_export_value(getattr(prescriptor, column, "")) for column in prescriptor_columns)
+    for row in rows:
         writer.writerow(row)
 
     filename = "prescriptores.csv"
@@ -676,6 +684,58 @@ def export_prescriptors_csv():
         output.getvalue(),
         mimetype="text/csv; charset=utf-8",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@prescriptors_bp.get("/export.xlsx")
+@login_required
+def export_prescriptors_xlsx():
+    Model = _get_model()
+    if not Model:
+        flash("Modelo Prescriptor no disponible", "danger")
+        return redirect(url_for("prescriptors.list_prescriptors"))
+
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill
+        from openpyxl.utils import get_column_letter
+    except ImportError:
+        flash("Para exportar Excel falta instalar openpyxl. Ejecutá pip install -r requirements.txt", "warning")
+        return redirect(url_for("prescriptors.list_prescriptors"))
+
+    headers, rows = _prescriptor_export_rows(Model)
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Prescriptores"
+    sheet.append(headers)
+
+    header_fill = PatternFill("solid", fgColor="D9EAF7")
+    for cell in sheet[1]:
+        cell.font = Font(bold=True)
+        cell.fill = header_fill
+
+    for row in rows:
+        sheet.append(row)
+
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = sheet.dimensions
+
+    for index, header in enumerate(headers, start=1):
+        max_len = len(str(header))
+        for cell in sheet[get_column_letter(index)]:
+            if cell.value is not None:
+                max_len = max(max_len, min(len(str(cell.value)), 60))
+        sheet.column_dimensions[get_column_letter(index)].width = min(max_len + 2, 62)
+
+    output = io.BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="prescriptores.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
 
