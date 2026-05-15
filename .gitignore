@@ -216,4 +216,8 @@ config.py
 .DS_Store
 static/.DS_Store
 templates/.DS_Store
-static/
+static/*
+!static/img/
+static/img/*
+!static/img/faviconV2.png
+!static/img/SDC_Blanco_Vertical.png
