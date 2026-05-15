@@ -26,6 +26,7 @@ def _model(name):
 from uuid import uuid4
 from sigp.security import require_perm
 from sigp.common.email_utils import send_simple_mail
+from sigp.common.prescriptor_utils import apply_program_commission_policy, sync_commissions_for_program
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -85,6 +86,7 @@ def _program_form(program_id=None):
         for k, v in data.items():
             if k not in upload_fields.values():
                 setattr(program, k, v)
+        apply_program_commission_policy(program)
         # handle uploads
         upload_dir = current_app.config.get("PROGRAM_UPLOAD_FOLDER", Path(current_app.root_path)/"static"/"programs")
         upload_dir.mkdir(parents=True, exist_ok=True)
@@ -108,48 +110,18 @@ def _program_form(program_id=None):
         try:
             db.session.commit()
             
-            # -----------------------------------------------------------------------
-            # NUEVO: Sincronizar comisiones para todos los prescriptores existentes
-            # -----------------------------------------------------------------------
             try:
-                Prescriptor = _model("prescriptors")
-                PrescComm = _model("prescriptor_commission")
-                
-                if Prescriptor and PrescComm:
-                    # Obtenemos todos los IDs de prescriptores
-                    # Nota: Podrías filtrar por state_id=1 (Activos) si no quieres asignarlo a dados de baja
-                    prescriptors_ids = db.session.query(Prescriptor.id).all()
-                    
-                    added_count = 0
-                    for (pid,) in prescriptors_ids:
-                        # Verificamos si ya existe la comisión para este par (Prescriptor, Programa)
-                        exists = db.session.query(PrescComm.id).filter_by(
-                            prescriptor_id=pid, 
-                            program_id=program.id
-                        ).first()
-                        
-                        if not exists:
-                            # Creamos la relación usando los valores por defecto del programa actual
-                            new_comm = PrescComm(
-                                id=str(uuid4()),
-                                prescriptor_id=pid,
-                                program_id=program.id,
-                                commission_value=program.commission_value or 0.0,
-                                registration_value=program.registration_value or 0.0,
-                                value_quotas=program.value_quotas or 0.0,
-                                first_installment_pct=program.first_installment_pct or 0.0
-                            )
-                            db.session.add(new_comm)
-                            added_count += 1
-                    
-                    if added_count > 0:
-                        db.session.commit()
-                        current_app.logger.info(f"Programa {program.name} sincronizado a {added_count} prescriptores.")
+                result = sync_commissions_for_program(program.id, update_existing=False)
+                if result["created"] > 0:
+                    current_app.logger.info(
+                        "Programa %s sincronizado a %s prescriptores.",
+                        program.name,
+                        result["created"],
+                    )
 
             except Exception as e_sync:
                 # Logueamos el error pero no fallamos la petición principal, ya que el programa sí se guardó
                 current_app.logger.error(f"Error sincronizando comisiones al guardar programa: {e_sync}")
-            # -----------------------------------------------------------------------
 
             flash("Programa guardado correctamente", "success")
             return redirect(url_for("programs.programs_list"))
@@ -240,29 +212,12 @@ def program_duplicate(program_id):
     for f in FIELDS:
         setattr(new, f, getattr(src, f))
     new.name = f"{src.name} (copia)"
+    apply_program_commission_policy(new)
     db.session.add(new)
     db.session.commit()
-    
-    # -----------------------------------------------------------------------
-    # También sincronizamos al duplicar para que los prescriptores tengan la copia
-    # -----------------------------------------------------------------------
+
     try:
-        PrescComm = _model("prescriptor_commission")
-        Prescriptor = _model("prescriptors")
-        if PrescComm and Prescriptor:
-             prescriptors_ids = db.session.query(Prescriptor.id).all()
-             for (pid,) in prescriptors_ids:
-                 new_comm = PrescComm(
-                    id=str(uuid4()),
-                    prescriptor_id=pid,
-                    program_id=new.id,
-                    commission_value=new.commission_value or 0.0,
-                    registration_value=new.registration_value or 0.0,
-                    value_quotas=new.value_quotas or 0.0,
-                    first_installment_pct=new.first_installment_pct or 0.0
-                 )
-                 db.session.add(new_comm)
-             db.session.commit()
+        sync_commissions_for_program(new.id, update_existing=False)
     except Exception as e_dup:
         current_app.logger.error(f"Error sync duplicado: {e_dup}")
     

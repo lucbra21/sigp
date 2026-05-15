@@ -137,6 +137,25 @@ def create_app(config_class=Config):
     app.register_blueprint(adjustments_bp)
     app.register_blueprint(dashboard_directive_bp)
 
+    import click
+
+    @app.cli.command("sync-recent-prescriptor-commissions")
+    @click.option("--days", default=5, show_default=True, type=int, help="Cantidad de días hacia atrás a corregir.")
+    @click.option("--apply", "apply_changes", is_flag=True, help="Aplica los cambios. Sin este flag solo muestra el resumen.")
+    def sync_recent_prescriptor_commissions_cmd(days, apply_changes):
+        """Sincroniza programas activos y comisiones para prescriptores recientes."""
+        from sigp.common.prescriptor_utils import sync_recent_prescriptor_commissions
+
+        result = sync_recent_prescriptor_commissions(days=days, apply=apply_changes)
+        mode = "APLICADO" if apply_changes else "DRY-RUN"
+        click.echo(f"[{mode}] Prescriptores desde {result['cutoff']:%Y-%m-%d %H:%M:%S} UTC")
+        click.echo(f"Prescriptores alcanzados: {result['prescriptors']}")
+        click.echo(f"Programas activos: {result['programs']}")
+        click.echo(f"Asignaciones a crear: {result['created']}")
+        click.echo(f"Asignaciones a actualizar: {result['updated']}")
+        if not apply_changes:
+            click.echo("Ejecutá nuevamente con --apply para guardar estos cambios.")
+
     # ---- error handlers (CORREGIDO PARA FAVICON PNG) ----
     
     @app.errorhandler(403)

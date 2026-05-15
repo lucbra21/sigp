@@ -69,10 +69,13 @@ def landing_page(prescriptor_id: str):
         return redirect("/")
 
     form = PublicLeadForm()
-    # Poblar choices con todos los programas activos.
-    if Program is not None:
+    # Poblar choices con programas activos asignados al prescriptor.
+    PrescComm = getattr(Base.classes, "prescriptor_commission", None)
+    if Program is not None and PrescComm is not None:
         prog_rows = (
             db.session.query(Program)
+            .join(PrescComm, PrescComm.program_id == Program.id)
+            .filter(PrescComm.prescriptor_id == prescriptor_id)
             .filter(Program.state == "Activo")
             .order_by(getattr(Program, "name", Program.id))
             .all()
@@ -81,6 +84,16 @@ def landing_page(prescriptor_id: str):
             (p.id, getattr(p, "name", getattr(p, "nombre", str(p.id)))) for p in prog_rows
         ]
         form.program_info_id.choices = prog_choices
+    elif Program is not None:
+        prog_rows = (
+            db.session.query(Program)
+            .filter(Program.state == "Activo")
+            .order_by(getattr(Program, "name", Program.id))
+            .all()
+        )
+        form.program_info_id.choices = [("", "Seleccione programa")] + [
+            (p.id, getattr(p, "name", getattr(p, "nombre", str(p.id)))) for p in prog_rows
+        ]
     else:
         form.program_info_id.choices = [("", "-")]
 

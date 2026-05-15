@@ -260,6 +260,12 @@ def signup_post():
         db.session.add(new_presc)
         db.session.commit()
 
+        try:
+            from sigp.common.prescriptor_utils import sync_commissions_for_prescriptor
+            sync_commissions_for_prescriptor(new_presc.id)
+        except Exception as exc:
+            current_app.logger.exception("Error sincronizando comisiones del prescriptor registrado: %s", exc)
+
         # 4. Notificar
         try:
             from sigp.common.email_utils import internal_notification_recipients
