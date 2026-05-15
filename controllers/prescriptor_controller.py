@@ -6,6 +6,7 @@ CRUD básico usando modelos reflejados.
 from flask import (
     current_app,
     Blueprint,
+    Response,
     render_template,
     request,
     redirect,
@@ -27,6 +28,8 @@ import os
 from werkzeug.utils import secure_filename
 import hashlib
 import uuid
+import csv
+import io
 from sigp.models import Base
 import time
 
@@ -439,6 +442,29 @@ def my_ledger():
 # ---------------------------------------------------------------------------
 
 
+def _filtered_prescriptors_query(Model):
+    nombre_f = request.args.get("nombre", type=str, default="").strip()
+    tipo_f = request.args.get("tipo", type=str, default="")
+    estado_f = request.args.get("estado", type=str, default="")
+
+    query = db.session.query(Model)
+    if nombre_f:
+        query = query.filter(Model.squeeze_page_name.ilike(f"%{nombre_f}%"))
+    if tipo_f:
+        query = query.filter(Model.type_id == int(tipo_f))
+    if estado_f:
+        query = query.filter(Model.state_id == int(estado_f))
+    return query
+
+
+def _format_export_value(value):
+    if value is None:
+        return ""
+    if hasattr(value, "strftime"):
+        return value.strftime("%Y-%m-%d %H:%M:%S")
+    return value
+
+
 @prescriptors_bp.get("/")
 @login_required
 def list_prescriptors():
@@ -562,6 +588,94 @@ def list_prescriptors():
         total=total,
         sort=sort,
         direction=direction,
+    )
+
+
+@prescriptors_bp.get("/export.csv")
+@login_required
+def export_prescriptors_csv():
+    Model = _get_model()
+    if not Model:
+        flash("Modelo Prescriptor no disponible", "danger")
+        return redirect(url_for("prescriptors.list_prescriptors"))
+
+    Users = getattr(Base.classes, "users", None)
+    Types = getattr(Base.classes, "prescriptor_types", None)
+    States = getattr(Base.classes, "state_prescriptor", None)
+    Substates = getattr(Base.classes, "substate_prescriptor", None)
+    Confidence = getattr(Base.classes, "confidence_level", None)
+
+    rows = (
+        _filtered_prescriptors_query(Model)
+        .order_by(Model.created_at.desc())
+        .all()
+    )
+
+    user_ids = {getattr(row, "user_id", None) for row in rows if getattr(row, "user_id", None)}
+    type_ids = {getattr(row, "type_id", None) for row in rows if getattr(row, "type_id", None) is not None}
+    proposed_type_ids = {getattr(row, "proposed_type_id", None) for row in rows if getattr(row, "proposed_type_id", None) is not None}
+    state_ids = {getattr(row, "state_id", None) for row in rows if getattr(row, "state_id", None) is not None}
+    substate_ids = {getattr(row, "sub_state_id", None) for row in rows if getattr(row, "sub_state_id", None) is not None}
+    confidence_ids = {getattr(row, "confidence_level_id", None) for row in rows if getattr(row, "confidence_level_id", None) is not None}
+
+    users_map = {}
+    if Users is not None and user_ids:
+        users_map = {u.id: u for u in db.session.query(Users).filter(Users.id.in_(user_ids)).all()}
+
+    type_map = {}
+    if Types is not None and (type_ids or proposed_type_ids):
+        ids = type_ids | proposed_type_ids
+        type_map = {t.id: getattr(t, "name", "") for t in db.session.query(Types).filter(Types.id.in_(ids)).all()}
+
+    state_map = {}
+    if States is not None and state_ids:
+        state_map = {s.id: getattr(s, "name", "") for s in db.session.query(States).filter(States.id.in_(state_ids)).all()}
+
+    substate_map = {}
+    if Substates is not None and substate_ids:
+        substate_map = {s.id: getattr(s, "name", "") for s in db.session.query(Substates).filter(Substates.id.in_(substate_ids)).all()}
+
+    confidence_map = {}
+    if Confidence is not None and confidence_ids:
+        confidence_map = {c.id: getattr(c, "name", "") for c in db.session.query(Confidence).filter(Confidence.id.in_(confidence_ids)).all()}
+
+    prescriptor_columns = [column.name for column in Model.__table__.columns]
+    headers = [
+        "user_name",
+        "user_email",
+        "user_cellular",
+        "type_name",
+        "proposed_type_name",
+        "state_name",
+        "sub_state_name",
+        "confidence_level_name",
+    ] + prescriptor_columns
+
+    output = io.StringIO()
+    output.write("\ufeff")
+    writer = csv.writer(output)
+    writer.writerow(headers)
+
+    for prescriptor in rows:
+        user = users_map.get(getattr(prescriptor, "user_id", None))
+        row = [
+            getattr(user, "name", "") if user else "",
+            getattr(user, "email", "") if user else "",
+            getattr(user, "cellular", "") if user else "",
+            type_map.get(getattr(prescriptor, "type_id", None), ""),
+            type_map.get(getattr(prescriptor, "proposed_type_id", None), ""),
+            state_map.get(getattr(prescriptor, "state_id", None), ""),
+            substate_map.get(getattr(prescriptor, "sub_state_id", None), ""),
+            confidence_map.get(getattr(prescriptor, "confidence_level_id", None), ""),
+        ]
+        row.extend(_format_export_value(getattr(prescriptor, column, "")) for column in prescriptor_columns)
+        writer.writerow(row)
+
+    filename = "prescriptores.csv"
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 

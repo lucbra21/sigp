@@ -16,7 +16,14 @@
 </div>
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="fw-semibold mb-0">Prescriptores</h2>
-    <a href="{{ url_for('prescriptors.new_prescriptor') }}" id="btnNuevo" class="btn btn-primary">Nuevo Prescriptor</a>
+    <div class="d-flex gap-2">
+        <a
+            href="{{ url_for('prescriptors.export_prescriptors_csv', nombre=filters.nombre, tipo=filters.tipo, estado=filters.estado) }}"
+            id="btnExportar"
+            class="btn btn-outline-success"
+        >Exportar CSV</a>
+        <a href="{{ url_for('prescriptors.new_prescriptor') }}" id="btnNuevo" class="btn btn-primary">Nuevo Prescriptor</a>
+    </div>
 </div>
 
 
@@ -105,6 +112,8 @@
     if(filter){filter.addEventListener('submit',show);}    
     const btnNuevo=document.getElementById('btnNuevo');
     if(btnNuevo){btnNuevo.addEventListener('click',show);}    
+    const btnExportar=document.getElementById('btnExportar');
+    if(btnExportar){btnExportar.addEventListener('click',show);}
     document.querySelectorAll('.pagination a.page-link, thead a').forEach(a=>a.addEventListener('click',show));
     // Editar y Comisiones
     document.querySelectorAll('a.btn-secondary, a.btn-warning').forEach(a=>a.addEventListener('click',show));
