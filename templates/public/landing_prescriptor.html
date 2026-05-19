@@ -6,128 +6,112 @@
 {% endblock %}
 {% block content %}
 
-<div class="landing-hero">
-  <div class="hero-content col-md-2">
-      <div class="w-100" style="max-width: 600px;">
-        <div class="text-center">
-          <h1 class="display-5 mb-2" style="color: #ffffff;">{{ prescriptor.squeeze_page_name }}</h1>
-          
-          {% if prescriptor.photo_url %}
-            <img src="{{ prescriptor.photo_url }}" class="rounded-circle mb-3" alt="Foto de {{ prescriptor.squeeze_page_name }}" style="max-width: 200px;">
-          {% endif %}
-          <img
-            src="{{ url_for('static', filename='img/SDC_Blanco_Vertical.png') }}"
-            class="img-fluid mb-3"
-            alt="Sports Data Campus"
-            style="max-width: 150px;"
-          >
-          <div class="d-flex justify-content-center mb-3">
-            <button class="btn p-0 fs-2 me-1" onclick="setLang('es')" title="Español">&#x1F1EA;&#x1F1F8;</button>
-            <button class="btn p-0 fs-2 me-1" onclick="setLang('en')" title="English">&#x1F1EC;&#x1F1E7;</button>
-            <button class="btn p-0 fs-2" onclick="setLang('pt')" title="Português">&#x1F1F5;&#x1F1F9;</button>
-          </div>
-          <!-- social links -->
-          <div class="d-flex justify-content-center gap-3 mb-4">
-            {% if prescriptor.face_url %}<a href="{{ prescriptor.face_url }}" target="_blank" class="text-white fs-4"><i class="bi bi-facebook"></i></a>{% endif %}
-            {% if prescriptor.linkedin_url %}<a href="{{ prescriptor.linkedin_url }}" target="_blank" class="text-white fs-4"><i class="bi bi-linkedin"></i></a>{% endif %}
-            {% if prescriptor.instagram_url %}<a href="{{ prescriptor.instagram_url }}" target="_blank" class="text-white fs-4"><i class="bi bi-instagram"></i></a>{% endif %}
-            {% if prescriptor.x_url %}<a href="{{ prescriptor.x_url }}" target="_blank" class="text-white fs-4"><i class="bi bi-twitter"></i></a>{% endif %}
-            {% set wa = prescriptor.whatsapp_number if prescriptor.whatsapp_number is defined else (prescriptor.whatsapp_namber if prescriptor.whatsapp_namber is defined else None) %}
-            {% if wa %}<a href="https://wa.me/{{ wa|replace(' ','') }}" target="_blank" class="text-white fs-4"><i class="bi bi-whatsapp"></i></a>{% endif %}
-          </div>
-        </div>
-    </div>
-  </div>
+<div class="landing-hero landing-v2">
+  <section class="landing-v2-profile" aria-label="Prescriptor">
+    <a class="landing-v2-logo" href="https://sportsdatacampus.com/" target="_blank" rel="noopener">
+      <img src="{{ url_for('static', filename='img/logos/SDC_horizontal_texto_blanco.svg') }}" alt="Sports Data Campus">
+    </a>
 
-
-  <div class="row justify-content-center col-md-9">
-    <div class="col-md-9">
-      <div class="et_pb_with_border et_pb_column_4_4 et_pb_column et_pb_column_1  et_pb_css_mix_blend_mode_passthrough et-last-child">
-				
-				
-				<div class="et_pb_module et_pb_text et_pb_text_0  et_pb_text_align_center et_pb_bg_layout_light">
-				
-				
-				<div class="et_pb_text_inner"><h1 style="text-align: center;font-family: 'Barlow Semi Condensed', Helvetica, Arial, Lucida, sans-serif;
-    font-weight: 400;
-    font-style: italic;
-    font-size: 57px;
-    color: #FFFFFF !important;
-    letter-spacing: 4px;
-    line-height: 0.9em;
-    margin-top: 20px;
-    text-shadow: 0em 0.1em 0.1em rgba(0, 0, 0, 0.4);
-    transition: line-height 300ms ease 0ms;">SPORTS DATA CAMPUS</h1></div>
-			</div><div class="et_pb_module et_pb_text et_pb_text_1  et_pb_text_align_center et_pb_bg_layout_light">
-				
-				
-				<div class="et_pb_text_inner" style="    line-height: 0.9em;
-    font-family: 'Barlow Condensed', Helvetica, Arial, Lucida, sans-serif;
-    font-size: 36px;
-    letter-spacing: 5px;
-    line-height: 0.9em;
-    padding-right: 0px !important;
-    padding-left: 0px !important;"
-    ><p style="text-align: center; color: #FFFFFF !important;" id="headlineText">PON TU PASIÓN AL SERVICIO DEL FUTURO</p></div>
-			
-      <h2 class="h6" style="text-align: center; color: #FFFFFF !important;"><a href="https://sportsdatacampus.com/" target="_blank" class="link-light text-decoration-none">sportsdatacampus.com</a></h2>
-    </div>
-			</div>
-
-      <div class="card" style="margin-top: 40px;background-color: rgba(255, 255, 255, 0.25);color: white;">
-        <div class="card-body">
-          <!-- Language Switcher -->
-          
-          <h2 id="leadTitle" class="h4 mb-3">Déjanos tus datos</h2>
-          <form id="leadForm" method="post">
-            {{ form.hidden_tag() }}
-            <div class="col-md-12">
-              <label id="labelName" class="form-label">{{ form.name.label.text }}</label>
-              {{ form.name(class="form-control", placeholder="Tu nombre") }}
-              {% for error in form.name.errors %}
-              <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
-            <div class="row g-3"><div class="col-md-6">
-              <label id="labelEmail" class="form-label">{{ form.email.label.text }}</label>
-              {{ form.email(class="form-control", placeholder="Tu email") }}
-              {% for error in form.email.errors %}
-              <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
-            <div class="col-md-6">
-              <label id="labelCell" class="form-label">{{ form.cellular.label.text }}</label>
-              {{ form.cellular(class="form-control", placeholder="Teléfono") }}
-              {% for error in form.cellular.errors %}
-              <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
-            <div class="col-md-12">
-              <label id="labelProgram" class="form-label">{{ form.program_info_id.label.text }}</label>
-              {{ form.program_info_id(class="form-select") }}
-              <div class="d-grid mt-2">
-                <a id="programLinkBtn" href="#" target="_blank" class="btn btn-outline-light d-none" rel="noopener">Ver programa</a>
-              </div>
-              {% for error in form.program_info_id.errors %}
-              <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
-            <div class="col-md-12">
-              <label id="labelObs" class="form-label">{{ form.observations.label.text }}</label>
-              {{ form.observations(class="form-control", placeholder="Observaciones", rows=3) }}
-              {% for error in form.observations.errors %}
-              <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
-            <div class="d-grid">
-              <button id="btnSubmit" type="submit" class="btn btn-primary btn-lg">{{ form.submit.label.text }}</button>
-            </div>
-          </div>
-          </form>
-        </div>
+    <div class="profile-spotlight">
+      <div class="profile-ring">
+        {% if prescriptor.photo_url %}
+          <img src="{{ prescriptor.photo_url }}" alt="Foto de {{ prescriptor.squeeze_page_name }}" onerror="this.style.display='none';">
+        {% else %}
+          <img src="{{ url_for('static', filename='img/SDC_Blanco_Vertical.png') }}" alt="Sports Data Campus">
+        {% endif %}
       </div>
     </div>
-  </div>
+
+    <h1 class="prescriptor-name">{{ prescriptor.squeeze_page_name }}</h1>
+
+    <div class="social-links">
+      {% if prescriptor.face_url %}<a href="{{ prescriptor.face_url }}" target="_blank" title="Facebook"><i class="bi bi-facebook"></i></a>{% endif %}
+      {% if prescriptor.linkedin_url %}<a href="{{ prescriptor.linkedin_url }}" target="_blank" title="LinkedIn"><i class="bi bi-linkedin"></i></a>{% endif %}
+      {% if prescriptor.instagram_url %}<a href="{{ prescriptor.instagram_url }}" target="_blank" title="Instagram"><i class="bi bi-instagram"></i></a>{% endif %}
+      {% if prescriptor.x_url %}<a href="{{ prescriptor.x_url }}" target="_blank" title="X"><i class="bi bi-twitter"></i></a>{% endif %}
+      {% set wa = prescriptor.whatsapp_number if prescriptor.whatsapp_number is defined else (prescriptor.whatsapp_namber if prescriptor.whatsapp_namber is defined else None) %}
+      {% if wa %}<a href="https://wa.me/{{ wa|replace(' ','') }}" target="_blank" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>{% endif %}
+    </div>
+  </section>
+
+  <section class="landing-v2-content" aria-label="Formulario">
+    <div class="headline-wrap">
+      <p id="headlineText" class="landing-headline">PON TU PASIÓN AL SERVICIO DEL <span>FUTURO</span></p>
+    </div>
+
+    <form id="leadForm" method="post" class="lead-form-v2">
+      {{ form.hidden_tag() }}
+      <div class="form-title-row">
+        <h2 id="leadTitle">Déjanos tus datos</h2>
+        <div class="language-switcher-v2" aria-label="Idioma">
+          <button type="button" onclick="setLang('es')" title="Español" aria-label="Español">
+            <img src="{{ url_for('static', filename='img/squeeze page/v2/Banderas-02.png') }}" alt="">
+          </button>
+          <button type="button" onclick="setLang('en')" title="English" aria-label="English">
+            <img src="{{ url_for('static', filename='img/squeeze page/v2/Banderas-03.png') }}" alt="">
+          </button>
+          <button type="button" onclick="setLang('pt')" title="Português" aria-label="Português">
+            <img src="{{ url_for('static', filename='img/squeeze page/v2/Banderas-04.png') }}" alt="">
+          </button>
+        </div>
+      </div>
+
+      <div class="form-grid-v2">
+        <div class="field-full">
+          <label id="labelName" class="visually-hidden">{{ form.name.label.text }}</label>
+          {{ form.name(class="form-control", placeholder="Nombre") }}
+          {% for error in form.name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div>
+          <label id="labelEmail" class="visually-hidden">{{ form.email.label.text }}</label>
+          {{ form.email(class="form-control", placeholder="Email") }}
+          {% for error in form.email.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div>
+          <label id="labelCell" class="visually-hidden">{{ form.cellular.label.text }}</label>
+          {{ form.cellular(class="form-control", placeholder="Teléfono") }}
+          {% for error in form.cellular.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-full">
+          <label id="labelProgram" class="visually-hidden">{{ form.program_info_id.label.text }}</label>
+          {{ form.program_info_id(class="form-select") }}
+          <a id="programLinkBtn" href="#" target="_blank" class="program-guide-link d-none" rel="noopener">Ver guía PDF</a>
+          {% for error in form.program_info_id.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="field-full">
+          <label id="labelObs" class="visually-hidden">{{ form.observations.label.text }}</label>
+          {{ form.observations(class="form-control", placeholder="Observaciones", rows=4) }}
+          {% for error in form.observations.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="submit-wrap">
+        <button id="btnSubmit" type="submit" class="btn-submit-v2">{{ form.submit.label.text }}</button>
+      </div>
+    </form>
+
+    <div class="benefits-v2">
+      <div class="benefit-item">
+        <img src="{{ url_for('static', filename='img/squeeze page/v2/Birrete-neon.png') }}" alt="">
+        <p>Formación especializada en <span>deporte, datos e innovación</span></p>
+      </div>
+      <div class="benefit-item">
+        <img src="{{ url_for('static', filename='img/squeeze page/v2/Metrica-neon.png') }}" alt="">
+        <p>Metodología conectada con la <span>realidad de la industria</span></p>
+      </div>
+      <div class="benefit-item">
+        <img src="{{ url_for('static', filename='img/squeeze page/v2/Estrella-neon.png') }}" alt="">
+        <p>Mejores <span>condiciones de matriculación</span></p>
+      </div>
+    </div>
+
+    <div class="neon-divider"></div>
+
+    <div class="help-note-v2">
+      <img src="{{ url_for('static', filename='img/squeeze page/v2/Corazon-neon.png') }}" alt="">
+      <p>Si necesitas orientación para elegir tu Máster, escríbeme y <span>te ayudo.</span></p>
+    </div>
+  </section>
 
 <!-- Loading overlay -->
 <div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center" style="background:rgba(0,0,0,.5);z-index:1050;">
@@ -138,12 +122,13 @@
   document.addEventListener('DOMContentLoaded', function(){
     // i18n translations
     const translations = {
-      es:{headline:'PON TU PASIÓN AL SERVICIO DEL FUTURO',lead:'Déjanos tus datos',name:'Tu nombre',email:'Tu email',cell:'Teléfono',program:'Programa',obs:'Observaciones',submit:'Enviar',btnVer:'Ver guía PDF'},
-      en:{headline:'PUT YOUR PASSION AT THE SERVICE OF THE FUTURE',lead:'Leave us your data',name:'Your name',email:'Your email',cell:'Phone',program:'Program',obs:'Observations',submit:'Send',btnVer:'See PDF guide'},
-      pt:{headline:'COLOQUE A SUA PAIXÃO A SERVIÇO DO FUTURO',lead:'Deixe-nos os seus dados',name:'Seu nome',email:'Seu email',cell:'Telefone',program:'Programa',obs:'Observações',submit:'Enviar',btnVer:'Ver guia PDF'}
+      es:{headline:'PON TU PASIÓN AL SERVICIO DEL FUTURO',lead:'Déjanos tus datos',name:'Nombre',email:'Email',cell:'Teléfono',program:'Programa',obs:'Observaciones',submit:'Enviar',btnVer:'Ver guía PDF'},
+      en:{headline:'PUT YOUR PASSION AT THE SERVICE OF THE FUTURE',lead:'Leave us your data',name:'Name',email:'Email',cell:'Phone',program:'Program',obs:'Observations',submit:'Send',btnVer:'See PDF guide'},
+      pt:{headline:'COLOQUE A SUA PAIXÃO A SERVIÇO DO FUTURO',lead:'Deixe-nos os seus dados',name:'Nome',email:'Email',cell:'N. Telemóvel',program:'Programa',obs:'Observações',submit:'Enviar',btnVer:'Ver guia PDF'}
     };
     const applyLang=(l)=>{
       const setText=(id,text)=>{const el=document.getElementById(id);if(el) el.innerText=text;};
+      const setPlaceholder=(id,text)=>{const el=document.getElementById(id);if(el) el.placeholder=text;};
       const t=translations[l]||translations.es;
       setText('headlineText',t.headline);
       setText('leadTitle',t.lead);
@@ -154,6 +139,12 @@
       setText('labelObs',t.obs);
       setText('btnSubmit',t.submit);
       setText('programLinkBtn',t.btnVer);
+      setPlaceholder('name',t.name);
+      setPlaceholder('email',t.email);
+      setPlaceholder('cellular',t.cell);
+      setPlaceholder('observations',t.obs);
+      const programSelect=document.getElementById('program_info_id');
+      if(programSelect && programSelect.options.length){programSelect.options[0].text=t.program;}
     };
     window.setLang=(l)=>{localStorage.setItem('lang',l);applyLang(l);} ;
     applyLang(localStorage.getItem('lang')||'es');
