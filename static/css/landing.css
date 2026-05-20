@@ -4,8 +4,8 @@
     width: 100%;
     overflow: hidden;
     display: grid;
-    grid-template-columns: minmax(320px, 42vw) minmax(420px, 1fr);
-    gap: clamp(18px, 3vw, 48px);
+    grid-template-columns: minmax(390px, 46vw) minmax(420px, 1fr);
+    gap: clamp(16px, 2.4vw, 42px);
     padding: clamp(18px, 2.4vw, 42px);
     background:
         radial-gradient(circle at 20% 38%, rgba(0, 239, 255, .18), transparent 22%),
@@ -13,6 +13,7 @@
         url("/static/img/squeeze page/v2/Fondo.jpg") center/cover no-repeat,
         #000;
     color: #fff;
+    font-family: "Open Sans", Arial, sans-serif;
 }
 
 .landing-v2::before {
@@ -45,13 +46,13 @@
 }
 
 .landing-v2-logo img {
-    width: clamp(145px, 12vw, 220px);
+    width: clamp(170px, 14vw, 250px);
     height: auto;
 }
 
 .profile-spotlight {
     position: relative;
-    width: min(41vw, 500px);
+    width: min(45vw, 610px);
     aspect-ratio: 1;
     display: grid;
     place-items: center;
@@ -75,19 +76,40 @@
 
 .profile-ring {
     position: relative;
-    width: 70%;
+    width: 82%;
     aspect-ratio: 1;
     border-radius: 50%;
-    padding: 7px;
-    overflow: hidden;
+    padding: 0;
+    overflow: visible;
+    isolation: isolate;
     border: 3px solid transparent;
+    background:
+        linear-gradient(#fff, #fff) padding-box,
+        linear-gradient(130deg, #ff2ff7 0%, #fff 36%, #15f4ff 70%, #00e2bf 100%) border-box;
     box-shadow:
-        0 0 18px rgba(0, 234, 255, .42),
-        0 0 28px rgba(240, 0, 255, .36);
+        0 0 24px rgba(0, 234, 255, .58),
+        0 0 44px rgba(240, 0, 255, .48),
+        0 0 78px rgba(0, 217, 200, .28);
     z-index: 2;
 }
 
+.profile-ring::before {
+    content: "";
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 28% 30%, rgba(255, 47, 247, .58), transparent 34%),
+        radial-gradient(circle at 72% 64%, rgba(0, 234, 255, .62), transparent 36%),
+        radial-gradient(circle, rgba(255, 255, 255, .18), transparent 62%);
+    filter: blur(19px);
+    opacity: .92;
+    z-index: -1;
+}
+
 .profile-ring img {
+    position: relative;
+    z-index: 1;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -99,9 +121,10 @@
 .prescriptor-name {
     width: 100%;
     margin: clamp(8px, 1.2vw, 16px) 0 0;
-    font-size: clamp(32px, 3.2vw, 52px);
+    font-family: "Barlow Condensed", Impact, "Arial Narrow", sans-serif;
+    font-size: clamp(42px, 4.1vw, 68px);
     line-height: .95;
-    font-weight: 800;
+    font-weight: 600;
     text-align: center;
     text-shadow: 0 0 12px rgba(0, 0, 0, .75);
 }
@@ -140,9 +163,10 @@
 
 .landing-headline {
     margin: 0;
-    font-size: clamp(30px, 2.55vw, 46px);
+    font-family: "Barlow Condensed", Impact, "Arial Narrow", sans-serif;
+    font-size: clamp(36px, 3vw, 56px);
     line-height: 1.05;
-    font-weight: 900;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0;
 }
@@ -355,7 +379,7 @@
     }
 
     .profile-spotlight {
-        width: min(78vw, 440px);
+        width: min(82vw, 520px);
     }
 
     .landing-v2-content {

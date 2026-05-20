@@ -2,6 +2,9 @@
 {% block title %}{{ prescriptor.squeeze_page_name or 'Prescriptor' }} | SIGP{% endblock %}
 
 {% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&family=Open+Sans:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
 {% endblock %}
 {% block content %}
@@ -9,7 +12,7 @@
 <div class="landing-hero landing-v2">
   <section class="landing-v2-profile" aria-label="Prescriptor">
     <a class="landing-v2-logo" href="https://sportsdatacampus.com/" target="_blank" rel="noopener">
-      <img src="{{ url_for('static', filename='img/logos/SDC_horizontal_texto_blanco.svg') }}" alt="Sports Data Campus">
+      <img src="{{ url_for('static', filename='img/logos/SDC_horizontal_monocromo_blanco.svg') }}" alt="Sports Data Campus">
     </a>
 
     <div class="profile-spotlight">
@@ -22,7 +25,7 @@
       </div>
     </div>
 
-    <h1 class="prescriptor-name">{{ prescriptor.squeeze_page_name }}</h1>
+    <h1 class="prescriptor-name">{{ prescriptor.squeeze_page_name|title }}</h1>
 
     <div class="social-links">
       {% if prescriptor.face_url %}<a href="{{ prescriptor.face_url }}" target="_blank" title="Facebook"><i class="bi bi-facebook"></i></a>{% endif %}
@@ -93,15 +96,15 @@
     <div class="benefits-v2">
       <div class="benefit-item">
         <img src="{{ url_for('static', filename='img/squeeze page/v2/Birrete-neon.png') }}" alt="">
-        <p>Formación especializada en <span>deporte, datos e innovación</span></p>
+        <p id="benefitTrainingText">Formación especializada en <span>deporte, datos e innovación</span></p>
       </div>
       <div class="benefit-item">
         <img src="{{ url_for('static', filename='img/squeeze page/v2/Metrica-neon.png') }}" alt="">
-        <p>Metodología conectada con la <span>realidad de la industria</span></p>
+        <p id="benefitMethodText">Metodología conectada con la <span>realidad de la industria</span></p>
       </div>
       <div class="benefit-item">
         <img src="{{ url_for('static', filename='img/squeeze page/v2/Estrella-neon.png') }}" alt="">
-        <p>Mejores <span>condiciones de matriculación</span></p>
+        <p id="benefitConditionsText">Mejores <span>condiciones de matriculación</span></p>
       </div>
     </div>
 
@@ -109,7 +112,7 @@
 
     <div class="help-note-v2">
       <img src="{{ url_for('static', filename='img/squeeze page/v2/Corazon-neon.png') }}" alt="">
-      <p>Si necesitas orientación para elegir tu Máster, escríbeme y <span>te ayudo.</span></p>
+      <p id="helpNoteText">Si necesitas orientación para elegir tu Máster, escríbeme y <span>te ayudo.</span></p>
     </div>
   </section>
 
@@ -122,15 +125,23 @@
   document.addEventListener('DOMContentLoaded', function(){
     // i18n translations
     const translations = {
-      es:{headline:'PON TU PASIÓN AL SERVICIO DEL FUTURO',lead:'Déjanos tus datos',name:'Nombre',email:'Email',cell:'Teléfono',program:'Programa',obs:'Observaciones',submit:'Enviar',btnVer:'Ver guía PDF'},
-      en:{headline:'PUT YOUR PASSION AT THE SERVICE OF THE FUTURE',lead:'Leave us your data',name:'Name',email:'Email',cell:'Phone',program:'Program',obs:'Observations',submit:'Send',btnVer:'See PDF guide'},
-      pt:{headline:'COLOQUE A SUA PAIXÃO A SERVIÇO DO FUTURO',lead:'Deixe-nos os seus dados',name:'Nome',email:'Email',cell:'N. Telemóvel',program:'Programa',obs:'Observações',submit:'Enviar',btnVer:'Ver guia PDF'}
+      es:{headline:'PON TU PASIÓN AL SERVICIO DEL FUTURO',lead:'Déjanos tus datos',name:'Nombre',email:'Email',cell:'Teléfono',program:'Programa',obs:'Observaciones',submit:'Enviar',btnVer:'Ver guía PDF',benefitTraining:'Formación especializada en <span>deporte, datos e innovación</span>',benefitMethod:'Metodología conectada con la <span>realidad de la industria</span>',benefitConditions:'Mejores <span>condiciones de matriculación</span>',helpNote:'Si necesitas orientación para elegir tu Máster, escríbeme y <span>te ayudo.</span>'},
+      en:{headline:'PUT YOUR PASSION AT THE SERVICE OF THE FUTURE',lead:'Leave us your data',name:'Name',email:'Email',cell:'Phone',program:'Program',obs:'Observations',submit:'Send',btnVer:'See PDF guide',benefitTraining:'Specialized training in <span>sport, data and innovation</span>',benefitMethod:'Methodology connected to the <span>reality of the industry</span>',benefitConditions:'Better <span>enrollment conditions</span>',helpNote:'If you need guidance to choose your Master’s program, write to me and <span>I’ll help you.</span>'},
+      pt:{headline:'COLOQUE A SUA PAIXÃO A SERVIÇO DO FUTURO',lead:'Deixe-nos os seus dados',name:'Nome',email:'Email',cell:'N. Telemóvel',program:'Programa',obs:'Observações',submit:'Enviar',btnVer:'Ver guia PDF',benefitTraining:'Formação especializada em <span>desporto, dados e inovação</span>',benefitMethod:'Metodologia conectada com a <span>realidade da indústria</span>',benefitConditions:'Melhores <span>condições de matrícula</span>',helpNote:'Se precisar de orientação para escolher o seu Mestrado, escreva-me e <span>eu ajudo.</span>'}
     };
     const applyLang=(l)=>{
       const setText=(id,text)=>{const el=document.getElementById(id);if(el) el.innerText=text;};
+      const setHtml=(id,html)=>{const el=document.getElementById(id);if(el) el.innerHTML=html;};
+      const setHeadline=(text)=>{
+        const el=document.getElementById('headlineText');
+        if(!el) return;
+        const words=text.trim().split(' ');
+        const last=words.pop();
+        el.innerHTML=`${words.join(' ')} <span>${last}</span>`;
+      };
       const setPlaceholder=(id,text)=>{const el=document.getElementById(id);if(el) el.placeholder=text;};
       const t=translations[l]||translations.es;
-      setText('headlineText',t.headline);
+      setHeadline(t.headline);
       setText('leadTitle',t.lead);
       setText('labelName',t.name);
       setText('labelEmail',t.email);
@@ -139,6 +150,10 @@
       setText('labelObs',t.obs);
       setText('btnSubmit',t.submit);
       setText('programLinkBtn',t.btnVer);
+      setHtml('benefitTrainingText',t.benefitTraining);
+      setHtml('benefitMethodText',t.benefitMethod);
+      setHtml('benefitConditionsText',t.benefitConditions);
+      setHtml('helpNoteText',t.helpNote);
       setPlaceholder('name',t.name);
       setPlaceholder('email',t.email);
       setPlaceholder('cellular',t.cell);
