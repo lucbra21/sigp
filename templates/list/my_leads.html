@@ -55,7 +55,13 @@
   {% for l in leads %}
     <tr>
       <td>{{ l.created_at.strftime('%d/%m/%Y') if l.created_at }}</td>
-      <td>{{ l.candidate_name }}</td>
+      <td>
+        {{ l.candidate_name }}
+        {% set nationality = l.candidate_nationality|default('', true) %}
+        {% if nationality %}
+          <br><small>Nacionalidad: {{ nationality }}</small>
+        {% endif %}
+      </td>
       <td>{{ l.candidate_email or '-'}}</td>
       <td>{{ l.candidate_cellular or '-'}}</td>
       <td>{{ program_map.get(l.program_info_id, '-') }}</td>

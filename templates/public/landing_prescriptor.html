@@ -65,19 +65,26 @@
           {{ form.name(class="form-control", placeholder="Nombre") }}
           {% for error in form.name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
         </div>
-        <div>
+        <div class="field-full">
           <label id="labelEmail" class="visually-hidden">{{ form.email.label.text }}</label>
           {{ form.email(class="form-control", placeholder="Email") }}
           {% for error in form.email.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
         </div>
-        <div>
-          <label id="labelCell" class="visually-hidden">{{ form.cellular.label.text }}</label>
-          <div class="phone-field-v2">
-            {{ form.country_code(class="form-select", required=True, aria_label="Código país") }}
-            {{ form.cellular(class="form-control", placeholder="Teléfono", required=True, inputmode="tel", autocomplete="tel") }}
+        <div class="field-full contact-line-v2">
+          <div>
+            <label id="labelNationality" class="visually-hidden">{{ form.candidate_nationality.label.text }}</label>
+            {{ form.candidate_nationality(class="form-select", required=True) }}
+            {% for error in form.candidate_nationality.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
           </div>
-          {% for error in form.country_code.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-          {% for error in form.cellular.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          <div>
+            <label id="labelCell" class="visually-hidden">{{ form.cellular.label.text }}</label>
+            <div class="phone-field-v2">
+              {{ form.country_code(class="form-select", required=True, aria_label="Código país") }}
+              {{ form.cellular(class="form-control", placeholder="Teléfono", required=True, inputmode="tel", autocomplete="tel") }}
+            </div>
+            {% for error in form.country_code.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            {% for error in form.cellular.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
         </div>
         <div class="field-full">
           <label id="labelProgram" class="visually-hidden">{{ form.program_info_id.label.text }}</label>
@@ -129,9 +136,9 @@
   document.addEventListener('DOMContentLoaded', function(){
     // i18n translations
     const translations = {
-      es:{headline:'PON TU PASIÓN AL SERVICIO DEL FUTURO',lead:'Déjanos tus datos',name:'Nombre',email:'Email',cell:'Teléfono',countryCode:'Código país',program:'Programa',obs:'Observaciones',submit:'Enviar',btnVer:'Ver guía PDF',benefitTraining:'Formación especializada en <span>deporte, datos e innovación</span>',benefitMethod:'Metodología conectada con la <span>realidad de la industria</span>',benefitConditions:'Mejores <span>condiciones de matriculación</span>',helpNote:'Si necesitas orientación para elegir tu Máster, escríbeme y <span>te ayudo.</span>'},
-      en:{headline:'PUT YOUR PASSION AT THE SERVICE OF THE FUTURE',lead:'Leave us your data',name:'Name',email:'Email',cell:'Phone',countryCode:'Country code',program:'Program',obs:'Observations',submit:'Send',btnVer:'See PDF guide',benefitTraining:'Specialized training in <span>sport, data and innovation</span>',benefitMethod:'Methodology connected to the <span>reality of the industry</span>',benefitConditions:'Better <span>enrollment conditions</span>',helpNote:'If you need guidance to choose your Master’s program, write to me and <span>I’ll help you.</span>'},
-      pt:{headline:'COLOQUE A SUA PAIXÃO A SERVIÇO DO FUTURO',lead:'Deixe-nos os seus dados',name:'Nome',email:'Email',cell:'N. Telemóvel',countryCode:'Código do país',program:'Programa',obs:'Observações',submit:'Enviar',btnVer:'Ver guia PDF',benefitTraining:'Formação especializada em <span>desporto, dados e inovação</span>',benefitMethod:'Metodologia conectada com a <span>realidade da indústria</span>',benefitConditions:'Melhores <span>condições de matrícula</span>',helpNote:'Se precisar de orientação para escolher o seu Mestrado, escreva-me e <span>eu ajudo.</span>'}
+      es:{headline:'PON TU PASIÓN AL SERVICIO DEL FUTURO',lead:'Déjanos tus datos',name:'Nombre',email:'Email',nationality:'Nacionalidad',nationalityPlaceholder:'Seleccione nacionalidad',cell:'Teléfono',countryCode:'Código país',program:'Programa',obs:'Observaciones',submit:'Enviar',btnVer:'Ver guía PDF',benefitTraining:'Formación especializada en <span>deporte, datos e innovación</span>',benefitMethod:'Metodología conectada con la <span>realidad de la industria</span>',benefitConditions:'Mejores <span>condiciones de matriculación</span>',helpNote:'Si necesitas orientación para elegir tu Máster, escríbeme y <span>te ayudo.</span>'},
+      en:{headline:'PUT YOUR PASSION AT THE SERVICE OF THE FUTURE',lead:'Leave us your data',name:'Name',email:'Email',nationality:'Nationality',nationalityPlaceholder:'Select nationality',cell:'Phone',countryCode:'Country code',program:'Program',obs:'Observations',submit:'Send',btnVer:'See PDF guide',benefitTraining:'Specialized training in <span>sport, data and innovation</span>',benefitMethod:'Methodology connected to the <span>reality of the industry</span>',benefitConditions:'Better <span>enrollment conditions</span>',helpNote:'If you need guidance to choose your Master’s program, write to me and <span>I’ll help you.</span>'},
+      pt:{headline:'COLOQUE A SUA PAIXÃO A SERVIÇO DO FUTURO',lead:'Deixe-nos os seus dados',name:'Nome',email:'Email',nationality:'Nacionalidade',nationalityPlaceholder:'Selecione a nacionalidade',cell:'N. Telemóvel',countryCode:'Código do país',program:'Programa',obs:'Observações',submit:'Enviar',btnVer:'Ver guia PDF',benefitTraining:'Formação especializada em <span>desporto, dados e inovação</span>',benefitMethod:'Metodologia conectada com a <span>realidade da indústria</span>',benefitConditions:'Melhores <span>condições de matrícula</span>',helpNote:'Se precisar de orientação para escolher o seu Mestrado, escreva-me e <span>eu ajudo.</span>'}
     };
     const applyLang=(l)=>{
       const setText=(id,text)=>{const el=document.getElementById(id);if(el) el.innerText=text;};
@@ -149,6 +156,7 @@
       setText('leadTitle',t.lead);
       setText('labelName',t.name);
       setText('labelEmail',t.email);
+      setText('labelNationality',t.nationality);
       setText('labelCell',t.cell);
       setText('labelProgram',t.program);
       setText('labelObs',t.obs);
@@ -164,11 +172,41 @@
       setPlaceholder('observations',t.obs);
       const countryCode=document.getElementById('country_code');
       if(countryCode){countryCode.setAttribute('aria-label',t.countryCode);countryCode.setAttribute('title',t.countryCode);}
+      const nationalitySelect=document.getElementById('candidate_nationality');
+      if(nationalitySelect && nationalitySelect.options.length){nationalitySelect.options[0].text=t.nationalityPlaceholder;}
       const programSelect=document.getElementById('program_info_id');
       if(programSelect && programSelect.options.length){programSelect.options[0].text=t.program;}
     };
+
+    const setupCountryCodeSelect=()=>{
+      const select=document.getElementById('country_code');
+      if(!select) return;
+      const options=Array.from(select.options);
+      options.forEach(option=>{
+        if(!option.dataset.fullText){
+          option.dataset.fullText=option.text;
+          const parts=option.text.trim().split(/\s+/);
+          const flag=parts[0] || '';
+          const code=parts[parts.length - 1] || option.value;
+          option.dataset.shortText=`${flag} ${code}`.trim();
+        }
+      });
+      const showFull=()=>options.forEach(option=>{option.text=option.dataset.fullText;});
+      const showShort=()=>{
+        options.forEach(option=>{option.text=option.dataset.fullText;});
+        const selected=select.options[select.selectedIndex];
+        if(selected && selected.dataset.shortText){selected.text=selected.dataset.shortText;}
+      };
+      select.addEventListener('focus',showFull);
+      select.addEventListener('mousedown',showFull);
+      select.addEventListener('change',()=>window.setTimeout(showShort,0));
+      select.addEventListener('blur',showShort);
+      showShort();
+    };
+
     window.setLang=(l)=>{localStorage.setItem('lang',l);applyLang(l);} ;
     applyLang(localStorage.getItem('lang')||'es');
+    setupCountryCodeSelect();
 
     const programUrls = {{ program_urls|tojson }};
     const sel = document.getElementById('program_info_id');

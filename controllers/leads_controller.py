@@ -56,6 +56,7 @@ class LeadForm(FlaskForm):
     prescriptor_id = SelectField("Prescriptor", coerce=str, validators=[DataRequired()])
     candidate_name = StringField("Nombre", validators=[DataRequired(), Length(max=100)])
     candidate_email = StringField("Email", validators=[Optional(), Email(), Length(max=255)])
+    candidate_nationality = StringField("Nacionalidad", validators=[Optional(), Length(max=100)])
     candidate_cellular = StringField("Celular", validators=[Optional(), Length(max=255)])
     program_info_id = SelectField("Programa", coerce=str, validators=[Optional()])
     state_id = SelectField("Estado", coerce=int, validators=[DataRequired()])
@@ -258,6 +259,8 @@ def new_lead():
             candidate_email=form.candidate_email.data,
             candidate_cellular=form.candidate_cellular.data,
         )
+        if hasattr(lead, "candidate_nationality"):
+            lead.candidate_nationality = form.candidate_nationality.data or None
         db.session.add(lead)
         db.session.commit()
         # registrar movimiento inicial en historial
@@ -280,6 +283,7 @@ def new_lead():
                         f"Programa: {getattr(program,'name', program.id)}\n"
                         f"Nombre candidato: {form.candidate_name.data}\n"
                         f"Email: {form.candidate_email.data or '-'}\n"
+                        f"Nacionalidad: {form.candidate_nationality.data or '-'}\n"
                         f"Celular: {form.candidate_cellular.data or '-'}\n"
                         f"Observaciones: {form.observations.data or '-'}\n"
                     )
@@ -289,6 +293,7 @@ def new_lead():
                         program=getattr(program,'name', program.id),
                         candidate_name=form.candidate_name.data,
                         candidate_email=form.candidate_email.data,
+                        candidate_nationality=form.candidate_nationality.data,
                         candidate_cellular=form.candidate_cellular.data,
                         observations=form.observations.data)
                     
@@ -683,6 +688,8 @@ def edit_lead(lead_id):
         lead.candidate_email = form.candidate_email.data
         lead.program_info_id = form.program_info_id.data or None
         lead.candidate_cellular = form.candidate_cellular.data
+        if hasattr(lead, "candidate_nationality"):
+            lead.candidate_nationality = form.candidate_nationality.data or None
         # Si el campo estado está habilitado y vino un valor, actualizar
         if form.state_id.data:
             lead.state_id = form.state_id.data
@@ -874,6 +881,7 @@ def embed_lead_post():
                             f"Programa: {getattr(program,'name', program.id)}\n"
                             f"Nombre candidato: {name}\n"
                             f"Email: {email or '-'}\n"
+                            f"Nacionalidad: -\n"
                             f"Celular: {cellular or '-'}\n"
                             f"Observaciones: {observations or '-'}\n"
                         )
@@ -889,6 +897,7 @@ def embed_lead_post():
                             program=getattr(program,'name', program.id),
                             candidate_name=name,
                             candidate_email=email,
+                            candidate_nationality=None,
                             candidate_cellular=cellular,
                             observations=observations,
                             lead_url=lead_url,
@@ -925,6 +934,7 @@ def embed_lead_post():
                         f"Programa: {getattr(program,'name', program.id) if program_id and program else '-'}\n"
                         f"Nombre candidato: {name}\n"
                         f"Email: {email or '-'}\n"
+                        f"Nacionalidad: -\n"
                         f"Celular: {cellular or '-'}\n"
                         f"Observaciones: {observations or '-'}\n"
                         + (f"\nVer lead: {lead_url}\n" if lead_url else "")
@@ -936,6 +946,7 @@ def embed_lead_post():
                         program=(getattr(program,'name', program.id) if program_id and program else '-'),
                         candidate_name=name,
                         candidate_email=email,
+                        candidate_nationality=None,
                         candidate_cellular=cellular,
                         observations=observations,
                         lead_url=lead_url,

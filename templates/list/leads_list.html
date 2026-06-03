@@ -70,7 +70,14 @@
     {% for l in leads %}
         <tr>
             <td>{{ l.created_at.strftime('%d/%m/%Y') if l.created_at }} </td>
-            <td>{{ l.candidate_name or '-' }}<br><small>{{ l.candidate_email }}</small></td>
+            <td>
+              {{ l.candidate_name or '-' }}<br>
+              <small>{{ l.candidate_email or '-' }}</small>
+              {% set nationality = l.candidate_nationality|default('', true) %}
+              {% if nationality %}
+                <br><small>Nacionalidad: {{ nationality }}</small>
+              {% endif %}
+            </td>
             <td>{{ pres_map.get(l.prescriptor_id, l.prescriptor_id) }}</td>
             <td>{{ l.candidate_cellular or '-' }}</td>
             <td>{{ commercial_map.get(l.commercial_id, l.commercial_id or '-') }}</td>

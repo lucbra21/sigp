@@ -131,11 +131,24 @@ def _country_code_choices() -> list[tuple[str, str]]:
     return sorted(choices, key=lambda item: (item[0] != "+34", item[1]))
 
 
+def _nationality_choices() -> list[tuple[str, str]]:
+    choices = [
+        (name, f"{_flag_emoji(iso_code)} {name}")
+        for iso_code, name, _dial_code in COUNTRY_CALLING_CODES
+    ]
+    return [("", "Seleccione nacionalidad")] + sorted(choices, key=lambda item: item[1])
+
+
 class PublicLeadForm(FlaskForm):
     """Formulario de captación visible en la landing."""
 
     name = StringField("Nombre", validators=[DataRequired(), Length(max=100)])
     email = StringField("Email", validators=[Optional(), Email(), Length(max=255)])
+    candidate_nationality = SelectField(
+        "Nacionalidad",
+        choices=_nationality_choices(),
+        validators=[DataRequired(message="Seleccione la nacionalidad")],
+    )
     country_code = SelectField(
         "Código país",
         choices=_country_code_choices(),
@@ -237,6 +250,8 @@ def landing_page(prescriptor_id: str):
              observations=form.observations.data or None,
             state_id=state_id,
         )
+        if hasattr(new_lead, "candidate_nationality"):
+            new_lead.candidate_nationality = form.candidate_nationality.data or None
         db.session.add(new_lead)
         db.session.commit()
         current_app.logger.info("Nuevo lead captado para prescriptor %s", prescriptor_id)
@@ -256,6 +271,7 @@ def landing_page(prescriptor_id: str):
                         f"Programa: {getattr(program,'name', program.id)}\n"
                         f"Nombre candidato: {form.name.data}\n"
                         f"Email: {form.email.data or '-'}\n"
+                        f"Nacionalidad: {form.candidate_nationality.data or '-'}\n"
                         f"Celular: {full_cellular or '-'}\n"
                         f"Observaciones: {form.observations.data or '-'}\n"
                      )
@@ -265,6 +281,7 @@ def landing_page(prescriptor_id: str):
                         program=getattr(program,'name', program.id),
                         candidate_name=form.name.data,
                         candidate_email=form.email.data,
+                        candidate_nationality=form.candidate_nationality.data,
                         candidate_cellular=full_cellular,
                         observations=form.observations.data,
                         lead_url=(current_app.config.get('BASE_URL') or request.host_url.rstrip('/')) + url_for('leads.edit_lead', lead_id=new_lead.id))
