@@ -72,7 +72,11 @@
         </div>
         <div>
           <label id="labelCell" class="visually-hidden">{{ form.cellular.label.text }}</label>
-          {{ form.cellular(class="form-control", placeholder="Teléfono") }}
+          <div class="phone-field-v2">
+            {{ form.country_code(class="form-select", required=True, aria_label="Código país") }}
+            {{ form.cellular(class="form-control", placeholder="Teléfono", required=True, inputmode="tel", autocomplete="tel") }}
+          </div>
+          {% for error in form.country_code.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
           {% for error in form.cellular.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
         </div>
         <div class="field-full">
@@ -125,9 +129,9 @@
   document.addEventListener('DOMContentLoaded', function(){
     // i18n translations
     const translations = {
-      es:{headline:'PON TU PASIÓN AL SERVICIO DEL FUTURO',lead:'Déjanos tus datos',name:'Nombre',email:'Email',cell:'Teléfono',program:'Programa',obs:'Observaciones',submit:'Enviar',btnVer:'Ver guía PDF',benefitTraining:'Formación especializada en <span>deporte, datos e innovación</span>',benefitMethod:'Metodología conectada con la <span>realidad de la industria</span>',benefitConditions:'Mejores <span>condiciones de matriculación</span>',helpNote:'Si necesitas orientación para elegir tu Máster, escríbeme y <span>te ayudo.</span>'},
-      en:{headline:'PUT YOUR PASSION AT THE SERVICE OF THE FUTURE',lead:'Leave us your data',name:'Name',email:'Email',cell:'Phone',program:'Program',obs:'Observations',submit:'Send',btnVer:'See PDF guide',benefitTraining:'Specialized training in <span>sport, data and innovation</span>',benefitMethod:'Methodology connected to the <span>reality of the industry</span>',benefitConditions:'Better <span>enrollment conditions</span>',helpNote:'If you need guidance to choose your Master’s program, write to me and <span>I’ll help you.</span>'},
-      pt:{headline:'COLOQUE A SUA PAIXÃO A SERVIÇO DO FUTURO',lead:'Deixe-nos os seus dados',name:'Nome',email:'Email',cell:'N. Telemóvel',program:'Programa',obs:'Observações',submit:'Enviar',btnVer:'Ver guia PDF',benefitTraining:'Formação especializada em <span>desporto, dados e inovação</span>',benefitMethod:'Metodologia conectada com a <span>realidade da indústria</span>',benefitConditions:'Melhores <span>condições de matrícula</span>',helpNote:'Se precisar de orientação para escolher o seu Mestrado, escreva-me e <span>eu ajudo.</span>'}
+      es:{headline:'PON TU PASIÓN AL SERVICIO DEL FUTURO',lead:'Déjanos tus datos',name:'Nombre',email:'Email',cell:'Teléfono',countryCode:'Código país',program:'Programa',obs:'Observaciones',submit:'Enviar',btnVer:'Ver guía PDF',benefitTraining:'Formación especializada en <span>deporte, datos e innovación</span>',benefitMethod:'Metodología conectada con la <span>realidad de la industria</span>',benefitConditions:'Mejores <span>condiciones de matriculación</span>',helpNote:'Si necesitas orientación para elegir tu Máster, escríbeme y <span>te ayudo.</span>'},
+      en:{headline:'PUT YOUR PASSION AT THE SERVICE OF THE FUTURE',lead:'Leave us your data',name:'Name',email:'Email',cell:'Phone',countryCode:'Country code',program:'Program',obs:'Observations',submit:'Send',btnVer:'See PDF guide',benefitTraining:'Specialized training in <span>sport, data and innovation</span>',benefitMethod:'Methodology connected to the <span>reality of the industry</span>',benefitConditions:'Better <span>enrollment conditions</span>',helpNote:'If you need guidance to choose your Master’s program, write to me and <span>I’ll help you.</span>'},
+      pt:{headline:'COLOQUE A SUA PAIXÃO A SERVIÇO DO FUTURO',lead:'Deixe-nos os seus dados',name:'Nome',email:'Email',cell:'N. Telemóvel',countryCode:'Código do país',program:'Programa',obs:'Observações',submit:'Enviar',btnVer:'Ver guia PDF',benefitTraining:'Formação especializada em <span>desporto, dados e inovação</span>',benefitMethod:'Metodologia conectada com a <span>realidade da indústria</span>',benefitConditions:'Melhores <span>condições de matrícula</span>',helpNote:'Se precisar de orientação para escolher o seu Mestrado, escreva-me e <span>eu ajudo.</span>'}
     };
     const applyLang=(l)=>{
       const setText=(id,text)=>{const el=document.getElementById(id);if(el) el.innerText=text;};
@@ -158,6 +162,8 @@
       setPlaceholder('email',t.email);
       setPlaceholder('cellular',t.cell);
       setPlaceholder('observations',t.obs);
+      const countryCode=document.getElementById('country_code');
+      if(countryCode){countryCode.setAttribute('aria-label',t.countryCode);countryCode.setAttribute('title',t.countryCode);}
       const programSelect=document.getElementById('program_info_id');
       if(programSelect && programSelect.options.length){programSelect.options[0].text=t.program;}
     };
